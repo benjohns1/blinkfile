@@ -2,10 +2,17 @@ package main
 
 import (
 	"context"
-	"git.jfam.app/one-way-file-send/web"
+	"crypto/rand"
+	"encoding/base64"
+	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/app/repo"
+	"git.jfam.app/one-way-file-send/app/web/api"
+	"git.jfam.app/one-way-file-send/app/web/server"
 	"log"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 )
 
 func main() {
@@ -19,22 +26,65 @@ func main() {
 func run(ctx context.Context) error {
 	cfg := parseConfig()
 	log.Printf("Starting server on port %d", cfg.Port)
-	server, err := web.NewServer(ctx, web.ServerConfig{Port: cfg.Port})
+	application, err := app.New(app.Config{
+		AdminCredentials: app.Credentials{
+			Username: cfg.AdminUsername,
+		},
+		SessionExpiration: 7 * 24 * time.Hour,
+		SessionRepo:       repo.NewSession(),
+		GenerateToken: func() (app.Token, error) {
+			v, err := randomBase64String(128)
+			return app.Token(v), err
+		},
+	})
 	if err != nil {
 		return err
 	}
-	done := server.Start(ctx)
+
+	srv, err := server.New(ctx, server.Config{
+		Port: cfg.Port,
+		API: &api.API{
+			App: application,
+			GenerateErrorID: func() (api.ErrorID, error) {
+				v, err := randomBase64String(8)
+				return api.ErrorID(v), err
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	done := srv.Start(ctx)
 	return <-done
 }
 
+func randomBase64String(length int) (string, error) {
+	b := make([]byte, length)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return strings.ToLower(base64.StdEncoding.EncodeToString(b)), nil
+}
+
 type config struct {
-	Port int
+	Port          int
+	AdminUsername string
 }
 
 func parseConfig() config {
 	return config{
-		Port: envDefaultInt("PORT", 8000),
+		Port:          envDefaultInt("PORT", 8000),
+		AdminUsername: envDefaultString("ADMIN_USERNAME", "admin"),
 	}
+}
+
+func envDefaultString(key, def string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	return v
 }
 
 func envDefaultInt(key string, def int) int {

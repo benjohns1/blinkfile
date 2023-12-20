@@ -1,4 +1,4 @@
-package web
+package server
 
 import (
 	"context"
@@ -12,25 +12,35 @@ import (
 
 const shutdownWaitTime = 10 * time.Second
 
-type ServerConfig struct {
-	Port int
-}
+type (
+	Config struct {
+		Port int
+		API
+	}
 
-type Server struct {
-	*http.Server
-	ServerConfig
-}
+	API interface {
+		GetRoutes() map[string]func(http.ResponseWriter, *http.Request)
+	}
+
+	Server struct {
+		*http.Server
+		Config
+	}
+)
 
 //go:embed static/*
 var content embed.FS
 
-func routes() (*http.ServeMux, error) {
+func routes(cfg Config) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
 	handleStatic, err := staticHandler()
 	if err != nil {
 		return nil, err
 	}
 	mux.Handle("/", handleStatic)
+	for pattern, handler := range cfg.GetRoutes() {
+		mux.HandleFunc(pattern, handler)
+	}
 	return mux, nil
 }
 
@@ -42,8 +52,8 @@ func staticHandler() (http.Handler, error) {
 	return http.FileServer(http.FS(static)), nil
 }
 
-func NewServer(ctx context.Context, cfg ServerConfig) (Server, error) {
-	mux, err := routes()
+func New(ctx context.Context, cfg Config) (Server, error) {
+	mux, err := routes(cfg)
 	if err != nil {
 		return Server{}, err
 	}
