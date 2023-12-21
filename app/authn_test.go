@@ -18,7 +18,7 @@ func TestApp_Login(t *testing.T) {
 		name            string
 		cfg             app.Config
 		args            args
-		want            app.Token
+		want            app.Session
 		wantErr         error
 		wantSessionSave []app.Session
 	}{
@@ -108,11 +108,15 @@ func TestApp_Login(t *testing.T) {
 					Username: "admin-username",
 				},
 			},
-			want: "token1",
+			want: app.Session{
+				Username: "admin-username",
+				Token:    "token1",
+				Expires:  time.Unix(3, 3),
+			},
 			wantSessionSave: []app.Session{{
-				Username:   "admin-username",
-				Token:      "token1",
-				Expiration: time.Unix(3, 3),
+				Username: "admin-username",
+				Token:    "token1",
+				Expires:  time.Unix(3, 3),
 			}},
 		},
 	}

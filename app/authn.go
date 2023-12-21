@@ -15,15 +15,15 @@ type (
 	Token string
 
 	Session struct {
-		Username   string
-		Token      Token
-		Expiration time.Time
+		Username string
+		Token    Token
+		Expires  time.Time
 	}
 )
 
-func (a App) Login(ctx context.Context, creds Credentials) (Token, error) {
+func (a App) Login(ctx context.Context, creds Credentials) (Session, error) {
 	if creds.Username == "" {
-		return "", Error{
+		return Session{}, Error{
 			Type: ErrAuthnFailed,
 			Err:  fmt.Errorf("invalid credentials: username cannot be empty"),
 		}
@@ -31,19 +31,19 @@ func (a App) Login(ctx context.Context, creds Credentials) (Token, error) {
 	if stringsAreEqual(creds.Username, a.cfg.AdminCredentials.Username) {
 		token, err := a.cfg.GenerateToken()
 		if err != nil {
-			return "", Error{ErrInternal, err}
+			return Session{}, Error{ErrInternal, err}
 		}
 		session := Session{
-			Username:   creds.Username,
-			Token:      token,
-			Expiration: a.cfg.Now().Add(a.cfg.SessionExpiration),
+			Username: creds.Username,
+			Token:    token,
+			Expires:  a.cfg.Now().Add(a.cfg.SessionExpiration),
 		}
 		if saveErr := a.cfg.SessionRepo.Save(ctx, session); saveErr != nil {
-			return "", Error{ErrRepo, saveErr}
+			return Session{}, Error{ErrRepo, saveErr}
 		}
-		return token, nil
+		return session, nil
 	}
-	return "", Error{
+	return Session{}, Error{
 		Type: ErrAuthnFailed,
 		Err:  fmt.Errorf("invalid credentials"),
 	}

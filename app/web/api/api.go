@@ -3,9 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/app/web"
 	"io"
 	"net/http"
 )
@@ -13,34 +13,58 @@ import (
 type (
 	API struct {
 		App
-		GenerateErrorID func() (ErrorID, error)
-		Log
-	}
-
-	Log interface {
-		Error(context.Context, ErrorID, error)
 	}
 
 	App interface {
-		Login(context.Context, app.Credentials) (app.Token, error)
+		Login(context.Context, app.Credentials) (app.Session, error)
 	}
 
 	ResponseErrorBody struct {
-		ID  ErrorID
+		ID  web.ErrorID
 		Err string
 	}
-	ErrorID string
 
 	successResponse struct {
 		Status int
 		Body   []byte
 	}
+
+	route struct {
+		pattern    string
+		method     string
+		middleware []middlewareFunc
+		handler    func(context.Context, *http.Request) (successResponse, error)
+	}
+
+	middlewareFunc func(http.HandlerFunc) http.HandlerFunc
 )
 
-func (api *API) GetRoutes() map[string]func(http.ResponseWriter, *http.Request) {
-	return map[string]func(http.ResponseWriter, *http.Request){
-		"/api/login": api.httpResponder(api.login),
+var _ App = &app.App{}
+
+func (api *API) GetRoutes() map[string]http.HandlerFunc {
+	cfg := []route{
+		{
+			pattern: "/api/login",
+			method:  http.MethodPost,
+			handler: api.login,
+		},
 	}
+	return api.compileRoutes(cfg)
+}
+
+func (api *API) compileRoutes(cfg []route) map[string]http.HandlerFunc {
+	routes := make(map[string]http.HandlerFunc, len(cfg))
+	for _, r := range cfg {
+		if r.method != "" {
+			r.middleware = append(r.middleware, api.httpMethod(r.method))
+		}
+		handler := api.httpResponder(r.handler)
+		for _, m := range r.middleware {
+			handler = m(handler)
+		}
+		routes[r.pattern] = handler
+	}
+	return routes
 }
 
 func unmarshalRequestBody(rawReq *http.Request, v any) error {
@@ -74,61 +98,37 @@ func marshalResponseBody(v any) (successResponse, error) {
 	return successResponse{http.StatusOK, resp}, nil
 }
 
-func parseAppErr(appErr app.Error) (int, string) {
-	switch appErr.Type {
-	case app.ErrBadRequest:
-		return http.StatusBadRequest, appErr.Err.Error()
-	case app.ErrAuthnFailed:
-		return http.StatusUnauthorized, "Authentication failed"
-	default:
-		return http.StatusInternalServerError, "Internal error"
+func (api *API) httpMethod(method string) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, req *http.Request) {
+			if req.Method != method {
+				web.WriteResponse(w, http.StatusMethodNotAllowed, nil)
+				return
+			}
+			next(w, req)
+		}
 	}
 }
 
-func (api *API) httpResponder(handler func(ctx context.Context, req *http.Request) (successResponse, error)) func(w http.ResponseWriter, req *http.Request) {
+func (api *API) httpResponder(handler func(ctx context.Context, req *http.Request) (successResponse, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		success, err := handler(ctx, req)
 		if err != nil {
-			var appErr app.Error
-			if !errors.As(err, &appErr) {
-				appErr = app.Error{Err: err}
-			}
-			errStatus, errMsg := parseAppErr(appErr)
-
-			errID, genErr := api.GenerateErrorID()
-			if genErr != nil {
-				api.Log.Error(ctx, "", fmt.Errorf("generating error ID: %w", genErr))
-			}
+			errID, errStatus, errMsg := web.ParseAppErr(err)
 			b, marshalErr := json.Marshal(ResponseErrorBody{
 				ID:  errID,
 				Err: errMsg,
 			})
-			api.Log.Error(ctx, errID, err)
+			web.LogError(ctx, errID, err)
 			if marshalErr != nil {
-				api.Log.Error(ctx, errID, fmt.Errorf("attempting to encode error response: %w", marshalErr))
-				api.writeResponse(w, http.StatusInternalServerError, nil)
+				web.LogError(ctx, errID, fmt.Errorf("attempting to encode error response: %w", marshalErr))
+				web.WriteResponse(w, http.StatusInternalServerError, nil)
 				return
 			}
-			if !api.writeResponse(w, errStatus, b) {
-				return
-			}
+			web.WriteResponse(w, errStatus, b)
 			return
 		}
-		if !api.writeResponse(w, success.Status, success.Body) {
-			return
-		}
+		web.WriteResponse(w, success.Status, success.Body)
 	}
-}
-
-func (api *API) writeResponse(w http.ResponseWriter, status int, b []byte) bool {
-	w.WriteHeader(status)
-	_, writeErr := w.Write(b)
-	if writeErr == nil {
-		return true
-	}
-	api.Log.Error(context.Background(), "", fmt.Errorf("attempting to write response: %v, response: %s", writeErr, b))
-	w.WriteHeader(http.StatusInternalServerError)
-	_, _ = w.Write(nil)
-	return false
 }

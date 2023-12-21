@@ -35,14 +35,6 @@ func findOpenTestPort(t *testing.T) int {
 	return port
 }
 
-type stubAPI struct {
-	routes map[string]func(http.ResponseWriter, *http.Request)
-}
-
-func (api *stubAPI) GetRoutes() map[string]func(http.ResponseWriter, *http.Request) {
-	return api.routes
-}
-
 func TestStartServerLocalhost(t *testing.T) {
 	testPort := findOpenTestPort(t)
 	type args struct {
@@ -59,7 +51,6 @@ func TestStartServerLocalhost(t *testing.T) {
 			args: args{
 				cfg: server.Config{
 					Port: testPort,
-					API:  &stubAPI{},
 				},
 			},
 			assert: func(t *testing.T) {
@@ -79,7 +70,7 @@ func TestStartServerLocalhost(t *testing.T) {
 			args: args{
 				cfg: server.Config{
 					Port: testPort,
-					API: &stubAPI{routes: map[string]func(http.ResponseWriter, *http.Request){
+					APIRoutes: map[string]http.HandlerFunc{
 						"/test/route": func(w http.ResponseWriter, req *http.Request) {
 							w.WriteHeader(http.StatusTeapot)
 							_, err := w.Write([]byte("response body"))
@@ -87,7 +78,7 @@ func TestStartServerLocalhost(t *testing.T) {
 								t.Fatal(err)
 							}
 						},
-					}},
+					},
 				},
 			},
 			assert: func(t *testing.T) {
@@ -115,7 +106,7 @@ func TestStartServerLocalhost(t *testing.T) {
 			args: args{
 				cfg: server.Config{
 					Port: testPort,
-					API: &stubAPI{routes: map[string]func(http.ResponseWriter, *http.Request){
+					APIRoutes: map[string]http.HandlerFunc{
 						"/test/error/route": func(w http.ResponseWriter, req *http.Request) {
 							w.WriteHeader(http.StatusNotAcceptable)
 							_, err := w.Write([]byte("error response"))
@@ -123,7 +114,7 @@ func TestStartServerLocalhost(t *testing.T) {
 								t.Fatal(err)
 							}
 						},
-					}},
+					},
 				},
 			},
 			assert: func(t *testing.T) {

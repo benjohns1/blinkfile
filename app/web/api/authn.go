@@ -4,6 +4,7 @@ import (
 	"context"
 	"git.jfam.app/one-way-file-send/app"
 	"net/http"
+	"time"
 )
 
 type (
@@ -11,7 +12,8 @@ type (
 		Username string
 	}
 	LoginResponse struct {
-		AuthzToken string
+		Token   string
+		Expires time.Time
 	}
 )
 
@@ -20,12 +22,13 @@ func (api *API) login(ctx context.Context, req *http.Request) (successResponse, 
 	if parseErr := unmarshalRequestBody(req, &login); parseErr != nil {
 		return successResponse{}, parseErr
 	}
-	token, loginErr := api.App.Login(ctx, app.Credentials{Username: login.Username})
+	session, loginErr := api.App.Login(ctx, app.Credentials{Username: login.Username})
 	if loginErr != nil {
 		return successResponse{}, loginErr
 	}
 	resp := LoginResponse{
-		AuthzToken: string(token),
+		Token:   string(session.Token),
+		Expires: session.Expires,
 	}
 	return marshalResponseBody(resp)
 }

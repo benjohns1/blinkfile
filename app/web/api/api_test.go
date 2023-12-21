@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"git.jfam.app/one-way-file-send/app/web/api"
+	"fmt"
 	"io"
 	"testing"
 )
@@ -31,12 +31,9 @@ func jsonMarshal(t *testing.T, v any) []byte {
 }
 
 type spyLog struct {
-	errors map[api.ErrorID]string
+	errors []string
 }
 
-func (l *spyLog) Error(_ context.Context, errID api.ErrorID, err error) {
-	if l.errors == nil {
-		l.errors = make(map[api.ErrorID]string, 1)
-	}
-	l.errors[errID] = err.Error()
+func (l *spyLog) Errorf(_ context.Context, format string, v ...any) {
+	l.errors = append(l.errors, fmt.Sprintf(format, v...))
 }

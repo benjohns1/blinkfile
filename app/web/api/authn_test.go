@@ -4,21 +4,23 @@ import (
 	"context"
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/app/web"
 	"git.jfam.app/one-way-file-send/app/web/api"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type stubAppLogin struct {
-	returnToken app.Token
-	returnErr   error
+	LoginSession app.Session
+	LoginErr     error
 }
 
-func (a *stubAppLogin) Login(context.Context, app.Credentials) (app.Token, error) {
-	return a.returnToken, a.returnErr
+func (a *stubAppLogin) Login(context.Context, app.Credentials) (app.Session, error) {
+	return a.LoginSession, a.LoginErr
 }
 
 type spyAppLogin struct {
@@ -27,7 +29,7 @@ type spyAppLogin struct {
 	app.Credentials
 }
 
-func (a *spyAppLogin) Login(ctx context.Context, creds app.Credentials) (app.Token, error) {
+func (a *spyAppLogin) Login(ctx context.Context, creds app.Credentials) (app.Session, error) {
 	a.Credentials = creds
 	return a.stubAppLogin.Login(ctx, creds)
 }
@@ -44,81 +46,105 @@ func TestAPI_Login(t *testing.T) {
 		wantStatus    int
 		wantBody      []byte
 		wantSpy       app.Credentials
-		wantErrorLogs map[api.ErrorID]string
+		wantErrorLogs []string
 	}{
+		{
+			name: "should fail if HTTP method is GET",
+			args: args{
+				req: &http.Request{
+					Method: http.MethodGet,
+				},
+			},
+			wantStatus: http.StatusMethodNotAllowed,
+			wantBody:   []byte{},
+		},
 		{
 			name: "should fail if request body cannot be read",
 			args: args{
 				req: &http.Request{
-					Body: io.NopCloser(stubReader{readErr: fmt.Errorf("read-err")}),
+					Method: http.MethodPost,
+					Body:   io.NopCloser(stubReader{readErr: fmt.Errorf("read-err")}),
 				},
 			},
 			wantStatus: http.StatusInternalServerError,
 			wantBody:   jsonMarshal(t, api.ResponseErrorBody{ID: "1", Err: "Internal error"}),
-			wantErrorLogs: map[api.ErrorID]string{"1": app.Error{
-				Type: app.ErrInternal,
-				Err:  fmt.Errorf("reading request body: read-err"),
-			}.Error()},
+			wantErrorLogs: []string{
+				fmt.Sprintf("error ID 1: %v", app.Error{
+					Type: app.ErrInternal,
+					Err:  fmt.Errorf("reading request body: read-err"),
+				}.Error()),
+			},
 		},
 		{
 			name: "should fail with an invalid request body",
 			args: args{
 				req: &http.Request{
-					Body: readCloser([]byte("invalid-json")),
+					Method: http.MethodPost,
+					Body:   readCloser([]byte("invalid-json")),
 				},
 			},
 			wantStatus: http.StatusBadRequest,
 			wantBody:   jsonMarshal(t, api.ResponseErrorBody{ID: "1", Err: "parsing request body: invalid character 'i' looking for beginning of value"}),
-			wantErrorLogs: map[api.ErrorID]string{"1": app.Error{
-				Type: app.ErrBadRequest,
-				Err:  fmt.Errorf("parsing request body: invalid character 'i' looking for beginning of value"),
-			}.Error()},
+			wantErrorLogs: []string{
+				fmt.Sprintf("error ID 1: %v", app.Error{
+					Type: app.ErrBadRequest,
+					Err:  fmt.Errorf("parsing request body: invalid character 'i' looking for beginning of value"),
+				}.Error()),
+			},
 		},
 		{
 			name: "should fail if the application returns a generic error",
 			args: args{
 				req: &http.Request{
-					Body: readCloser(jsonMarshal(t, api.LoginRequest{Username: "Bob Johansson"})),
+					Method: http.MethodPost,
+					Body:   readCloser(jsonMarshal(t, api.LoginRequest{Username: "Bob Johansson"})),
 				},
 			},
 			stubApp: stubAppLogin{
-				returnErr: fmt.Errorf("app err"),
+				LoginErr: fmt.Errorf("app err"),
 			},
 			wantStatus:    http.StatusInternalServerError,
 			wantBody:      jsonMarshal(t, api.ResponseErrorBody{ID: "1", Err: "Internal error"}),
-			wantErrorLogs: map[api.ErrorID]string{"1": "app err"},
+			wantErrorLogs: []string{"error ID 1: app err"},
 			wantSpy:       app.Credentials{Username: "Bob Johansson"},
 		},
 		{
 			name: "should fail with a 401 if the application returns an authentication failed error",
 			args: args{
 				req: &http.Request{
-					Body: readCloser(jsonMarshal(t, api.LoginRequest{Username: "Bob Johansson"})),
+					Method: http.MethodPost,
+					Body:   readCloser(jsonMarshal(t, api.LoginRequest{Username: "Bob Johansson"})),
 				},
 			},
 			stubApp: stubAppLogin{
-				returnErr: app.Error{Type: app.ErrAuthnFailed, Err: fmt.Errorf("additional err detail")},
+				LoginErr: app.Error{Type: app.ErrAuthnFailed, Err: fmt.Errorf("additional err detail")},
 			},
 			wantStatus: http.StatusUnauthorized,
 			wantBody:   jsonMarshal(t, api.ResponseErrorBody{ID: "1", Err: "Authentication failed"}),
-			wantErrorLogs: map[api.ErrorID]string{"1": app.Error{
-				Type: app.ErrAuthnFailed,
-				Err:  fmt.Errorf("additional err detail"),
-			}.Error()},
+			wantErrorLogs: []string{
+				fmt.Sprintf("error ID 1: %v", app.Error{
+					Type: app.ErrAuthnFailed,
+					Err:  fmt.Errorf("additional err detail"),
+				}.Error()),
+			},
 			wantSpy: app.Credentials{Username: "Bob Johansson"},
 		},
 		{
 			name: "should succeed if the application succeeds",
 			args: args{
 				req: &http.Request{
-					Body: readCloser(jsonMarshal(t, api.LoginRequest{Username: "Bob Johansson"})),
+					Method: http.MethodPost,
+					Body:   readCloser(jsonMarshal(t, api.LoginRequest{Username: "Bob Johansson"})),
 				},
 			},
 			stubApp: stubAppLogin{
-				returnToken: "token1",
+				LoginSession: app.Session{
+					Token:   "token1",
+					Expires: time.Unix(1, 0),
+				},
 			},
 			wantStatus: http.StatusOK,
-			wantBody:   jsonMarshal(t, api.LoginResponse{AuthzToken: "token1"}),
+			wantBody:   jsonMarshal(t, api.LoginResponse{Token: "token1", Expires: time.Unix(1, 0)}),
 			wantSpy:    app.Credentials{Username: "Bob Johansson"},
 		},
 	}
@@ -127,14 +153,12 @@ func TestAPI_Login(t *testing.T) {
 			appSpy := &spyAppLogin{stubAppLogin: tt.stubApp}
 			logSpy := &spyLog{}
 			var errIDIdx int
-			a := api.API{
-				App: appSpy,
-				GenerateErrorID: func() (api.ErrorID, error) {
-					errIDIdx++
-					return api.ErrorID(fmt.Sprintf("%d", errIDIdx)), nil
-				},
-				Log: logSpy,
+			web.Log = logSpy
+			web.GenerateErrorID = func() web.ErrorID {
+				errIDIdx++
+				return web.ErrorID(fmt.Sprintf("%d", errIDIdx))
 			}
+			a := api.API{App: appSpy}
 			pattern := "/api/login"
 			handler := a.GetRoutes()[pattern]
 			w := httptest.NewRecorder()

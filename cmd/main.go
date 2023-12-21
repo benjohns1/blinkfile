@@ -25,8 +25,8 @@ func main() {
 
 func run(ctx context.Context) error {
 	cfg := parseConfig()
-	log.Printf("Starting server on port %d", cfg.Port)
-	application, err := app.New(app.Config{
+
+	application, appErr := app.New(app.Config{
 		AdminCredentials: app.Credentials{
 			Username: cfg.AdminUsername,
 		},
@@ -37,22 +37,20 @@ func run(ctx context.Context) error {
 			return app.Token(v), err
 		},
 	})
-	if err != nil {
-		return err
+	if appErr != nil {
+		return appErr
 	}
 
-	srv, err := server.New(ctx, server.Config{
-		Port: cfg.Port,
-		API: &api.API{
-			App: application,
-			GenerateErrorID: func() (api.ErrorID, error) {
-				v, err := randomBase64String(8)
-				return api.ErrorID(v), err
-			},
-		},
+	webAPI := &api.API{App: application}
+
+	log.Printf("Starting server on port %d", cfg.Port)
+	srv, srvErr := server.New(ctx, server.Config{
+		Port:      cfg.Port,
+		APIRoutes: webAPI.GetRoutes(),
+		App:       application,
 	})
-	if err != nil {
-		return err
+	if srvErr != nil {
+		return srvErr
 	}
 	done := srv.Start(ctx)
 	return <-done
