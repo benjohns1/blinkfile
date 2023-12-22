@@ -130,7 +130,7 @@ func generateRandomBytes(n uint32) ([]byte, error) {
 	return b, err
 }
 
-func (a App) Login(_ context.Context, username, password string) error {
+func (a App) Authenticate(_ context.Context, username, password string) error {
 	if username == "" {
 		return Error{
 			Type: ErrAuthnFailed,

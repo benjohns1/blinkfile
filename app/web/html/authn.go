@@ -1,7 +1,6 @@
 package html
 
 import (
-	"fmt"
 	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/sessions"
@@ -9,8 +8,8 @@ import (
 
 type LoginView struct {
 	LayoutView
-	SuccessMessage string
 	ErrorView
+	SuccessMessage string
 }
 
 func showLogin(ctx iris.Context, _ App) error {
@@ -39,19 +38,12 @@ func loginRequired(ctx iris.Context, _ App) error {
 	return nil
 }
 
-func setAuthenticated(ctx iris.Context, value bool) error {
-	sess := sessions.Get(ctx)
-	if sess == nil {
-		return fmt.Errorf("unable to get session from request context")
-	}
-	sess.Set("authenticated", value)
-	return nil
-}
-
 func logout(ctx iris.Context, _ App) error {
-	if sessErr := setAuthenticated(ctx, false); sessErr != nil {
-		return sessErr
+	session, err := getSession(ctx)
+	if err != nil {
+		return err
 	}
+	session.setLogout()
 	ctx.ViewData("content", LoginView{
 		SuccessMessage: "Successfully logged out",
 	})
@@ -74,14 +66,17 @@ func doLogin(ctx iris.Context, a App) error {
 }
 
 func login(ctx iris.Context, a App) (LoginView, error) {
-	username := ctx.FormValue("username")
-	password := ctx.FormValue("password")
-	if err := a.Login(ctx, username, password); err != nil {
+	session, err := getSession(ctx)
+	if err != nil {
 		return LoginView{}, err
 	}
-	if sessErr := setAuthenticated(ctx, true); sessErr != nil {
-		return LoginView{}, sessErr
+	username := ctx.FormValue("username")
+	session.setUsername(username)
+	password := ctx.FormValue("password")
+	if err := a.Authenticate(ctx, username, password); err != nil {
+		return LoginView{}, err
 	}
+	session.setAuthenticated()
 	ctx.Redirect("/")
 
 	return LoginView{}, nil

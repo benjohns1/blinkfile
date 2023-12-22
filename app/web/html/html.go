@@ -29,7 +29,7 @@ type (
 	}
 
 	App interface {
-		Login(ctx context.Context, username, password string) error
+		Authenticate(ctx context.Context, username, password string) error
 	}
 
 	wrapper struct {

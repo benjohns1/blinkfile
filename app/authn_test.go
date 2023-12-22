@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestApp_Login(t *testing.T) {
+func TestApp_Authenticate(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
 		username string
@@ -95,7 +95,7 @@ func TestApp_Login(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = application.Login(ctx, tt.args.username, tt.args.password)
+			err = application.Authenticate(ctx, tt.args.username, tt.args.password)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
 				return

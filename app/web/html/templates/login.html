@@ -8,11 +8,11 @@
 <form action="/login" method="post">
     <label>
         Username:
-        <input type="text" name="username"/>
+        <input id="username" type="text" name="username" value="{{.session.Get `username`}}"/>
     </label>
     <label>
         Password:
-        <input type="password" name="password"/>
+        <input id="password" type="password" name="password"/>
     </label>
     <input type="submit" value="Login"/>
 </form>
