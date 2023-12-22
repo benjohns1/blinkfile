@@ -16,6 +16,7 @@ import (
 
 type (
 	Config struct {
+		Title             string
 		App               App
 		Port              int
 		SessionExpiration time.Duration
@@ -50,6 +51,11 @@ type (
 
 func (c Config) parse(ctx context.Context) (Config, error) {
 	cfg := c
+	if cfg.Title == "" {
+		const defaultTitle = "File Sender"
+		app.Log.Printf(ctx, "setting Title to default %q", defaultTitle)
+		cfg.Title = defaultTitle
+	}
 	if cfg.Port <= 0 {
 		return cfg, fmt.Errorf("port must be a positive number")
 	}
@@ -104,7 +110,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 
 	i.Use(iris.Compression)
 	i.Use(sess.Handler())
-	i.Use(setSessionViewData)
+	i.Use(setDefaultViewData(cfg.Title))
 	w := wrapper{cfg.App}
 
 	authenticated := i.Party("/")
@@ -125,10 +131,13 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	return &HTML{i, cfg}, nil
 }
 
-func setSessionViewData(ctx iris.Context) {
-	sess := sessions.Get(ctx)
-	ctx.ViewData("session", sess)
-	ctx.Next()
+func setDefaultViewData(title string) func(iris.Context) {
+	return func(ctx iris.Context) {
+		sess := sessions.Get(ctx)
+		ctx.ViewData("session", sess)
+		ctx.ViewData("title", title)
+		ctx.Next()
+	}
 }
 
 func randomBase64String(length int) string {

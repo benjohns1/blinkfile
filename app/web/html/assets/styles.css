@@ -1,11 +1,19 @@
+:root {
+    --color-bg-gradient: linear-gradient(114deg, rgba(255,255,255,1) 0%, rgba(253,254,254,1) 50%, rgba(210,229,230,1) 78%, rgba(184,196,223,1) 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[color-mode="user"] {
+        --color-bg-gradient: linear-gradient(114deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(48,33,60,1) 100%);
+    }
+}
+
 body {
     margin: 0;
     display: flex;
     min-height: 100vh;
     flex-direction: column;
-    background: rgb(255,255,255);
-    background: linear-gradient(114deg, rgba(255,255,255,1) 0%, rgba(253,254,254,1) 50%, rgba(210,229,230,1) 78%, rgba(184,196,223,1) 100%);
-    font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    background: var(--color-bg-gradient);
 }
 main {
     display: block;
@@ -21,29 +29,21 @@ main {
     bottom: 0;
     width: 100%;
 }
-.hidden {
-    display: none;
-    visibility: hidden;
+nav {
+    margin-bottom: 1em;
+}
+nav ul li {
+    margin: 0 1rem 0 0;
+}
+main {
+    padding: 0;
 }
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 100;
-    color: #4b4b3b;
+    font-weight: 120;
 }
 h1 {
-    font-size: 3em
+    margin-bottom: 0;
 }
-h2 {
-    font-size: 2em
-}
-h3 {
-    font-size: 1.7em
-}
-h4 {
-    font-size: 1.5em
-}
-h5 {
-    font-size: 1.3em
-}
-h6 {
-    font-size: 1.1em
+input[type="password"] {
+    width: calc(100% - 1.6rem);
 }

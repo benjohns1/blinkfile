@@ -5,10 +5,10 @@
 {{- if .content.ErrorView}}
 <p>{{.content.ErrorView.Message}}<span hidden><span id="error-id">{{.content.ErrorView.ID}}</span><span id="error-status">{{.content.ErrorView.Status}}</span></span></p>
 {{- end}}
-<form action="/login" method="post" class="pure-form pure-form-stacked">
+<form action="/login" method="post">
     <label for="username" hidden>Username</label>
     <input id="username" type="text" name="username" placeholder="Username" value="{{.session.Get `username`}}"/>
     <label for="password" hidden>Password</label>
     <input id="password" type="password" name="password" placeholder="Password"/>
-    <input type="submit" value="Login" class="pure-button pure-button-primary"/>
+    <input type="submit" value="Login"/>
 </form>
