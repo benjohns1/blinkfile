@@ -5,17 +5,45 @@ body {
     flex-direction: column;
     background: rgb(255,255,255);
     background: linear-gradient(114deg, rgba(255,255,255,1) 0%, rgba(253,254,254,1) 50%, rgba(210,229,230,1) 78%, rgba(184,196,223,1) 100%);
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }
 main {
     display: block;
     flex: 1 0 auto;
 }
 .container {
-    max-width: 500px;
+    min-width: 200px;
+    max-width: 600px;
     margin: auto;
 }
 .footer {
     position: fixed;
     bottom: 0;
     width: 100%;
+}
+.hidden {
+    display: none;
+    visibility: hidden;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 100;
+    color: #4b4b3b;
+}
+h1 {
+    font-size: 3em
+}
+h2 {
+    font-size: 2em
+}
+h3 {
+    font-size: 1.7em
+}
+h4 {
+    font-size: 1.5em
+}
+h5 {
+    font-size: 1.3em
+}
+h6 {
+    font-size: 1.1em
 }

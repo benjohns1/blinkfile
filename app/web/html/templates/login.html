@@ -3,16 +3,12 @@
 <p>{{.content.SuccessMessage}}</p>
 {{- end}}
 {{- if .content.ErrorView}}
-<p>{{.content.ErrorView.Message}}<span style="visibility:hidden"><span id="error-id">{{.content.ErrorView.ID}}</span><span id="error-status">{{.content.ErrorView.Status}}</span></span></p>
+<p>{{.content.ErrorView.Message}}<span hidden><span id="error-id">{{.content.ErrorView.ID}}</span><span id="error-status">{{.content.ErrorView.Status}}</span></span></p>
 {{- end}}
-<form action="/login" method="post">
-    <label>
-        Username:
-        <input id="username" type="text" name="username" value="{{.session.Get `username`}}"/>
-    </label>
-    <label>
-        Password:
-        <input id="password" type="password" name="password"/>
-    </label>
-    <input type="submit" value="Login"/>
+<form action="/login" method="post" class="pure-form pure-form-stacked">
+    <label for="username" hidden>Username</label>
+    <input id="username" type="text" name="username" placeholder="Username" value="{{.session.Get `username`}}"/>
+    <label for="password" hidden>Password</label>
+    <input id="password" type="password" name="password" placeholder="Password"/>
+    <input type="submit" value="Login" class="pure-button pure-button-primary"/>
 </form>

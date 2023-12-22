@@ -1,4 +1,6 @@
-<ol>
-    <li><a href="/">Home</a></li>
-    {{- if (.session.Get `authenticated`) }}<li><a href="/logout">Logout</a></li>{{end}}
-</ol>
+<div class="pure-menu pure-menu-horizontal">
+    <ul class="pure-menu-list">
+        <li class="pure-menu-item"><a href="/" class="pure-menu-link">Home</a></li>
+        {{- if (.session.Get `authenticated`) }}<li class="pure-menu-item"><a href="/logout" class="pure-menu-link">Logout</a></li>{{end}}
+    </ul>
+</div>
