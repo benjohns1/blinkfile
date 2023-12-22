@@ -1,0 +1,4 @@
+<ol>
+    <li><a href="/">Home</a></li>
+    {{- if (.session.Get "authenticated") }}<li><a href="/logout">Logout</a></li>{{end}}
+</ol>

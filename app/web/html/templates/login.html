@@ -1,0 +1,18 @@
+<h3>Login</h3>
+{{- if .content.SuccessMessage}}
+<p>{{.content.SuccessMessage}}</p>
+{{- end}}
+{{- if .content.ErrorView}}
+<p>{{.content.ErrorView.Message}}<span style="visibility:hidden"><span id="error-id">{{.content.ErrorView.ID}}</span><span id="error-status">{{.content.ErrorView.Status}}</span></span></p>
+{{- end}}
+<form action="/login" method="post">
+    <label>
+        Username:
+        <input type="text" name="username"/>
+    </label>
+    <label>
+        Password:
+        <input type="password" name="password"/>
+    </label>
+    <input type="submit" value="Login"/>
+</form>

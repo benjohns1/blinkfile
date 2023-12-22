@@ -1,0 +1,21 @@
+body {
+    margin: 0;
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    background: rgb(255,255,255);
+    background: linear-gradient(114deg, rgba(255,255,255,1) 0%, rgba(253,254,254,1) 50%, rgba(210,229,230,1) 78%, rgba(184,196,223,1) 100%);
+}
+main {
+    display: block;
+    flex: 1 0 auto;
+}
+.container {
+    max-width: 500px;
+    margin: auto;
+}
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}

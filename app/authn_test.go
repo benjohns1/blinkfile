@@ -6,28 +6,24 @@ import (
 	"git.jfam.app/one-way-file-send/app"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestApp_Login(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
-		creds app.Credentials
+		username string
+		password string
 	}
 	tests := []struct {
-		name            string
-		cfg             app.Config
-		args            args
-		want            app.Session
-		wantErr         error
-		wantSessionSave []app.Session
+		name    string
+		cfg     app.Config
+		args    args
+		wantErr error
 	}{
 		{
-			name: "should fail authentication if admin username is empty",
+			name: "should fail authentication if username is empty",
 			args: args{
-				creds: app.Credentials{
-					Username: "",
-				},
+				username: "",
 			},
 			wantErr: app.Error{
 				Type: app.ErrAuthnFailed,
@@ -35,135 +31,75 @@ func TestApp_Login(t *testing.T) {
 			},
 		},
 		{
-			name: "should fail authentication if admin username does not match",
+			name: "should fail authentication if password is empty",
 			args: args{
-				creds: app.Credentials{
-					Username: "incorrect-admin-username",
-				},
+				username: "admin",
+				password: "",
 			},
 			wantErr: app.Error{
 				Type: app.ErrAuthnFailed,
-				Err:  fmt.Errorf("invalid credentials"),
+				Err:  fmt.Errorf("invalid credentials: password cannot be empty"),
 			},
 		},
 		{
-			name: "should fail with an internal error if token generation fails",
-			cfg: app.Config{
-				AdminCredentials: app.Credentials{
-					Username: "admin-username",
-				},
-				GenerateToken: func() (app.Token, error) {
-					return "", fmt.Errorf("token generation error")
-				},
-			},
+			name: "should fail authentication if username cannot be found",
 			args: args{
-				creds: app.Credentials{
-					Username: "admin-username",
-				},
+				username: "unknown-username",
+				password: "super-secret-password",
 			},
 			wantErr: app.Error{
-				Type: app.ErrInternal,
-				Err:  fmt.Errorf("token generation error"),
+				Type: app.ErrAuthnFailed,
+				Err:  fmt.Errorf(`invalid credentials: no username "unknown-username" found`),
 			},
 		},
 		{
-			name: "should fail with a repo error if storing the session state fails",
+			name: "should fail to authenticate the admin user due to mismatched password",
 			cfg: app.Config{
-				AdminCredentials: app.Credentials{
-					Username: "admin-username",
-				},
-				GenerateToken: func() (app.Token, error) {
-					return "token1", nil
-				},
-				SessionRepo: stubSessionRepo{
-					SaveFunc: func(context.Context, app.Session) error {
-						return fmt.Errorf("session save error")
-					},
-				},
+				AdminCredentials: func() app.Credentials {
+					creds, err := app.NewCredentials("admin-username", "super-secret-password")
+					if err != nil {
+						t.Fatal(err)
+					}
+					return creds
+				}(),
 			},
 			args: args{
-				creds: app.Credentials{
-					Username: "admin-username",
-				},
+				username: "admin-username",
+				password: "bad-password",
 			},
 			wantErr: app.Error{
-				Type: app.ErrRepo,
-				Err:  fmt.Errorf("session save error"),
+				Type: app.ErrAuthnFailed,
+				Err:  fmt.Errorf(`invalid credentials: passwords do not match`),
 			},
 		},
 		{
-			name: "should successfully save a new session",
+			name: "should successfully authenticate the admin user",
 			cfg: app.Config{
-				AdminCredentials: app.Credentials{
-					Username: "admin-username",
-				},
-				GenerateToken: func() (app.Token, error) {
-					return "token1", nil
-				},
-				Now:               func() time.Time { return time.Unix(1, 1) },
-				SessionExpiration: 2*time.Second + 2*time.Nanosecond,
+				AdminCredentials: func() app.Credentials {
+					creds, err := app.NewCredentials("admin-username", "super-secret-password")
+					if err != nil {
+						t.Fatal(err)
+					}
+					return creds
+				}(),
 			},
 			args: args{
-				creds: app.Credentials{
-					Username: "admin-username",
-				},
+				username: "admin-username",
+				password: "super-secret-password",
 			},
-			want: app.Session{
-				Username: "admin-username",
-				Token:    "token1",
-				Expires:  time.Unix(3, 3),
-			},
-			wantSessionSave: []app.Session{{
-				Username: "admin-username",
-				Token:    "token1",
-				Expires:  time.Unix(3, 3),
-			}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sessionRepo := tt.cfg.SessionRepo
-			if sessionRepo == nil {
-				sessionRepo = stubSessionRepo{}
-			}
-			spy := &spySessionRepo{repo: sessionRepo}
-			tt.cfg.SessionRepo = spy
 			application, err := app.New(tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
-			got, err := application.Login(ctx, tt.args.creds)
+			err = application.Login(ctx, tt.args.username, tt.args.password)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("Login() got = %v, want %v", got, tt.want)
-			}
-			if tt.wantSessionSave != nil && !reflect.DeepEqual(spy.SaveCalls, tt.wantSessionSave) {
-				t.Errorf("Login() got session save calls = %+v, want %+v", spy.SaveCalls, tt.wantSessionSave)
-			}
 		})
 	}
-}
-
-type spySessionRepo struct {
-	repo      app.SessionRepo
-	SaveCalls []app.Session
-}
-
-func (r *spySessionRepo) Save(ctx context.Context, session app.Session) error {
-	r.SaveCalls = append(r.SaveCalls, session)
-	return r.repo.Save(ctx, session)
-}
-
-type stubSessionRepo struct {
-	SaveFunc func(context.Context, app.Session) error
-}
-
-func (r stubSessionRepo) Save(ctx context.Context, session app.Session) error {
-	if r.SaveFunc == nil {
-		return nil
-	}
-	return r.SaveFunc(ctx, session)
 }
