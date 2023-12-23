@@ -25,12 +25,15 @@ type (
 	}
 )
 
-func New(cfg Config) (*App, error) {
+func New(ctx context.Context, cfg Config) (*App, error) {
 	if cfg.Now == nil {
 		cfg.Now = func() time.Time { return time.Now().UTC() }
 	}
 	if cfg.GenerateToken == nil {
 		cfg.GenerateToken = generateDefaultToken
+	}
+	if cfg.AdminCredentials.username != "" {
+		Log.Printf(ctx, "Registered admin credentials for %q", cfg.AdminCredentials.username)
 	}
 
 	return &App{cfg}, nil

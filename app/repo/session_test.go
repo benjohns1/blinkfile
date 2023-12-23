@@ -160,8 +160,8 @@ func TestSession_Get(t *testing.T) {
 				if err := r.Save(ctx, app.Session{
 					Token:    "token1",
 					Username: "user1",
-					LoggedIn: time.Unix(1, 0),
-					Expires:  time.Unix(2, 0),
+					LoggedIn: time.Unix(1, 0).UTC(),
+					Expires:  time.Unix(2, 0).UTC(),
 					SessionRequestData: app.SessionRequestData{
 						UserAgent: "ua-agent",
 						IP:        "ip-addr",
@@ -176,8 +176,8 @@ func TestSession_Get(t *testing.T) {
 			want: app.Session{
 				Token:    "token1",
 				Username: "user1",
-				LoggedIn: time.Unix(1, 0),
-				Expires:  time.Unix(2, 0),
+				LoggedIn: time.Unix(1, 0).UTC(),
+				Expires:  time.Unix(2, 0).UTC(),
 				SessionRequestData: app.SessionRequestData{
 					UserAgent: "ua-agent",
 					IP:        "ip-addr",
@@ -202,7 +202,7 @@ func TestSession_Get(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Get() got = %v, want %v", got, tt.want)
+				t.Errorf("Get() got = \n\t%#v, want \n\t%#v", got, tt.want)
 			}
 			if gotOK != tt.wantOK {
 				t.Errorf("Get() gotOK = %v, wantOK %v", gotOK, tt.wantOK)

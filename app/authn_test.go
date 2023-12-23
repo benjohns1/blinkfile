@@ -166,7 +166,7 @@ func TestApp_Login(t *testing.T) {
 			}
 			spy := &spySessionRepo{repo: sessionRepo}
 			tt.cfg.SessionRepo = spy
-			application, err := app.New(tt.cfg)
+			application, err := app.New(ctx, tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -230,7 +230,7 @@ func TestApp_Logout(t *testing.T) {
 			}
 			spy := &spySessionRepo{repo: sessionRepo}
 			tt.cfg.SessionRepo = spy
-			application, err := app.New(tt.cfg)
+			application, err := app.New(ctx, tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -343,7 +343,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			}
 			spy := &spySessionRepo{repo: sessionRepo}
 			tt.cfg.SessionRepo = spy
-			application, err := app.New(tt.cfg)
+			application, err := app.New(ctx, tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}

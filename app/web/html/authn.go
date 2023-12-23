@@ -1,6 +1,7 @@
 package html
 
 import (
+	"fmt"
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
@@ -59,10 +60,11 @@ func logout(ctx iris.Context, a App) error {
 		return err
 	}
 	session.setLogout()
-	err = a.Logout(ctx, app.Token(authnToken))
-	if err != nil {
-		app.Log.Errorf(ctx, "logging out: %v", err)
-		return err
+	if authnToken != "" {
+		err = a.Logout(ctx, app.Token(authnToken))
+		if err != nil {
+			return fmt.Errorf("logging out: %w", err)
+		}
 	}
 	ctx.ViewData("content", LoginView{
 		SuccessMessage: "Successfully logged out",

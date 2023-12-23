@@ -20,18 +20,24 @@ func main() {
 	log.Println("Exited")
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context) (err error) {
 	cfg := parseConfig()
 
-	adminCredentials, err := app.NewCredentials(cfg.AdminUsername, cfg.AdminPassword)
-	if err != nil {
-		return err
+	var adminCredentials app.Credentials
+	if cfg.AdminUsername != "" {
+		adminCredentials, err = app.NewCredentials(cfg.AdminUsername, cfg.AdminPassword)
+		if err != nil {
+			return err
+		}
 	}
 
 	sessionRepo, err := repo.NewSession(repo.SessionConfig{
 		Dir: fmt.Sprintf("%s/sessions", cfg.DataDir),
 	})
-	application, appErr := app.New(app.Config{
+	if err != nil {
+		return err
+	}
+	application, appErr := app.New(ctx, app.Config{
 		AdminCredentials:  adminCredentials,
 		SessionRepo:       sessionRepo,
 		SessionExpiration: 7 * 24 * time.Hour,
@@ -63,7 +69,7 @@ type config struct {
 func parseConfig() config {
 	return config{
 		Port:          envDefaultInt("PORT", 8000),
-		AdminUsername: envDefaultString("ADMIN_USERNAME", "admin"),
+		AdminUsername: os.Getenv("ADMIN_USERNAME"),
 		AdminPassword: os.Getenv("ADMIN_PASSWORD"),
 		DataDir:       envDefaultString("DATA_DIR", "./data"),
 	}

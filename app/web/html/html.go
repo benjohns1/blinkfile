@@ -55,7 +55,7 @@ func (c Config) parse(ctx context.Context) (Config, error) {
 	cfg := c
 	if cfg.Title == "" {
 		const defaultTitle = "File Sender"
-		app.Log.Printf(ctx, "setting Title to default %q", defaultTitle)
+		app.Log.Printf(ctx, "Setting Title to default %q", defaultTitle)
 		cfg.Title = defaultTitle
 	}
 	if cfg.Port <= 0 {
@@ -63,12 +63,12 @@ func (c Config) parse(ctx context.Context) (Config, error) {
 	}
 	if cfg.ReadTimeout == 0 {
 		const defaultTimeout = time.Hour
-		app.Log.Printf(ctx, "setting ReadTimeout to default %v", defaultTimeout)
+		app.Log.Printf(ctx, "Setting ReadTimeout to default %v", defaultTimeout)
 		cfg.ReadTimeout = defaultTimeout
 	}
 	if cfg.WriteTimeout == 0 {
 		const defaultTimeout = time.Hour
-		app.Log.Printf(ctx, "setting WriteTimeout to default %v", defaultTimeout)
+		app.Log.Printf(ctx, "Setting WriteTimeout to default %v", defaultTimeout)
 		cfg.WriteTimeout = defaultTimeout
 	}
 	return cfg, nil
