@@ -144,12 +144,12 @@ func (a App) IsAuthenticated(ctx context.Context, token Token) (bool, error) {
 	return session.isValid(a.cfg.Now), nil
 }
 
-func (a App) Login(ctx context.Context, username, password string) (Session, error) {
+func (a App) Login(ctx context.Context, username, password string, requestData SessionRequestData) (Session, error) {
 	err := a.authenticate(username, password)
 	if err != nil {
 		return Session{}, err
 	}
-	session, err := a.newSession(ctx, username)
+	session, err := a.newSession(ctx, username, requestData)
 	if err != nil {
 		return Session{}, err
 	}
@@ -164,15 +164,17 @@ func (a App) Logout(ctx context.Context, token Token) error {
 	return nil
 }
 
-func (a App) newSession(ctx context.Context, username string) (Session, error) {
+func (a App) newSession(ctx context.Context, username string, data SessionRequestData) (Session, error) {
 	token, err := a.cfg.GenerateToken()
 	if err != nil {
 		return Session{}, Error{ErrInternal, err}
 	}
 	session := Session{
-		Token:    token,
-		Username: username,
-		Expires:  a.cfg.Now().Add(a.cfg.SessionExpiration),
+		Token:              token,
+		Username:           username,
+		LoggedIn:           a.cfg.Now(),
+		Expires:            a.cfg.Now().Add(a.cfg.SessionExpiration),
+		SessionRequestData: data,
 	}
 	err = a.cfg.SessionRepo.Save(ctx, session)
 	if err != nil {

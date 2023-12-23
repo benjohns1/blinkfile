@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 )
 
 var (
@@ -139,7 +140,7 @@ func TestSession_Get(t *testing.T) {
 			wantOK: false,
 		},
 		{
-			name: "should get a token",
+			name: "should get a session",
 			cfg:  repo.SessionConfig{Dir: newDir(t)},
 			arrange: func(t *testing.T, r *repo.Session) {
 				if err := r.Save(ctx, app.Session{Token: "token1"}); err != nil {
@@ -150,6 +151,38 @@ func TestSession_Get(t *testing.T) {
 				token: "token1",
 			},
 			want:   app.Session{Token: "token1"},
+			wantOK: true,
+		},
+		{
+			name: "should get a fully populated session",
+			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			arrange: func(t *testing.T, r *repo.Session) {
+				if err := r.Save(ctx, app.Session{
+					Token:    "token1",
+					Username: "user1",
+					LoggedIn: time.Unix(1, 0),
+					Expires:  time.Unix(2, 0),
+					SessionRequestData: app.SessionRequestData{
+						UserAgent: "ua-agent",
+						IP:        "ip-addr",
+					},
+				}); err != nil {
+					t.Fatal(err)
+				}
+			},
+			args: args{
+				token: "token1",
+			},
+			want: app.Session{
+				Token:    "token1",
+				Username: "user1",
+				LoggedIn: time.Unix(1, 0),
+				Expires:  time.Unix(2, 0),
+				SessionRequestData: app.SessionRequestData{
+					UserAgent: "ua-agent",
+					IP:        "ip-addr",
+				},
+			},
 			wantOK: true,
 		},
 	}

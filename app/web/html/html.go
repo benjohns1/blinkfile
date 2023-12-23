@@ -30,7 +30,7 @@ type (
 	}
 
 	App interface {
-		Login(ctx context.Context, username, password string) (app.Session, error)
+		Login(ctx context.Context, username, password string, requestData app.SessionRequestData) (app.Session, error)
 		Logout(ctx context.Context, token app.Token) error
 		IsAuthenticated(ctx context.Context, token app.Token) (bool, error)
 	}

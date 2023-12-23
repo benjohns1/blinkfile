@@ -12,7 +12,14 @@ type (
 	Session struct {
 		Token
 		Username string
+		LoggedIn time.Time
 		Expires  time.Time
+		SessionRequestData
+	}
+
+	SessionRequestData struct {
+		UserAgent string
+		IP        string
 	}
 )
 

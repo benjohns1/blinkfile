@@ -93,7 +93,12 @@ func login(ctx iris.Context, a App) (LoginView, error) {
 	username := ctx.FormValue("username")
 	session.setUsername(username)
 	password := ctx.FormValue("password")
-	authn, err := a.Login(ctx, username, password)
+	req := ctx.Request()
+	data := app.SessionRequestData{
+		UserAgent: req.UserAgent(),
+		IP:        req.RemoteAddr,
+	}
+	authn, err := a.Login(ctx, username, password, data)
 	if err != nil {
 		return LoginView{}, err
 	}

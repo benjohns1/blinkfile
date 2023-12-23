@@ -21,9 +21,11 @@ type (
 	}
 
 	sessionData struct {
-		app.Token `json:"-"`
-		Username  string    `json:"username"`
-		Expires   time.Time `json:"expires"`
+		app.Token              `json:"-"`
+		Username               string    `json:"username"`
+		LoggedIn               time.Time `json:"logged_in"`
+		Expires                time.Time `json:"expires"`
+		app.SessionRequestData `json:"data"`
 	}
 )
 

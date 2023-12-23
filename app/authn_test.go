@@ -21,8 +21,9 @@ func newCredentials(t *testing.T, user, pass string) app.Credentials {
 func TestApp_Login(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
-		username string
-		password string
+		username    string
+		password    string
+		requestData app.SessionRequestData
 	}
 	tests := []struct {
 		name            string
@@ -130,16 +131,30 @@ func TestApp_Login(t *testing.T) {
 			args: args{
 				username: "admin-username",
 				password: "super-secret-password",
+				requestData: app.SessionRequestData{
+					UserAgent: "ua-data",
+					IP:        "ip-addr",
+				},
 			},
 			want: app.Session{
 				Token:    "token1",
 				Username: "admin-username",
+				LoggedIn: time.Unix(1, 1),
 				Expires:  time.Unix(3, 3),
+				SessionRequestData: app.SessionRequestData{
+					UserAgent: "ua-data",
+					IP:        "ip-addr",
+				},
 			},
 			wantSessionSave: []app.Session{{
 				Token:    "token1",
 				Username: "admin-username",
+				LoggedIn: time.Unix(1, 1),
 				Expires:  time.Unix(3, 3),
+				SessionRequestData: app.SessionRequestData{
+					UserAgent: "ua-data",
+					IP:        "ip-addr",
+				},
 			}},
 		},
 	}
@@ -155,13 +170,13 @@ func TestApp_Login(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			got, err := application.Login(ctx, tt.args.username, tt.args.password)
+			got, err := application.Login(ctx, tt.args.username, tt.args.password, tt.args.requestData)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Login() got = %+v, want %+v", got, tt.want)
+				t.Errorf("Login() got = \n\t%+v, want \n\t%+v", got, tt.want)
 			}
 			if tt.wantSessionSave != nil && !reflect.DeepEqual(spy.SaveCalls, tt.wantSessionSave) {
 				t.Errorf("Login() got session save calls = %+v, want %+v", spy.SaveCalls, tt.wantSessionSave)
