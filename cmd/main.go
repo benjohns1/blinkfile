@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/app/repo"
 	"git.jfam.app/one-way-file-send/app/web/html"
@@ -26,9 +27,13 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	sessionRepo, err := repo.NewSession(repo.SessionConfig{
+		Dir: fmt.Sprintf("%s/sessions", cfg.DataDir),
+	})
 	application, appErr := app.New(app.Config{
 		AdminCredentials:  adminCredentials,
-		SessionRepo:       repo.NewSession(),
+		SessionRepo:       sessionRepo,
 		SessionExpiration: 7 * 24 * time.Hour,
 	})
 	if appErr != nil {
@@ -36,9 +41,8 @@ func run(ctx context.Context) error {
 	}
 
 	srv, err := html.New(ctx, html.Config{
-		App:                      application,
-		Port:                     cfg.Port,
-		BrowserSessionExpiration: 4 * 7 * 24 * time.Hour,
+		App:  application,
+		Port: cfg.Port,
 	})
 	if err != nil {
 		return err
@@ -53,6 +57,7 @@ type config struct {
 	Port          int
 	AdminUsername string
 	AdminPassword string
+	DataDir       string
 }
 
 func parseConfig() config {
@@ -60,6 +65,7 @@ func parseConfig() config {
 		Port:          envDefaultInt("PORT", 8000),
 		AdminUsername: envDefaultString("ADMIN_USERNAME", "admin"),
 		AdminPassword: os.Getenv("ADMIN_PASSWORD"),
+		DataDir:       envDefaultString("DATA_DIR", "./data"),
 	}
 }
 

@@ -1,2 +1,4 @@
-.idea
+.idea/
 coverage.*
+_test/
+data/

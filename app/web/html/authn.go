@@ -102,6 +102,7 @@ func login(ctx iris.Context, a App) (LoginView, error) {
 		Value:    string(authn.Token),
 		Expires:  authn.Expires,
 		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 	})
 	session.setAuthenticated()
 	ctx.Redirect("/")
