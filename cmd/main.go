@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/app/repo"
 	"git.jfam.app/one-way-file-send/app/web/html"
 	"log"
 	"os"
@@ -26,16 +27,18 @@ func run(ctx context.Context) error {
 		return err
 	}
 	application, appErr := app.New(app.Config{
-		AdminCredentials: adminCredentials,
+		AdminCredentials:  adminCredentials,
+		SessionRepo:       repo.NewSession(),
+		SessionExpiration: 7 * 24 * time.Hour,
 	})
 	if appErr != nil {
 		return appErr
 	}
 
 	srv, err := html.New(ctx, html.Config{
-		App:               application,
-		Port:              cfg.Port,
-		SessionExpiration: 7 * 24 * time.Hour,
+		App:                      application,
+		Port:                     cfg.Port,
+		BrowserSessionExpiration: 4 * 7 * 24 * time.Hour,
 	})
 	if err != nil {
 		return err

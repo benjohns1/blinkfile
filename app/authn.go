@@ -130,7 +130,58 @@ func generateRandomBytes(n uint32) ([]byte, error) {
 	return b, err
 }
 
-func (a App) Authenticate(_ context.Context, username, password string) error {
+func (a App) IsAuthenticated(ctx context.Context, token Token) (bool, error) {
+	if token == "" {
+		return false, Error{ErrBadRequest, fmt.Errorf("session token cannot be empty")}
+	}
+	session, found, err := a.cfg.SessionRepo.Get(ctx, token)
+	if err != nil {
+		return false, Error{ErrRepo, err}
+	}
+	if !found {
+		return false, nil
+	}
+	return session.isValid(a.cfg.Now), nil
+}
+
+func (a App) Login(ctx context.Context, username, password string) (Session, error) {
+	err := a.authenticate(username, password)
+	if err != nil {
+		return Session{}, err
+	}
+	session, err := a.newSession(ctx, username)
+	if err != nil {
+		return Session{}, err
+	}
+	return session, nil
+}
+
+func (a App) Logout(ctx context.Context, token Token) error {
+	err := a.cfg.SessionRepo.Delete(ctx, token)
+	if err != nil {
+		return Error{ErrRepo, err}
+	}
+	return nil
+}
+
+func (a App) newSession(ctx context.Context, username string) (Session, error) {
+	token, err := a.cfg.GenerateToken()
+	if err != nil {
+		return Session{}, Error{ErrInternal, err}
+	}
+	session := Session{
+		Token:    token,
+		Username: username,
+		Expires:  a.cfg.Now().Add(a.cfg.SessionExpiration),
+	}
+	err = a.cfg.SessionRepo.Save(ctx, session)
+	if err != nil {
+		return Session{}, Error{ErrRepo, err}
+	}
+	return session, nil
+}
+
+func (a App) authenticate(username string, password string) error {
 	if username == "" {
 		return Error{
 			Type: ErrAuthnFailed,

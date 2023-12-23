@@ -1,9 +1,10 @@
 package html
 
 import (
+	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/sessions"
+	"net/http"
 )
 
 type LoginView struct {
@@ -12,8 +13,10 @@ type LoginView struct {
 	SuccessMessage string
 }
 
-func showLogin(ctx iris.Context, _ App) error {
-	if isAuthenticated(ctx) {
+const authnTokenCookieName = "token"
+
+func showLogin(ctx iris.Context, a App) error {
+	if isAuthenticated(ctx, a) {
 		ctx.Redirect("/")
 		return nil
 	}
@@ -21,16 +24,26 @@ func showLogin(ctx iris.Context, _ App) error {
 	return ctx.View("login.html")
 }
 
-func isAuthenticated(ctx iris.Context) bool {
-	sess := sessions.Get(ctx)
-	if sess == nil {
+func isAuthenticated(ctx iris.Context, a App) bool {
+	authnToken := ctx.GetCookie(authnTokenCookieName)
+	if authnToken == "" {
 		return false
 	}
-	return sess.GetBooleanDefault("authenticated", false)
+	isAuthn, err := a.IsAuthenticated(ctx, app.Token(authnToken))
+	if err != nil {
+		app.Log.Errorf(ctx, "checking authentication state of token %q: %v", authnToken, err)
+		return false
+	}
+	if isAuthn {
+		if sess, sessErr := getSession(ctx); sessErr == nil {
+			sess.setAuthenticated()
+		}
+	}
+	return isAuthn
 }
 
-func loginRequired(ctx iris.Context, _ App) error {
-	if !isAuthenticated(ctx) {
+func loginRequired(ctx iris.Context, a App) error {
+	if !isAuthenticated(ctx, a) {
 		ctx.Redirect("/login")
 		return nil
 	}
@@ -38,12 +51,19 @@ func loginRequired(ctx iris.Context, _ App) error {
 	return nil
 }
 
-func logout(ctx iris.Context, _ App) error {
+func logout(ctx iris.Context, a App) error {
+	authnToken := ctx.GetCookie(authnTokenCookieName)
+	ctx.RemoveCookie(authnTokenCookieName)
 	session, err := getSession(ctx)
 	if err != nil {
 		return err
 	}
 	session.setLogout()
+	err = a.Logout(ctx, app.Token(authnToken))
+	if err != nil {
+		app.Log.Errorf(ctx, "logging out: %v", err)
+		return err
+	}
 	ctx.ViewData("content", LoginView{
 		SuccessMessage: "Successfully logged out",
 	})
@@ -73,9 +93,16 @@ func login(ctx iris.Context, a App) (LoginView, error) {
 	username := ctx.FormValue("username")
 	session.setUsername(username)
 	password := ctx.FormValue("password")
-	if err := a.Authenticate(ctx, username, password); err != nil {
+	authn, err := a.Login(ctx, username, password)
+	if err != nil {
 		return LoginView{}, err
 	}
+	ctx.SetCookie(&http.Cookie{
+		Name:     authnTokenCookieName,
+		Value:    string(authn.Token),
+		Expires:  authn.Expires,
+		HttpOnly: true,
+	})
 	session.setAuthenticated()
 	ctx.Redirect("/")
 

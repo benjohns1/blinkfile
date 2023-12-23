@@ -16,12 +16,12 @@ import (
 
 type (
 	Config struct {
-		Title             string
-		App               App
-		Port              int
-		SessionExpiration time.Duration
-		ReadTimeout       time.Duration
-		WriteTimeout      time.Duration
+		Title                    string
+		App                      App
+		Port                     int
+		BrowserSessionExpiration time.Duration
+		ReadTimeout              time.Duration
+		WriteTimeout             time.Duration
 	}
 
 	HTML struct {
@@ -30,7 +30,9 @@ type (
 	}
 
 	App interface {
-		Authenticate(ctx context.Context, username, password string) error
+		Login(ctx context.Context, username, password string) (app.Session, error)
+		Logout(ctx context.Context, token app.Token) error
+		IsAuthenticated(ctx context.Context, token app.Token) (bool, error)
 	}
 
 	wrapper struct {
@@ -102,9 +104,9 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	sess := sessions.New(sessions.Config{
 		AllowReclaim: true,
 		Cookie:       "session",
-		Expires:      cfg.SessionExpiration,
-		SessionIDGenerator: func(iris.Context) string {
-			return randomBase64String(128)
+		Expires:      cfg.BrowserSessionExpiration,
+		SessionIDGenerator: func(ctx iris.Context) string {
+			return randomBase64String(64)
 		},
 	})
 
@@ -146,7 +148,7 @@ func randomBase64String(length int) string {
 	if err != nil {
 		panic(err)
 	}
-	return base64.StdEncoding.EncodeToString(b)
+	return base64.URLEncoding.EncodeToString(b)
 }
 
 func (w wrapper) f(h func(ctx iris.Context, a App) error) func(ctx iris.Context) {
