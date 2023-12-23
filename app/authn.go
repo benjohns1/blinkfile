@@ -2,17 +2,18 @@ package app
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
+	domain "git.jfam.app/one-way-file-send"
 	"golang.org/x/crypto/argon2"
 	"strings"
 )
 
 type (
 	Credentials struct {
-		username            string
+		domain.UserID
+		username            domain.Username
 		encodedPasswordHash string
 	}
 )
@@ -36,7 +37,10 @@ var argon2DefaultParams = argon2Params{
 	keyLength:   64,
 }
 
-func NewCredentials(user, pass string) (Credentials, error) {
+func NewCredentials(userID domain.UserID, user domain.Username, pass string) (Credentials, error) {
+	if userID == "" {
+		return Credentials{}, fmt.Errorf("user ID cannot be empty")
+	}
 	if user == "" {
 		return Credentials{}, fmt.Errorf("username cannot be empty")
 	}
@@ -48,13 +52,14 @@ func NewCredentials(user, pass string) (Credentials, error) {
 		return Credentials{}, err
 	}
 	return Credentials{
+		UserID:              userID,
 		username:            user,
 		encodedPasswordHash: encodedHash,
 	}, nil
 }
 
-func (c Credentials) CredentialsMatch(username, password string) (bool, error) {
-	if !stringsAreEqual(c.username, username) {
+func (c Credentials) CredentialsMatch(username domain.Username, password string) (bool, error) {
+	if !stringsAreEqual(string(c.username), string(username)) {
 		return false, nil
 	}
 	salt, hash, p, err := decodeHash(c.encodedPasswordHash)
@@ -124,13 +129,7 @@ func decodeHash(encodedHash string) (salt, hash []byte, p argon2Params, err erro
 	return salt, hash, p, nil
 }
 
-func generateRandomBytes(n uint32) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	return b, err
-}
-
-func (a App) IsAuthenticated(ctx context.Context, token Token) (bool, error) {
+func (a *App) IsAuthenticated(ctx context.Context, token Token) (bool, error) {
 	if token == "" {
 		return false, Error{ErrBadRequest, fmt.Errorf("session token cannot be empty")}
 	}
@@ -144,19 +143,19 @@ func (a App) IsAuthenticated(ctx context.Context, token Token) (bool, error) {
 	return session.isValid(a.cfg.Now), nil
 }
 
-func (a App) Login(ctx context.Context, username, password string, requestData SessionRequestData) (Session, error) {
-	err := a.authenticate(username, password)
+func (a *App) Login(ctx context.Context, username domain.Username, password string, requestData SessionRequestData) (Session, error) {
+	userID, err := a.authenticate(username, password)
 	if err != nil {
 		return Session{}, err
 	}
-	session, err := a.newSession(ctx, username, requestData)
+	session, err := a.newSession(ctx, userID, requestData)
 	if err != nil {
 		return Session{}, err
 	}
 	return session, nil
 }
 
-func (a App) Logout(ctx context.Context, token Token) error {
+func (a *App) Logout(ctx context.Context, token Token) error {
 	err := a.cfg.SessionRepo.Delete(ctx, token)
 	if err != nil {
 		return Error{ErrRepo, err}
@@ -164,14 +163,14 @@ func (a App) Logout(ctx context.Context, token Token) error {
 	return nil
 }
 
-func (a App) newSession(ctx context.Context, username string, data SessionRequestData) (Session, error) {
+func (a *App) newSession(ctx context.Context, userID domain.UserID, data SessionRequestData) (Session, error) {
 	token, err := a.cfg.GenerateToken()
 	if err != nil {
 		return Session{}, Error{ErrInternal, err}
 	}
 	session := Session{
 		Token:              token,
-		Username:           username,
+		UserID:             userID,
 		LoggedIn:           a.cfg.Now(),
 		Expires:            a.cfg.Now().Add(a.cfg.SessionExpiration),
 		SessionRequestData: data,
@@ -183,54 +182,54 @@ func (a App) newSession(ctx context.Context, username string, data SessionReques
 	return session, nil
 }
 
-func (a App) authenticate(username string, password string) error {
+func (a *App) authenticate(username domain.Username, password string) (domain.UserID, error) {
 	if username == "" {
-		return Error{
+		return "", Error{
 			Type: ErrAuthnFailed,
 			Err:  fmt.Errorf("invalid credentials: username cannot be empty"),
 		}
 	}
 	if password == "" {
-		return Error{
+		return "", Error{
 			Type: ErrAuthnFailed,
 			Err:  fmt.Errorf("invalid credentials: password cannot be empty"),
 		}
 	}
 	credentials, found, err := a.getCredentials(username)
 	if err != nil {
-		return Error{
+		return "", Error{
 			Type: ErrInternal,
 			Err:  fmt.Errorf("error retrieving credentials for %q: %w", username, err),
 		}
 	}
 	if !found {
-		return Error{
+		return "", Error{
 			Type: ErrAuthnFailed,
 			Err:  fmt.Errorf("invalid credentials: no username %q found", username),
 		}
 	}
 	match, err := credentials.CredentialsMatch(username, password)
 	if err != nil {
-		return Error{
+		return "", Error{
 			Type: ErrInternal,
 			Err:  fmt.Errorf("error matching credentials: %w", err),
 		}
 	}
 	if !match {
-		return Error{
+		return "", Error{
 			Type: ErrAuthnFailed,
 			Err:  fmt.Errorf("invalid credentials: passwords do not match"),
 		}
 	}
-	return nil
+	return credentials.UserID, nil
 }
 
-func (a App) getCredentials(username string) (Credentials, bool, error) {
-	// TODO: multi-user
-	if stringsAreEqual(username, a.cfg.AdminCredentials.username) {
-		return a.cfg.AdminCredentials, true, nil
+func (a *App) getCredentials(username domain.Username) (Credentials, bool, error) {
+	creds, found := a.credentials[username]
+	if !found {
+		return Credentials{}, false, nil
 	}
-	return Credentials{}, false, nil
+	return creds, true, nil
 }
 
 func stringsAreEqual(a, b string) bool {

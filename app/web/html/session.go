@@ -2,6 +2,7 @@ package html
 
 import (
 	"fmt"
+	domain "git.jfam.app/one-way-file-send"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/sessions"
 )
@@ -25,7 +26,7 @@ func (s *Session) setAuthenticated() {
 	s.Set("authenticated", true)
 }
 
-func (s *Session) setUsername(username string) {
+func (s *Session) setUsername(username domain.Username) {
 	s.Set("username", username)
 }
 

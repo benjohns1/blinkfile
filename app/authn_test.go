@@ -3,25 +3,17 @@ package app_test
 import (
 	"context"
 	"fmt"
+	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
 	"reflect"
 	"testing"
 	"time"
 )
 
-func newCredentials(t *testing.T, user, pass string) app.Credentials {
-	t.Helper()
-	creds, err := app.NewCredentials(user, pass)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return creds
-}
-
 func TestApp_Login(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
-		username    string
+		username    domain.Username
 		password    string
 		requestData app.SessionRequestData
 	}
@@ -68,7 +60,8 @@ func TestApp_Login(t *testing.T) {
 		{
 			name: "should fail to authenticate the admin user due to mismatched password",
 			cfg: app.Config{
-				AdminCredentials: newCredentials(t, "admin-username", "super-secret-password"),
+				AdminUsername: "admin-username",
+				AdminPassword: "super-secret-password",
 			},
 			args: args{
 				username: "admin-username",
@@ -82,7 +75,8 @@ func TestApp_Login(t *testing.T) {
 		{
 			name: "should fail with an internal error if token generation fails",
 			cfg: app.Config{
-				AdminCredentials: newCredentials(t, "admin-username", "super-secret-password"),
+				AdminUsername: "admin-username",
+				AdminPassword: "super-secret-password",
 				GenerateToken: func() (app.Token, error) {
 					return "", fmt.Errorf("token generation error")
 				},
@@ -99,7 +93,8 @@ func TestApp_Login(t *testing.T) {
 		{
 			name: "should fail with a repo error if storing the session state fails",
 			cfg: app.Config{
-				AdminCredentials: newCredentials(t, "admin-username", "super-secret-password"),
+				AdminUsername: "admin-username",
+				AdminPassword: "super-secret-password",
 				GenerateToken: func() (app.Token, error) {
 					return "token1", nil
 				},
@@ -121,7 +116,8 @@ func TestApp_Login(t *testing.T) {
 		{
 			name: "should successfully login the admin user and return a valid session",
 			cfg: app.Config{
-				AdminCredentials: newCredentials(t, "admin-username", "super-secret-password"),
+				AdminUsername: "admin-username",
+				AdminPassword: "super-secret-password",
 				GenerateToken: func() (app.Token, error) {
 					return "token1", nil
 				},
@@ -138,7 +134,7 @@ func TestApp_Login(t *testing.T) {
 			},
 			want: app.Session{
 				Token:    "token1",
-				Username: "admin-username",
+				UserID:   app.AdminUserID,
 				LoggedIn: time.Unix(1, 1),
 				Expires:  time.Unix(3, 3),
 				SessionRequestData: app.SessionRequestData{
@@ -148,7 +144,7 @@ func TestApp_Login(t *testing.T) {
 			},
 			wantSessionSave: []app.Session{{
 				Token:    "token1",
-				Username: "admin-username",
+				UserID:   app.AdminUserID,
 				LoggedIn: time.Unix(1, 1),
 				Expires:  time.Unix(3, 3),
 				SessionRequestData: app.SessionRequestData{

@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
+	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
@@ -30,9 +31,9 @@ type (
 	}
 
 	App interface {
-		Login(ctx context.Context, username, password string, requestData app.SessionRequestData) (app.Session, error)
-		Logout(ctx context.Context, token app.Token) error
-		IsAuthenticated(ctx context.Context, token app.Token) (bool, error)
+		Login(ctx context.Context, username domain.Username, password string, requestData app.SessionRequestData) (app.Session, error)
+		Logout(context.Context, app.Token) error
+		IsAuthenticated(context.Context, app.Token) (bool, error)
 	}
 
 	wrapper struct {

@@ -2,14 +2,18 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
+	domain "git.jfam.app/one-way-file-send"
 	"time"
 )
 
 type (
 	Config struct {
-		AdminCredentials  Credentials
+		AdminUsername     string
+		AdminPassword     string
 		SessionExpiration time.Duration
 		SessionRepo
+		FileRepo
 		GenerateToken func() (Token, error)
 		Now           func() time.Time
 	}
@@ -20,8 +24,13 @@ type (
 		Delete(context.Context, Token) error
 	}
 
+	FileRepo interface {
+		Save(context.Context, domain.File) error
+	}
+
 	App struct {
-		cfg Config
+		cfg         Config
+		credentials map[domain.Username]Credentials
 	}
 )
 
@@ -32,9 +41,19 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	if cfg.GenerateToken == nil {
 		cfg.GenerateToken = generateDefaultToken
 	}
-	if cfg.AdminCredentials.username != "" {
-		Log.Printf(ctx, "Registered admin credentials for %q", cfg.AdminCredentials.username)
+
+	a := &App{cfg, make(map[domain.Username]Credentials, 1)}
+
+	err := a.registerAdminUser(ctx, domain.Username(cfg.AdminUsername), cfg.AdminPassword)
+	if err != nil {
+		return nil, err
 	}
 
-	return &App{cfg}, nil
+	return a, nil
+}
+
+func generateRandomBytes(n uint32) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	return b, err
 }

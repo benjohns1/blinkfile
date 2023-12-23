@@ -23,14 +23,6 @@ func main() {
 func run(ctx context.Context) (err error) {
 	cfg := parseConfig()
 
-	var adminCredentials app.Credentials
-	if cfg.AdminUsername != "" {
-		adminCredentials, err = app.NewCredentials(cfg.AdminUsername, cfg.AdminPassword)
-		if err != nil {
-			return err
-		}
-	}
-
 	sessionRepo, err := repo.NewSession(repo.SessionConfig{
 		Dir: fmt.Sprintf("%s/sessions", cfg.DataDir),
 	})
@@ -38,7 +30,8 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 	application, appErr := app.New(ctx, app.Config{
-		AdminCredentials:  adminCredentials,
+		AdminUsername:     cfg.AdminUsername,
+		AdminPassword:     cfg.AdminPassword,
 		SessionRepo:       sessionRepo,
 		SessionExpiration: 7 * 24 * time.Hour,
 	})

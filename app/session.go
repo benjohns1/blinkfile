@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/rand"
 	"encoding/base64"
+	domain "git.jfam.app/one-way-file-send"
 	"time"
 )
 
@@ -11,7 +12,7 @@ type (
 
 	Session struct {
 		Token
-		Username string
+		domain.UserID
 		LoggedIn time.Time
 		Expires  time.Time
 		SessionRequestData

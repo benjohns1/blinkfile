@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
 	"os"
 	"path/filepath"
@@ -21,29 +22,18 @@ type (
 	}
 
 	sessionData struct {
-		app.Token              `json:"-"`
-		Username               string    `json:"username"`
-		LoggedIn               time.Time `json:"logged_in"`
-		Expires                time.Time `json:"expires"`
-		app.SessionRequestData `json:"data"`
+		app.Token `json:"-"`
+		domain.UserID
+		LoggedIn time.Time
+		Expires  time.Time
+		app.SessionRequestData
 	}
 )
 
 func NewSession(cfg SessionConfig) (*Session, error) {
 	dir := filepath.Clean(cfg.Dir)
-	err := os.MkdirAll(dir, os.ModeDir)
-	if err != nil {
-		return nil, fmt.Errorf("making directory %q: %w", dir, err)
-	}
-	info, err := os.Lstat(dir)
-	if err != nil {
-		return nil, fmt.Errorf("getting directory %q info: %w", dir, err)
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("%q is not a directory", dir)
-	}
-
-	return &Session{dir}, nil
+	err := mkdirValidate(dir)
+	return &Session{dir}, err
 }
 
 func (r *Session) Save(_ context.Context, session app.Session) error {

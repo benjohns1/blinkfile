@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/app/repo"
-	"os"
 	"path/filepath"
 	"reflect"
 	"sync"
@@ -14,25 +13,17 @@ import (
 )
 
 var (
-	dirNum int
-	mu     sync.Mutex
+	sessionDirNum int
+	sessionNumMu  sync.Mutex
 )
 
-func newDir(t *testing.T) string {
+func newSessionDir(t *testing.T) string {
 	t.Helper()
 	const testDir = "./_test/repo_session"
-	mu.Lock()
-	defer mu.Unlock()
-	dirNum++
-	return filepath.Clean(fmt.Sprintf("%s/%d", testDir, dirNum))
-}
-
-func cleanDir(t *testing.T, dir string) {
-	t.Helper()
-	err := os.RemoveAll(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	sessionNumMu.Lock()
+	defer sessionNumMu.Unlock()
+	sessionDirNum++
+	return filepath.Clean(fmt.Sprintf("%s/%d", testDir, sessionDirNum))
 }
 
 func TestNewSession(t *testing.T) {
@@ -47,7 +38,7 @@ func TestNewSession(t *testing.T) {
 		{
 			name: "should create a new session repo",
 			args: args{
-				cfg: repo.SessionConfig{Dir: newDir(t)},
+				cfg: repo.SessionConfig{Dir: newSessionDir(t)},
 			},
 		},
 	}
@@ -75,7 +66,7 @@ func TestSession_Save(t *testing.T) {
 	}{
 		{
 			name: "should fail with an empty token",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			args: args{
 				session: app.Session{
 					Token: "",
@@ -85,7 +76,7 @@ func TestSession_Save(t *testing.T) {
 		},
 		{
 			name: "should save a session",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			args: args{
 				session: app.Session{
 					Token: "token1",
@@ -125,7 +116,7 @@ func TestSession_Get(t *testing.T) {
 	}{
 		{
 			name: "should fail with an empty token",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			args: args{
 				token: "",
 			},
@@ -133,7 +124,7 @@ func TestSession_Get(t *testing.T) {
 		},
 		{
 			name: "should not get a non-existent token",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			args: args{
 				token: "token1",
 			},
@@ -141,7 +132,7 @@ func TestSession_Get(t *testing.T) {
 		},
 		{
 			name: "should get a session",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			arrange: func(t *testing.T, r *repo.Session) {
 				if err := r.Save(ctx, app.Session{Token: "token1"}); err != nil {
 					t.Fatal(err)
@@ -155,11 +146,11 @@ func TestSession_Get(t *testing.T) {
 		},
 		{
 			name: "should get a fully populated session",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			arrange: func(t *testing.T, r *repo.Session) {
 				if err := r.Save(ctx, app.Session{
 					Token:    "token1",
-					Username: "user1",
+					UserID:   "user1",
 					LoggedIn: time.Unix(1, 0).UTC(),
 					Expires:  time.Unix(2, 0).UTC(),
 					SessionRequestData: app.SessionRequestData{
@@ -175,7 +166,7 @@ func TestSession_Get(t *testing.T) {
 			},
 			want: app.Session{
 				Token:    "token1",
-				Username: "user1",
+				UserID:   "user1",
 				LoggedIn: time.Unix(1, 0).UTC(),
 				Expires:  time.Unix(2, 0).UTC(),
 				SessionRequestData: app.SessionRequestData{
@@ -226,7 +217,7 @@ func TestSession_Delete(t *testing.T) {
 	}{
 		{
 			name: "should fail with an empty token",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			args: args{
 				token: "",
 			},
@@ -234,7 +225,7 @@ func TestSession_Delete(t *testing.T) {
 		},
 		{
 			name: "should no-op a non-existent token",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			args: args{
 				token: "token1",
 			},
@@ -242,7 +233,7 @@ func TestSession_Delete(t *testing.T) {
 		},
 		{
 			name: "should delete a token",
-			cfg:  repo.SessionConfig{Dir: newDir(t)},
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
 			arrange: func(t *testing.T, r *repo.Session) {
 				if err := r.Save(ctx, app.Session{Token: "token1"}); err != nil {
 					t.Fatal(err)

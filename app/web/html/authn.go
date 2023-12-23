@@ -2,6 +2,7 @@ package html
 
 import (
 	"fmt"
+	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
@@ -92,7 +93,7 @@ func login(ctx iris.Context, a App) (LoginView, error) {
 	if err != nil {
 		return LoginView{}, err
 	}
-	username := ctx.FormValue("username")
+	username := domain.Username(ctx.FormValue("username"))
 	session.setUsername(username)
 	password := ctx.FormValue("password")
 	req := ctx.Request()
