@@ -8,16 +8,22 @@ import (
 
 type (
 	FileID string
-	File   struct {
+
+	FileHeader struct {
 		ID      FileID
 		Name    string
 		Owner   UserID
-		File    io.ReadCloser
 		Created time.Time
+		Size    int64
+	}
+
+	File struct {
+		FileHeader
+		Data io.ReadCloser
 	}
 )
 
-func UploadFile(id FileID, name string, owner UserID, reader io.ReadCloser, now func() time.Time) (File, error) {
+func UploadFile(id FileID, name string, owner UserID, reader io.ReadCloser, size int64, now func() time.Time) (File, error) {
 	if id == "" {
 		return File{}, fmt.Errorf("file ID cannot be empty")
 	}
@@ -34,10 +40,13 @@ func UploadFile(id FileID, name string, owner UserID, reader io.ReadCloser, now 
 		return File{}, fmt.Errorf("now() service cannot be empty")
 	}
 	return File{
-		ID:      id,
-		Name:    name,
-		Owner:   owner,
-		File:    reader,
-		Created: now(),
+		FileHeader: FileHeader{
+			ID:      id,
+			Name:    name,
+			Owner:   owner,
+			Created: now(),
+			Size:    size,
+		},
+		Data: reader,
 	}, nil
 }

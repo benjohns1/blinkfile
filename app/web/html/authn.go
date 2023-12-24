@@ -31,17 +31,18 @@ func isAuthenticated(ctx iris.Context, a App) bool {
 	if authnToken == "" {
 		return false
 	}
-	isAuthn, err := a.IsAuthenticated(ctx, app.Token(authnToken))
+	userID, isAuthn, err := a.IsAuthenticated(ctx, app.Token(authnToken))
 	if err != nil {
 		app.Log.Errorf(ctx, "checking authentication state of token %q: %v", authnToken, err)
 		return false
 	}
-	if isAuthn {
-		if sess, sessErr := getSession(ctx); sessErr == nil {
-			sess.setAuthenticated()
-		}
+	if !isAuthn {
+		return false
 	}
-	return isAuthn
+	if sess, sessErr := getSession(ctx); sessErr == nil {
+		sess.setAuthenticated(userID)
+	}
+	return true
 }
 
 func loginRequired(ctx iris.Context, a App) error {
@@ -73,8 +74,8 @@ func logout(ctx iris.Context, a App) error {
 	return ctx.View("login.html")
 }
 
-func doLogin(ctx iris.Context, a App) error {
-	view, err := login(ctx, a)
+func login(ctx iris.Context, a App) error {
+	view, err := doLogin(ctx, a)
 	if err != nil {
 		errID, errStatus, errMsg := web.ParseAppErr(err)
 		web.LogError(ctx, errID, err)
@@ -88,7 +89,7 @@ func doLogin(ctx iris.Context, a App) error {
 	return ctx.View("login.html")
 }
 
-func login(ctx iris.Context, a App) (LoginView, error) {
+func doLogin(ctx iris.Context, a App) (LoginView, error) {
 	session, err := getSession(ctx)
 	if err != nil {
 		return LoginView{}, err
@@ -112,7 +113,7 @@ func login(ctx iris.Context, a App) (LoginView, error) {
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})
-	session.setAuthenticated()
+	session.setAuthenticated(authn.UserID)
 	ctx.Redirect("/")
 
 	return LoginView{}, nil

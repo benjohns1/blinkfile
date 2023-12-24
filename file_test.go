@@ -16,6 +16,7 @@ func TestUploadFile(t *testing.T) {
 		name   string
 		owner  domain.UserID
 		reader io.ReadCloser
+		size   int64
 		now    func() time.Time
 	}
 	tests := []struct {
@@ -79,17 +80,19 @@ func TestUploadFile(t *testing.T) {
 				now:    func() time.Time { return time.Unix(1, 0).UTC() },
 			},
 			want: domain.File{
-				ID:      "file1",
-				Name:    "file1",
-				Owner:   "user1",
-				File:    io.NopCloser(strings.NewReader("file-data")),
-				Created: time.Unix(1, 0).UTC(),
+				FileHeader: domain.FileHeader{
+					ID:      "file1",
+					Name:    "file1",
+					Owner:   "user1",
+					Created: time.Unix(1, 0).UTC(),
+				},
+				Data: io.NopCloser(strings.NewReader("file-data")),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := domain.UploadFile(tt.args.id, tt.args.name, tt.args.owner, tt.args.reader, tt.args.now)
+			got, err := domain.UploadFile(tt.args.id, tt.args.name, tt.args.owner, tt.args.reader, tt.args.size, tt.args.now)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("UploadFile() error = %v, wantErr %v", err, tt.wantErr)
 				return

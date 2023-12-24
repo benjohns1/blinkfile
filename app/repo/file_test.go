@@ -47,7 +47,7 @@ func TestNewFileRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer cleanDir(t, tt.args.cfg.Dir)
-			_, err := repo.NewFileRepo(tt.args.cfg)
+			_, err := repo.NewFileRepo(context.Background(), tt.args.cfg)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("NewSession() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -71,11 +71,13 @@ func TestFileRepo_Save(t *testing.T) {
 			cfg:  repo.FileRepoConfig{Dir: newFileDir(t)},
 			args: args{
 				file: domain.File{
-					ID:      "file1",
-					Name:    "file1.txt",
-					Owner:   "user1",
-					File:    io.NopCloser(strings.NewReader("file-data")),
-					Created: time.Unix(1, 0),
+					FileHeader: domain.FileHeader{
+						ID:      "file1",
+						Name:    "file1.txt",
+						Owner:   "user1",
+						Created: time.Unix(1, 0),
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
 			},
 			wantErr: nil,
@@ -84,7 +86,7 @@ func TestFileRepo_Save(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer cleanDir(t, tt.cfg.Dir)
-			r, err := repo.NewFileRepo(tt.cfg)
+			r, err := repo.NewFileRepo(context.Background(), tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}

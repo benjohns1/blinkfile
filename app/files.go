@@ -6,18 +6,33 @@ import (
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"io"
+	"sort"
 )
 
-func (a *App) UploadFile(ctx context.Context, filename string, owner domain.Username, reader io.ReadCloser) error {
-	ownerID, err := a.getUserID(owner)
+func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.FileHeader, error) {
+	files, err := a.cfg.FileRepo.ListByUser(ctx, owner)
 	if err != nil {
-		return Error{ErrBadRequest, err}
+		return nil, err
 	}
+	sort.Slice(files, func(i, j int) bool {
+		x, y := files[i], files[j]
+		if x.Name != y.Name {
+			return x.Name < y.Name
+		}
+		if !x.Created.Equal(y.Created) {
+			return x.Created.Before(y.Created)
+		}
+		return x.ID < y.ID
+	})
+	return files, nil
+}
+
+func (a *App) UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64) error {
 	fileID, err := generateFileID()
 	if err != nil {
 		return Error{ErrInternal, fmt.Errorf("generating file ID: %w", err)}
 	}
-	file, err := domain.UploadFile(fileID, filename, ownerID, reader, a.cfg.Now)
+	file, err := domain.UploadFile(fileID, filename, owner, reader, size, a.cfg.Now)
 	if err != nil {
 		return Error{ErrBadRequest, err}
 	}

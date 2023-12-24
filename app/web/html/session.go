@@ -22,8 +22,16 @@ func getSession(ctx iris.Context) (Session, error) {
 	return Session{sess}, nil
 }
 
-func (s *Session) setAuthenticated() {
-	s.Set("authenticated", true)
+func loggedInUser(ctx iris.Context) domain.UserID {
+	session, err := getSession(ctx)
+	if err != nil {
+		return ""
+	}
+	return domain.UserID(session.GetString("authenticated"))
+}
+
+func (s *Session) setAuthenticated(userID domain.UserID) {
+	s.Set("authenticated", string(userID))
 }
 
 func (s *Session) setUsername(username domain.Username) {
@@ -32,5 +40,5 @@ func (s *Session) setUsername(username domain.Username) {
 
 func (s *Session) setLogout() {
 	s.Delete("username")
-	s.Set("authenticated", false)
+	s.Delete("authenticated")
 }

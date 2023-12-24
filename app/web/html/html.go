@@ -12,6 +12,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/rate"
 	"github.com/kataras/iris/v12/sessions"
+	"io"
 	"time"
 )
 
@@ -33,7 +34,9 @@ type (
 	App interface {
 		Login(ctx context.Context, username domain.Username, password string, requestData app.SessionRequestData) (app.Session, error)
 		Logout(context.Context, app.Token) error
-		IsAuthenticated(context.Context, app.Token) (bool, error)
+		IsAuthenticated(context.Context, app.Token) (domain.UserID, bool, error)
+		ListFiles(context.Context, domain.UserID) ([]domain.FileHeader, error)
+		UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64) error
 	}
 
 	wrapper struct {
@@ -119,7 +122,8 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	authenticated := i.Party("/")
 	{
 		authenticated.Use(w.f(loginRequired))
-		authenticated.Get("/", w.f(showDashboard))
+		authenticated.Get("/", w.f(showFiles))
+		authenticated.Post("/files", w.f(uploadFile))
 	}
 
 	unauthenticated := i.Party("/")
@@ -127,7 +131,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		limit := rate.Limit(1, 3, rate.PurgeEvery(time.Minute, 5*time.Minute))
 		unauthenticated.Use(limit)
 		unauthenticated.Get("/login", w.f(showLogin))
-		unauthenticated.Post("/login", w.f(doLogin))
+		unauthenticated.Post("/login", w.f(login))
 		unauthenticated.Get("/logout", w.f(logout))
 	}
 

@@ -129,18 +129,21 @@ func decodeHash(encodedHash string) (salt, hash []byte, p argon2Params, err erro
 	return salt, hash, p, nil
 }
 
-func (a *App) IsAuthenticated(ctx context.Context, token Token) (bool, error) {
+func (a *App) IsAuthenticated(ctx context.Context, token Token) (domain.UserID, bool, error) {
 	if token == "" {
-		return false, Error{ErrBadRequest, fmt.Errorf("session token cannot be empty")}
+		return "", false, Error{ErrBadRequest, fmt.Errorf("session token cannot be empty")}
 	}
 	session, found, err := a.cfg.SessionRepo.Get(ctx, token)
 	if err != nil {
-		return false, Error{ErrRepo, err}
+		return "", false, Error{ErrRepo, err}
 	}
 	if !found {
-		return false, nil
+		return "", false, nil
 	}
-	return session.isValid(a.cfg.Now), nil
+	if !session.isValid(a.cfg.Now) {
+		return "", false, nil
+	}
+	return session.UserID, true, nil
 }
 
 func (a *App) Login(ctx context.Context, username domain.Username, password string, requestData SessionRequestData) (Session, error) {

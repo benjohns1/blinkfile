@@ -1,0 +1,24 @@
+<h3>Files</h3>
+<form action="/files" method="post" enctype="multipart/form-data">
+    <label for="file" hidden>File</label>
+    <input id="file" type="file" name="file" placeholder="File"/>
+    <input type="submit" value="Upload"/>
+</form>
+<table>
+    <thead>
+        <tr>
+            <th>File</th>
+            <th>Size</th>
+            <th>Uploaded</th>
+        </tr>
+    </thead>
+    <tbody>
+    {{range $file := .content.Files}}
+        <tr>
+            <td>{{$file.Name}}</td>
+            <td>{{$file.Size}}</td>
+            <td>{{$file.Uploaded}}</td>
+        </tr>
+    {{end}}
+    </tbody>
+</table>

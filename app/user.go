@@ -20,7 +20,7 @@ func (a *App) registerAdminUser(ctx context.Context, username domain.Username, p
 	if err != nil {
 		return err
 	}
-	Log.Printf(ctx, "Registered admin credentials for %q", username)
+	Log.Printf(ctx, "Registered admin credentials for username %q", username)
 	return nil
 }
 

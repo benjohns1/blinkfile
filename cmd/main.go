@@ -29,11 +29,20 @@ func run(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
+	fileRepo, err := repo.NewFileRepo(ctx, repo.FileRepoConfig{
+		Dir: fmt.Sprintf("%s/files", cfg.DataDir),
+	})
+	if err != nil {
+		return err
+	}
+
 	application, appErr := app.New(ctx, app.Config{
 		AdminUsername:     cfg.AdminUsername,
 		AdminPassword:     cfg.AdminPassword,
-		SessionRepo:       sessionRepo,
 		SessionExpiration: 7 * 24 * time.Hour,
+		SessionRepo:       sessionRepo,
+		FileRepo:          fileRepo,
 	})
 	if appErr != nil {
 		return appErr

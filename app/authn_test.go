@@ -162,6 +162,11 @@ func TestApp_Login(t *testing.T) {
 			}
 			spy := &spySessionRepo{repo: sessionRepo}
 			tt.cfg.SessionRepo = spy
+
+			if tt.cfg.FileRepo == nil {
+				tt.cfg.FileRepo = stubFileRepo{}
+			}
+
 			application, err := app.New(ctx, tt.cfg)
 			if err != nil {
 				t.Fatal(err)
@@ -226,6 +231,11 @@ func TestApp_Logout(t *testing.T) {
 			}
 			spy := &spySessionRepo{repo: sessionRepo}
 			tt.cfg.SessionRepo = spy
+
+			if tt.cfg.FileRepo == nil {
+				tt.cfg.FileRepo = stubFileRepo{}
+			}
+
 			application, err := app.New(ctx, tt.cfg)
 			if err != nil {
 				t.Fatal(err)
@@ -252,6 +262,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 		cfg            app.Config
 		args           args
 		wantErr        error
+		wantUserID     domain.UserID
 		want           bool
 		wantSessionGet []app.Token
 	}{
@@ -314,11 +325,12 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "should return true if session is valid",
+			name: "should return userID if session is valid",
 			cfg: app.Config{
 				SessionRepo: stubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
 						return app.Session{
+							UserID:  "user1",
 							Expires: time.Unix(1, 1),
 						}, true, nil
 					},
@@ -328,7 +340,8 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			args: args{
 				token: "token1",
 			},
-			want: true,
+			wantUserID: "user1",
+			want:       true,
 		},
 	}
 	for _, tt := range tests {
@@ -339,18 +352,25 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			}
 			spy := &spySessionRepo{repo: sessionRepo}
 			tt.cfg.SessionRepo = spy
+
+			if tt.cfg.FileRepo == nil {
+				tt.cfg.FileRepo = stubFileRepo{}
+			}
+
 			application, err := app.New(ctx, tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
-			got, err := application.IsAuthenticated(ctx, tt.args.token)
+			gotUserID, got, err := application.IsAuthenticated(ctx, tt.args.token)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("IsAuthenticated() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			if !reflect.DeepEqual(gotUserID, tt.wantUserID) {
+				t.Errorf("IsAuthenticated() userID = %v, want %v", gotUserID, tt.wantUserID)
+			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("IsAuthenticated() = %v, want %v", got, tt.want)
-				return
 			}
 			if tt.wantSessionGet != nil && !reflect.DeepEqual(spy.GetCalls, tt.wantSessionGet) {
 				t.Errorf("IsAuthenticated() got session get calls = %+v, want %+v", spy.GetCalls, tt.wantSessionGet)
@@ -406,4 +426,8 @@ func (r stubSessionRepo) Get(ctx context.Context, token app.Token) (app.Session,
 		return app.Session{}, false, nil
 	}
 	return r.GetFunc(ctx, token)
+}
+
+type stubFileRepo struct {
+	app.FileRepo
 }

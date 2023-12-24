@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"time"
 )
@@ -26,6 +27,7 @@ type (
 
 	FileRepo interface {
 		Save(context.Context, domain.File) error
+		ListByUser(context.Context, domain.UserID) ([]domain.FileHeader, error)
 	}
 
 	App struct {
@@ -40,6 +42,12 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	}
 	if cfg.GenerateToken == nil {
 		cfg.GenerateToken = generateDefaultToken
+	}
+	if cfg.SessionRepo == nil {
+		return nil, fmt.Errorf("session repo is required")
+	}
+	if cfg.FileRepo == nil {
+		return nil, fmt.Errorf("file repo is required")
 	}
 
 	a := &App{cfg, make(map[domain.Username]Credentials, 1)}
