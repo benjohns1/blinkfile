@@ -11,8 +11,7 @@ import (
 
 type LoginView struct {
 	LayoutView
-	ErrorView
-	SuccessMessage string
+	MessageView
 }
 
 const authnTokenCookieName = "token"
@@ -69,7 +68,9 @@ func logout(ctx iris.Context, a App) error {
 		}
 	}
 	ctx.ViewData("content", LoginView{
-		SuccessMessage: "Successfully logged out",
+		MessageView: MessageView{
+			SuccessMessage: "Successfully logged out",
+		},
 	})
 	return ctx.View("login.html")
 }

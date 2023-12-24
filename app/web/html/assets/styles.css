@@ -65,3 +65,6 @@ input.warn {
     background-color: var(--color-warn);
     border: 2px solid var(--color-warn);
 }
+span.warn, p.warn {
+    color: var(--color-warn);
+}

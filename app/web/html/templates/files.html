@@ -4,6 +4,7 @@
     <input id="file" type="file" name="file" placeholder="File"/>
     <input type="submit" value="Upload"/>
 </form>
+{{ render "partials/message.html" .content.MessageView }}
 {{- if (len .content.Files)}}
 <form action="/files/delete" method="post">
     <table>
@@ -26,6 +27,7 @@
         {{end}}
         </tbody>
     </table>
+    <br/>
     <input class="warn right" type="submit" value="Delete Selected"/>
 </form>
 {{- else}}

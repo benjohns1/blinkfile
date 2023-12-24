@@ -49,6 +49,11 @@ type (
 		Title string
 	}
 
+	MessageView struct {
+		SuccessMessage string
+		ErrorView
+	}
+
 	ErrorView struct {
 		LayoutView
 		ID      web.ErrorID

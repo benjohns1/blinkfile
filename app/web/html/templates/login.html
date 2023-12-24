@@ -1,10 +1,5 @@
 <h3>Login</h3>
-{{- if .content.SuccessMessage}}
-<p>{{.content.SuccessMessage}}</p>
-{{- end}}
-{{- if .content.ErrorView}}
-<p>{{.content.ErrorView.Message}}<span hidden><span id="error-id">{{.content.ErrorView.ID}}</span><span id="error-status">{{.content.ErrorView.Status}}</span></span></p>
-{{- end}}
+{{ render "partials/message.html" .content.MessageView }}
 <form action="/login" method="post">
     <label for="username" hidden>Username</label>
     <input id="username" type="text" name="username" placeholder="Username" value="{{.session.Get `username`}}"/>

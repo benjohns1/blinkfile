@@ -3,6 +3,7 @@ package html
 import (
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
+	"git.jfam.app/one-way-file-send/app"
 	"github.com/kataras/iris/v12"
 	"io"
 	"strings"
@@ -13,6 +14,7 @@ type (
 	FilesView struct {
 		LayoutView
 		Files []FileView
+		MessageView
 	}
 	FileView struct {
 		ID       string
@@ -62,7 +64,7 @@ func uploadFile(ctx iris.Context, a App) error {
 	owner := loggedInUser(ctx)
 	file, header, err := ctx.FormFile("file")
 	if err != nil {
-		return err
+		return app.Error{Type: app.ErrBadRequest, Err: err}
 	}
 	err = a.UploadFile(ctx, header.Filename, owner, file, header.Size)
 	if err != nil {

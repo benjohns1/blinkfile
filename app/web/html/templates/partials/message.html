@@ -1,0 +1,6 @@
+{{- if .SuccessMessage}}
+<p>{{.SuccessMessage}}</p>
+{{- end}}
+{{- if .ErrorView}}
+<p class="warn">{{.ErrorView.Message}}<span hidden><span id="error-id">{{.ErrorView.ID}}</span><span id="error-status">{{.ErrorView.Status}}</span></span></p>
+{{- end}}
