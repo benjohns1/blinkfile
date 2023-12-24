@@ -15,7 +15,7 @@
     <tbody>
     {{range $file := .content.Files}}
         <tr>
-            <td>{{$file.Name}}</td>
+            <td><a href="/file/{{$file.ID}}/download" target="_blank">{{$file.Name}}</a></td>
             <td>{{$file.Size}}</td>
             <td>{{$file.Uploaded}}</td>
         </tr>

@@ -21,6 +21,7 @@ type (
 	FileRepo struct {
 		dir        string
 		ownerIndex map[domain.UserID]map[domain.FileID]fileHeader
+		idIndex    map[domain.FileID]fileHeader
 	}
 
 	fileHeader struct {
@@ -35,18 +36,22 @@ type (
 func NewFileRepo(ctx context.Context, cfg FileRepoConfig) (*FileRepo, error) {
 	dir := filepath.Clean(cfg.Dir)
 	err := mkdirValidate(dir)
+	if err != nil {
+		return nil, err
+	}
 	r := &FileRepo{
 		dir,
 		make(map[domain.UserID]map[domain.FileID]fileHeader),
+		make(map[domain.FileID]fileHeader),
 	}
-	err = r.indexByOwner(ctx, dir)
+	err = r.buildIndices(ctx, dir)
 	if err != nil {
 		return nil, err
 	}
 	return r, err
 }
 
-func (r *FileRepo) indexByOwner(ctx context.Context, dir string) error {
+func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return filepath.SkipAll
@@ -67,16 +72,17 @@ func (r *FileRepo) indexByOwner(ctx context.Context, dir string) error {
 			app.Log.Errorf(ctx, "Loading file header %q: %v", headerFilename, err)
 			return nil
 		}
-		r.addToOwnerIndex(header)
+		r.addToIndices(header)
 		return nil
 	})
 }
 
-func (r *FileRepo) addToOwnerIndex(header fileHeader) {
+func (r *FileRepo) addToIndices(header fileHeader) {
 	if _, ok := r.ownerIndex[header.Owner]; !ok {
 		r.ownerIndex[header.Owner] = make(map[domain.FileID]fileHeader, 1)
 	}
 	r.ownerIndex[header.Owner][header.ID] = header
+	r.idIndex[header.ID] = header
 }
 
 func loadFileHeader(_ context.Context, path string) (header fileHeader, err error) {
@@ -113,7 +119,7 @@ func (r *FileRepo) Save(_ context.Context, file domain.File) error {
 	if err != nil {
 		return fmt.Errorf("writing file %q: %w", filename, err)
 	}
-	r.addToOwnerIndex(header)
+	r.addToIndices(header)
 
 	return nil
 }
@@ -125,6 +131,28 @@ func (r *FileRepo) ListByUser(_ context.Context, userID domain.UserID) ([]domain
 		out = append(out, domain.FileHeader(header))
 	}
 	return out, nil
+}
+
+var ErrFileNotFound = fmt.Errorf("file not found")
+
+func (r *FileRepo) Get(_ context.Context, fileID domain.FileID, filter app.FileFilter) (domain.File, error) {
+	header, found := r.idIndex[fileID]
+	if !found {
+		return domain.File{}, ErrFileNotFound
+	}
+	if filter.UserID != nil && header.Owner != *filter.UserID {
+		return domain.File{}, ErrFileNotFound
+	}
+	fh := domain.FileHeader(header)
+	_, filename, _ := filenames(r.dir, fileID)
+	file, err := os.Open(filename)
+	if err != nil {
+		return domain.File{}, err
+	}
+	return domain.File{
+		FileHeader: fh,
+		Data:       file,
+	}, nil
 }
 
 func filenames(root string, fileID domain.FileID) (dir, file, header string) {

@@ -37,6 +37,7 @@ type (
 		IsAuthenticated(context.Context, app.Token) (domain.UserID, bool, error)
 		ListFiles(context.Context, domain.UserID) ([]domain.FileHeader, error)
 		UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64) error
+		DownloadFile(context.Context, domain.UserID, domain.FileID) (domain.File, error)
 	}
 
 	wrapper struct {
@@ -124,6 +125,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		authenticated.Use(w.f(loginRequired))
 		authenticated.Get("/", w.f(showFiles))
 		authenticated.Post("/files", w.f(uploadFile))
+		authenticated.Get("/file/{file_id:string}/download", w.f(downloadFile))
 	}
 
 	unauthenticated := i.Party("/")

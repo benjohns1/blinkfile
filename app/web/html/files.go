@@ -2,7 +2,9 @@ package html
 
 import (
 	"fmt"
+	domain "git.jfam.app/one-way-file-send"
 	"github.com/kataras/iris/v12"
+	"io"
 	"time"
 )
 
@@ -12,6 +14,7 @@ type (
 		Files []FileView
 	}
 	FileView struct {
+		ID       string
 		Name     string
 		Uploaded string
 		Size     string
@@ -27,6 +30,7 @@ func showFiles(ctx iris.Context, a App) error {
 	fileList := make([]FileView, 0, len(files))
 	for _, file := range files {
 		fileList = append(fileList, FileView{
+			ID:       string(file.ID),
 			Name:     file.Name,
 			Uploaded: file.Created.Format(time.RFC3339),
 			Size:     formatFileSize(file.Size),
@@ -65,4 +69,18 @@ func uploadFile(ctx iris.Context, a App) error {
 	}
 	ctx.Redirect("/")
 	return nil
+}
+
+func downloadFile(ctx iris.Context, a App) error {
+	fileID := domain.FileID(ctx.Params().Get("file_id"))
+	user := loggedInUser(ctx)
+	file, err := a.DownloadFile(ctx, user, fileID)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = file.Data.Close() }()
+	ctx.Header("Content-Type", "application/octet-stream")
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", file.Name))
+	_, err = io.Copy(ctx.ResponseWriter(), file.Data)
+	return err
 }

@@ -33,11 +33,3 @@ func (a *App) registerUserCredentials(creds Credentials) error {
 	a.credentials[creds.username] = creds
 	return nil
 }
-
-func (a *App) getUserID(username domain.Username) (domain.UserID, error) {
-	creds, found := a.credentials[username]
-	if !found {
-		return "", fmt.Errorf("user not found with username %q", username)
-	}
-	return creds.UserID, nil
-}

@@ -43,6 +43,14 @@ func (a *App) UploadFile(ctx context.Context, filename string, owner domain.User
 	return nil
 }
 
+func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID) (domain.File, error) {
+	file, err := a.cfg.FileRepo.Get(ctx, fileID, FileFilter{&userID})
+	if err != nil {
+		return domain.File{}, err
+	}
+	return file, nil
+}
+
 func generateFileID() (domain.FileID, error) {
 	b, err := generateRandomBytes(64)
 	if err != nil {
