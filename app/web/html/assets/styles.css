@@ -1,19 +1,9 @@
-:root {
-    --color-bg-gradient: linear-gradient(114deg, rgba(255,255,255,1) 0%, rgba(253,254,254,1) 50%, rgba(210,229,230,1) 78%, rgba(184,196,223,1) 100%);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root[color-mode="user"] {
-        --color-bg-gradient: linear-gradient(114deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(48,33,60,1) 100%);
-    }
-}
-
 body {
     margin: 0;
     display: flex;
     min-height: 100vh;
     flex-direction: column;
-    background: var(--color-bg-gradient);
+    overflow-x: scroll;
 }
 main {
     display: block;
@@ -46,4 +36,19 @@ h1 {
 }
 input[type="password"] {
     width: calc(100% - 1.6rem);
+}
+a {
+    font-weight: normal;
+}
+form {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+}
+a b,
+a em,
+a i,
+a strong,
+button,
+input[type="submit"] {
+    padding: 0.5rem 2rem;
 }

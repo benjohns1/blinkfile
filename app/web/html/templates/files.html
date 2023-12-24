@@ -4,12 +4,13 @@
     <input id="file" type="file" name="file" placeholder="File"/>
     <input type="submit" value="Upload"/>
 </form>
+{{- if (len .content.Files)}}
 <table>
     <thead>
         <tr>
             <th>File</th>
             <th>Size</th>
-            <th>Uploaded</th>
+            <th>Upload Time</th>
         </tr>
     </thead>
     <tbody>
@@ -22,3 +23,6 @@
     {{end}}
     </tbody>
 </table>
+{{- else}}
+<p>No files. Upload one!</p>
+{{- end}}
