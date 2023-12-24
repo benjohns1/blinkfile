@@ -85,6 +85,11 @@ func (r *FileRepo) addToIndices(header fileHeader) {
 	r.idIndex[header.ID] = header
 }
 
+func (r *FileRepo) removeFromIndices(header fileHeader) {
+	delete(r.ownerIndex[header.Owner], header.ID)
+	delete(r.idIndex, header.ID)
+}
+
 func loadFileHeader(_ context.Context, path string) (header fileHeader, err error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -153,6 +158,32 @@ func (r *FileRepo) Get(_ context.Context, fileID domain.FileID, filter app.FileF
 		FileHeader: fh,
 		Data:       file,
 	}, nil
+}
+
+func (r *FileRepo) Delete(_ context.Context, owner domain.UserID, deleteFiles []domain.FileID) error {
+	ownedFiles := r.ownerIndex[owner]
+
+	type deleteFile struct {
+		dir    string
+		header fileHeader
+	}
+	toRemove := make([]deleteFile, 0, len(deleteFiles))
+	for _, fileID := range deleteFiles {
+		header, exists := ownedFiles[fileID]
+		if !exists {
+			return fmt.Errorf("file %q not found to delete by user %q", fileID, owner)
+		}
+		dir, _, _ := filenames(r.dir, fileID)
+		toRemove = append(toRemove, deleteFile{dir, header})
+	}
+
+	for _, file := range toRemove {
+		if err := os.RemoveAll(file.dir); err != nil {
+			return err
+		}
+		r.removeFromIndices(file.header)
+	}
+	return nil
 }
 
 func filenames(root string, fileID domain.FileID) (dir, file, header string) {

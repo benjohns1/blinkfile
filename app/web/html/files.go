@@ -5,6 +5,7 @@ import (
 	domain "git.jfam.app/one-way-file-send"
 	"github.com/kataras/iris/v12"
 	"io"
+	"strings"
 	"time"
 )
 
@@ -49,7 +50,7 @@ func formatFileSize(size int64) string {
 		return fmt.Sprintf("%d B", size)
 	}
 	div, exp := unit, 0
-	for n := size / unit; n >= unit || exp >= len(labels); n /= unit {
+	for n := size / unit; n >= unit && exp < len(labels); n /= unit {
 		div *= unit
 		exp++
 	}
@@ -83,4 +84,29 @@ func downloadFile(ctx iris.Context, a App) error {
 	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", file.Name))
 	_, err = io.Copy(ctx.ResponseWriter(), file.Data)
 	return err
+}
+
+func deleteFiles(ctx iris.Context, a App) error {
+	owner := loggedInUser(ctx)
+	req := ctx.Request()
+	err := req.ParseForm()
+	if err != nil {
+		return err
+	}
+	deleteFileIDs := make([]domain.FileID, 0, len(req.Form))
+	for name, values := range req.Form {
+		if len(values) == 0 || values[0] != "on" {
+			continue
+		}
+		deleteFileIDs = append(deleteFileIDs, domain.FileID(strings.TrimPrefix(name, "select-")))
+	}
+	if len(deleteFileIDs) > 0 {
+		err = a.DeleteFiles(ctx, owner, deleteFileIDs)
+		if err != nil {
+			return err
+		}
+	}
+
+	ctx.Redirect("/")
+	return nil
 }

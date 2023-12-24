@@ -38,6 +38,7 @@ type (
 		ListFiles(context.Context, domain.UserID) ([]domain.FileHeader, error)
 		UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64) error
 		DownloadFile(context.Context, domain.UserID, domain.FileID) (domain.File, error)
+		DeleteFiles(context.Context, domain.UserID, []domain.FileID) error
 	}
 
 	wrapper struct {
@@ -126,6 +127,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		authenticated.Get("/", w.f(showFiles))
 		authenticated.Post("/files", w.f(uploadFile))
 		authenticated.Get("/file/{file_id:string}/download", w.f(downloadFile))
+		authenticated.Post("/files/delete", w.f(deleteFiles))
 	}
 
 	unauthenticated := i.Party("/")
@@ -176,11 +178,12 @@ func handleErrors(h func(ctx iris.Context) error) func(iris.Context) {
 		}
 		errID, errStatus, errMsg := web.ParseAppErr(err)
 		web.LogError(ctx, errID, err)
-		err = ctx.View("error.html", ErrorView{
+		ctx.ViewData("content", ErrorView{
 			ID:      errID,
 			Status:  errStatus,
 			Message: errMsg,
 		})
+		err = ctx.View("error.html")
 		if err == nil {
 			return
 		}

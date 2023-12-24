@@ -51,6 +51,10 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	return file, nil
 }
 
+func (a *App) DeleteFiles(ctx context.Context, owner domain.UserID, deleteFiles []domain.FileID) error {
+	return a.cfg.FileRepo.Delete(ctx, owner, deleteFiles)
+}
+
 func generateFileID() (domain.FileID, error) {
 	b, err := generateRandomBytes(64)
 	if err != nil {

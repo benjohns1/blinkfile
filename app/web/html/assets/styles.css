@@ -1,3 +1,7 @@
+:root {
+    --color-warn: rgb(200, 75, 75);
+}
+
 body {
     margin: 0;
     display: flex;
@@ -51,4 +55,13 @@ a strong,
 button,
 input[type="submit"] {
     padding: 0.5rem 2rem;
+}
+table td,
+table th,
+table tr {
+    text-align: left;
+}
+input.warn {
+    background-color: var(--color-warn);
+    border: 2px solid var(--color-warn);
 }

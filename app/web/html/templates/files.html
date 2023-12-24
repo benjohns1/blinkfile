@@ -5,24 +5,29 @@
     <input type="submit" value="Upload"/>
 </form>
 {{- if (len .content.Files)}}
-<table>
-    <thead>
-        <tr>
-            <th>File</th>
-            <th>Size</th>
-            <th>Upload Time</th>
-        </tr>
-    </thead>
-    <tbody>
-    {{range $file := .content.Files}}
-        <tr>
-            <td><a href="/file/{{$file.ID}}/download" target="_blank">{{$file.Name}}</a></td>
-            <td>{{$file.Size}}</td>
-            <td>{{$file.Uploaded}}</td>
-        </tr>
-    {{end}}
-    </tbody>
-</table>
+<form action="/files/delete" method="post">
+    <table>
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Size</th>
+                <th>Upload Time</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{range $file := .content.Files}}
+            <tr>
+                <td><a href="/file/{{$file.ID}}/download" target="_blank">{{$file.Name}}</a></td>
+                <td>{{$file.Size}}</td>
+                <td>{{$file.Uploaded}}</td>
+                <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
+            </tr>
+        {{end}}
+        </tbody>
+    </table>
+    <input class="warn right" type="submit" value="Delete Selected"/>
+</form>
 {{- else}}
 <p>No files. Upload one!</p>
 {{- end}}
