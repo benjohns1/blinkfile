@@ -1,0 +1,107 @@
+package hash
+
+import (
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
+	"fmt"
+	"golang.org/x/crypto/argon2"
+	"strings"
+)
+
+type (
+	Argon2id struct {
+		KeyLength   uint32
+		SaltLength  uint32
+		Time        uint32
+		Memory      uint32
+		Parallelism uint8
+	}
+)
+
+var (
+	Argon2idDefault = Argon2id{
+		KeyLength:   64,
+		SaltLength:  20,
+		Time:        8,
+		Memory:      32 * 1024,
+		Parallelism: 4,
+	}
+
+	ErrInvalidHash         = fmt.Errorf("the encoded hash is not in the correct format")
+	ErrIncompatibleVersion = fmt.Errorf("incompatible version of argon2")
+)
+
+func (h *Argon2id) Match(encodedHash string, data []byte) (matched bool, err error) {
+	salt, hash, params, err := decodeHash(encodedHash)
+	if err != nil {
+		return false, err
+	}
+	checkHash := params.hash(salt, data)
+	if !bytesAreEqual(hash, checkHash) {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (h *Argon2id) Hash(data []byte) (encodedHash string, err error) {
+	salt, err := generateRandomBytes(h.SaltLength)
+	if err != nil {
+		return "", err
+	}
+	hash := h.hash(salt, data)
+
+	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
+	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
+
+	encoded := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, h.Memory, h.Time, h.Parallelism, b64Salt, b64Hash)
+	return encoded, nil
+}
+
+func (h *Argon2id) hash(salt, pass []byte) []byte {
+	return argon2.IDKey(pass, salt, h.Time, h.Memory, h.Parallelism, h.KeyLength)
+}
+
+func generateRandomBytes(n uint32) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	return b, err
+}
+
+func decodeHash(encodedHash string) (salt, hash []byte, params Argon2id, err error) {
+	vals := strings.Split(encodedHash, "$")
+	if len(vals) != 6 {
+		return nil, nil, params, ErrInvalidHash
+	}
+	var versionPart, paramPart, saltPart, hashPart = vals[2], vals[3], vals[4], vals[5]
+
+	var version int
+	if _, err = fmt.Sscanf(versionPart, "v=%d", &version); err != nil {
+		return nil, nil, params, err
+	}
+	if version != argon2.Version {
+		return nil, nil, params, fmt.Errorf("expected version %d, found version %d: %w", argon2.Version, version, ErrIncompatibleVersion)
+	}
+
+	if _, err = fmt.Sscanf(paramPart, "m=%d,t=%d,p=%d", &params.Memory, &params.Time, &params.Parallelism); err != nil {
+		return nil, nil, params, err
+	}
+
+	salt, err = base64.RawStdEncoding.Strict().DecodeString(saltPart)
+	if err != nil {
+		return nil, nil, params, err
+	}
+	params.SaltLength = uint32(len(salt))
+
+	hash, err = base64.RawStdEncoding.Strict().DecodeString(hashPart)
+	if err != nil {
+		return nil, nil, params, err
+	}
+	params.KeyLength = uint32(len(hash))
+
+	return salt, hash, params, nil
+}
+
+func bytesAreEqual(a, b []byte) bool {
+	return subtle.ConstantTimeCompare(a, b) == 1
+}

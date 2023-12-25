@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"time"
@@ -17,6 +16,7 @@ type (
 		FileRepo
 		GenerateToken func() (Token, error)
 		Now           func() time.Time
+		PasswordHasher
 	}
 
 	SessionRepo interface {
@@ -30,6 +30,11 @@ type (
 		ListByUser(context.Context, domain.UserID) ([]domain.FileHeader, error)
 		Get(context.Context, domain.FileID) (domain.File, error)
 		Delete(context.Context, domain.UserID, []domain.FileID) error
+	}
+
+	PasswordHasher interface {
+		Hash(data []byte) (hash string, err error)
+		Match(hash string, data []byte) (matched bool, err error)
 	}
 
 	App struct {
@@ -51,6 +56,9 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	if cfg.FileRepo == nil {
 		return nil, fmt.Errorf("file repo is required")
 	}
+	if cfg.PasswordHasher == nil {
+		return nil, fmt.Errorf("password hasher is required")
+	}
 
 	a := &App{cfg, make(map[domain.Username]Credentials, 1)}
 
@@ -60,10 +68,4 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	}
 
 	return a, nil
-}
-
-func generateRandomBytes(n uint32) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	return b, err
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/hash"
 	"reflect"
 	"testing"
 	"time"
@@ -167,6 +168,10 @@ func TestApp_Login(t *testing.T) {
 				tt.cfg.FileRepo = stubFileRepo{}
 			}
 
+			if tt.cfg.PasswordHasher == nil {
+				tt.cfg.PasswordHasher = &hash.Argon2idDefault
+			}
+
 			application, err := app.New(ctx, tt.cfg)
 			if err != nil {
 				t.Fatal(err)
@@ -234,6 +239,10 @@ func TestApp_Logout(t *testing.T) {
 
 			if tt.cfg.FileRepo == nil {
 				tt.cfg.FileRepo = stubFileRepo{}
+			}
+
+			if tt.cfg.PasswordHasher == nil {
+				tt.cfg.PasswordHasher = &hash.Argon2idDefault
 			}
 
 			application, err := app.New(ctx, tt.cfg)
@@ -355,6 +364,10 @@ func TestApp_IsAuthenticated(t *testing.T) {
 
 			if tt.cfg.FileRepo == nil {
 				tt.cfg.FileRepo = stubFileRepo{}
+			}
+
+			if tt.cfg.PasswordHasher == nil {
+				tt.cfg.PasswordHasher = &hash.Argon2idDefault
 			}
 
 			application, err := app.New(ctx, tt.cfg)

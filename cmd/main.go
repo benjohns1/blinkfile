@@ -6,6 +6,7 @@ import (
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/app/repo"
 	"git.jfam.app/one-way-file-send/app/web/html"
+	"git.jfam.app/one-way-file-send/hash"
 	"log"
 	"os"
 	"strconv"
@@ -43,6 +44,7 @@ func run(ctx context.Context) (err error) {
 		SessionExpiration: 7 * 24 * time.Hour,
 		SessionRepo:       sessionRepo,
 		FileRepo:          fileRepo,
+		PasswordHasher:    &hash.Argon2idDefault,
 	})
 	if appErr != nil {
 		return appErr

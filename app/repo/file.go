@@ -25,11 +25,12 @@ type (
 	}
 
 	fileHeader struct {
-		ID      domain.FileID
-		Name    string
-		Owner   domain.UserID
-		Created time.Time
-		Size    int64
+		ID           domain.FileID
+		Name         string
+		Owner        domain.UserID
+		Created      time.Time
+		Size         int64
+		PasswordHash string
 	}
 )
 

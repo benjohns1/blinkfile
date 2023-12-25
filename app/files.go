@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
@@ -27,12 +28,24 @@ func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.File
 	return files, nil
 }
 
-func (a *App) UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64) error {
+func (a *App) UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64, password string) error {
 	fileID, err := generateFileID()
 	if err != nil {
 		return Error{ErrInternal, fmt.Errorf("generating file ID: %w", err)}
 	}
-	file, err := domain.UploadFile(fileID, filename, owner, reader, size, a.cfg.Now)
+	hashFunc := func(password string) (hash string, err error) {
+		return a.cfg.PasswordHasher.Hash([]byte(password))
+	}
+	file, err := domain.UploadFile(domain.UploadFileArgs{
+		ID:       fileID,
+		Name:     filename,
+		Owner:    owner,
+		Reader:   reader,
+		Size:     size,
+		Now:      a.cfg.Now,
+		Password: password,
+		HashFunc: hashFunc,
+	})
 	if err != nil {
 		return Error{ErrBadRequest, err}
 	}
@@ -45,12 +58,19 @@ func (a *App) UploadFile(ctx context.Context, filename string, owner domain.User
 
 var ErrFileNotFound = Error{ErrNotFound, fmt.Errorf("file not found")}
 
-func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID) (domain.File, error) {
+func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, password string) (domain.File, error) {
 	file, err := a.cfg.FileRepo.Get(ctx, fileID)
 	if err != nil {
 		return domain.File{}, err
 	}
-	if !file.Download(userID) {
+	matchFunc := func(hashedPassword string, checkPassword string) (matched bool, err error) {
+		return a.cfg.PasswordHasher.Match(hashedPassword, []byte(checkPassword))
+	}
+	canDownload, err := file.Download(userID, password, matchFunc)
+	if err != nil {
+		return domain.File{}, err
+	}
+	if !canDownload {
 		return domain.File{}, ErrFileNotFound
 	}
 	return file, nil
@@ -61,7 +81,8 @@ func (a *App) DeleteFiles(ctx context.Context, owner domain.UserID, deleteFiles 
 }
 
 func generateFileID() (domain.FileID, error) {
-	b, err := generateRandomBytes(64)
+	b := make([]byte, 64)
+	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}

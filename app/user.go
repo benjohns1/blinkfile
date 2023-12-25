@@ -12,7 +12,7 @@ func (a *App) registerAdminUser(ctx context.Context, username domain.Username, p
 	if username == "" {
 		return nil
 	}
-	creds, err := NewCredentials(AdminUserID, username, password)
+	creds, err := a.NewCredentials(AdminUserID, username, password)
 	if err != nil {
 		return err
 	}

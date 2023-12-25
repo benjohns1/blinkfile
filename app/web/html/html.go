@@ -36,8 +36,8 @@ type (
 		Logout(context.Context, app.Token) error
 		IsAuthenticated(context.Context, app.Token) (domain.UserID, bool, error)
 		ListFiles(context.Context, domain.UserID) ([]domain.FileHeader, error)
-		UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64) error
-		DownloadFile(context.Context, domain.UserID, domain.FileID) (domain.File, error)
+		UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64, pass string) error
+		DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, pass string) (domain.File, error)
 		DeleteFiles(context.Context, domain.UserID, []domain.FileID) error
 	}
 

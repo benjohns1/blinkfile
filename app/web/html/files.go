@@ -66,7 +66,8 @@ func uploadFile(ctx iris.Context, a App) error {
 	if err != nil {
 		return app.Error{Type: app.ErrBadRequest, Err: err}
 	}
-	err = a.UploadFile(ctx, header.Filename, owner, file, header.Size)
+	password := ctx.FormValue("password")
+	err = a.UploadFile(ctx, header.Filename, owner, file, header.Size, password)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,8 @@ func uploadFile(ctx iris.Context, a App) error {
 func downloadFile(ctx iris.Context, a App) error {
 	fileID := domain.FileID(ctx.Params().Get("file_id"))
 	user := loggedInUser(ctx)
-	file, err := a.DownloadFile(ctx, user, fileID)
+	password := "" // TODO: capture password
+	file, err := a.DownloadFile(ctx, user, fileID, password)
 	if err != nil {
 		return err
 	}
