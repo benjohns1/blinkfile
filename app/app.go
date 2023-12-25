@@ -28,12 +28,8 @@ type (
 	FileRepo interface {
 		Save(context.Context, domain.File) error
 		ListByUser(context.Context, domain.UserID) ([]domain.FileHeader, error)
-		Get(context.Context, domain.FileID, FileFilter) (domain.File, error)
+		Get(context.Context, domain.FileID) (domain.File, error)
 		Delete(context.Context, domain.UserID, []domain.FileID) error
-	}
-
-	FileFilter struct {
-		*domain.UserID
 	}
 
 	App struct {

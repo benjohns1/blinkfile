@@ -21,4 +21,5 @@ const (
 	ErrInternal    ErrorType = "internal"
 	ErrAuthnFailed ErrorType = "authn-failed"
 	ErrRepo        ErrorType = "repo"
+	ErrNotFound    ErrorType = "not-found"
 )

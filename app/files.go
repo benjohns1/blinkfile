@@ -43,10 +43,15 @@ func (a *App) UploadFile(ctx context.Context, filename string, owner domain.User
 	return nil
 }
 
+var ErrFileNotFound = Error{ErrNotFound, fmt.Errorf("file not found")}
+
 func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID) (domain.File, error) {
-	file, err := a.cfg.FileRepo.Get(ctx, fileID, FileFilter{&userID})
+	file, err := a.cfg.FileRepo.Get(ctx, fileID)
 	if err != nil {
 		return domain.File{}, err
+	}
+	if !file.Download(userID) {
+		return domain.File{}, ErrFileNotFound
 	}
 	return file, nil
 }

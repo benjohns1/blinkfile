@@ -138,15 +138,10 @@ func (r *FileRepo) ListByUser(_ context.Context, userID domain.UserID) ([]domain
 	return out, nil
 }
 
-var ErrFileNotFound = fmt.Errorf("file not found")
-
-func (r *FileRepo) Get(_ context.Context, fileID domain.FileID, filter app.FileFilter) (domain.File, error) {
+func (r *FileRepo) Get(_ context.Context, fileID domain.FileID) (domain.File, error) {
 	header, found := r.idIndex[fileID]
 	if !found {
-		return domain.File{}, ErrFileNotFound
-	}
-	if filter.UserID != nil && header.Owner != *filter.UserID {
-		return domain.File{}, ErrFileNotFound
+		return domain.File{}, app.ErrFileNotFound
 	}
 	fh := domain.FileHeader(header)
 	_, filename, _ := filenames(r.dir, fileID)

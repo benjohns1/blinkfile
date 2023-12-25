@@ -23,6 +23,13 @@ type (
 	}
 )
 
+func (f *File) Download(user UserID) bool {
+	if f.Owner == user {
+		return true
+	}
+	return false
+}
+
 func UploadFile(id FileID, name string, owner UserID, reader io.ReadCloser, size int64, now func() time.Time) (File, error) {
 	if id == "" {
 		return File{}, fmt.Errorf("file ID cannot be empty")
