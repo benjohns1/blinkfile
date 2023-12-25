@@ -1,9 +1,11 @@
 package html
 
 import (
+	"errors"
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
 	"io"
 	"strings"
@@ -17,10 +19,17 @@ type (
 		MessageView
 	}
 	FileView struct {
-		ID       string
-		Name     string
-		Uploaded string
-		Size     string
+		ID                string
+		Name              string
+		Uploaded          string
+		Size              string
+		PasswordProtected bool
+	}
+	FileDownloadView struct {
+		LayoutView
+		ID               string
+		PasswordRequired bool
+		MessageView
 	}
 )
 
@@ -33,10 +42,11 @@ func showFiles(ctx iris.Context, a App) error {
 	fileList := make([]FileView, 0, len(files))
 	for _, file := range files {
 		fileList = append(fileList, FileView{
-			ID:       string(file.ID),
-			Name:     file.Name,
-			Uploaded: file.Created.Format(time.RFC3339),
-			Size:     formatFileSize(file.Size),
+			ID:                string(file.ID),
+			Name:              file.Name,
+			Uploaded:          file.Created.Format(time.RFC3339),
+			Size:              formatFileSize(file.Size),
+			PasswordProtected: file.PasswordHash != "",
 		})
 	}
 	ctx.ViewData("content", FilesView{
@@ -77,17 +87,39 @@ func uploadFile(ctx iris.Context, a App) error {
 
 func downloadFile(ctx iris.Context, a App) error {
 	fileID := domain.FileID(ctx.Params().Get("file_id"))
-	user := loggedInUser(ctx)
-	password := "" // TODO: capture password
-	file, err := a.DownloadFile(ctx, user, fileID, password)
-	if err != nil {
-		return err
+	view := FileDownloadView{
+		ID: string(fileID),
 	}
-	defer func() { _ = file.Data.Close() }()
-	ctx.Header("Content-Type", "application/octet-stream")
-	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", file.Name))
-	_, err = io.Copy(ctx.ResponseWriter(), file.Data)
-	return err
+	err := func() error {
+		user := loggedInUser(ctx)
+		password := ctx.FormValue("password")
+		file, err := a.DownloadFile(ctx, user, fileID, password)
+		view.PasswordRequired = file.PasswordHash != ""
+		if err != nil {
+			return err
+		}
+		defer func() { _ = file.Data.Close() }()
+		ctx.Header("Content-Type", "application/octet-stream")
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", file.Name))
+		_, err = io.Copy(ctx.ResponseWriter(), file.Data)
+		return err
+	}()
+	if err != nil {
+		if errors.Is(err, domain.ErrFilePasswordRequired) {
+			view.MessageView.SuccessMessage = "Password required"
+		} else if errors.Is(err, domain.ErrFilePasswordInvalid) {
+			errID, errStatus, _ := web.ParseAppErr(err)
+			web.LogError(ctx, errID, err)
+			view.ErrorView = ErrorView{
+				ID:      errID,
+				Status:  errStatus,
+				Message: "Invalid password",
+			}
+		}
+		ctx.ViewData("content", view)
+		return ctx.View("file.html")
+	}
+	return nil
 }
 
 func deleteFiles(ctx iris.Context, a App) error {

@@ -131,7 +131,6 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		authenticated.Use(w.f(loginRequired))
 		authenticated.Get("/", w.f(showFiles))
 		authenticated.Post("/files", w.f(uploadFile))
-		authenticated.Get("/file/{file_id:string}/download", w.f(downloadFile))
 		authenticated.Post("/files/delete", w.f(deleteFiles))
 	}
 
@@ -142,6 +141,8 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		unauthenticated.Get("/login", w.f(showLogin))
 		unauthenticated.Post("/login", w.f(login))
 		unauthenticated.Get("/logout", w.f(logout))
+		unauthenticated.Get("/file/{file_id:string}", w.f(downloadFile))
+		unauthenticated.Post("/file/{file_id:string}", w.f(downloadFile))
 	}
 
 	return &HTML{i, cfg}, nil

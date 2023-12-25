@@ -25,6 +25,8 @@ func ParseAppErr(err error) (ErrorID, int, string) {
 		return id, http.StatusBadRequest, appErr.Err.Error()
 	case app.ErrAuthnFailed:
 		return id, http.StatusUnauthorized, "Authentication failed"
+	case app.ErrAuthzFailed:
+		return id, http.StatusUnauthorized, "Authorization failed"
 	default:
 		return id, http.StatusInternalServerError, "Internal error"
 	}

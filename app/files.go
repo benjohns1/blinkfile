@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"io"
@@ -56,8 +57,6 @@ func (a *App) UploadFile(ctx context.Context, filename string, owner domain.User
 	return nil
 }
 
-var ErrFileNotFound = Error{ErrNotFound, fmt.Errorf("file not found")}
-
 func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, password string) (domain.File, error) {
 	file, err := a.cfg.FileRepo.Get(ctx, fileID)
 	if err != nil {
@@ -66,12 +65,12 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	matchFunc := func(hashedPassword string, checkPassword string) (matched bool, err error) {
 		return a.cfg.PasswordHasher.Match(hashedPassword, []byte(checkPassword))
 	}
-	canDownload, err := file.Download(userID, password, matchFunc)
+	err = file.Download(userID, password, matchFunc)
 	if err != nil {
-		return domain.File{}, err
-	}
-	if !canDownload {
-		return domain.File{}, ErrFileNotFound
+		if errors.Is(err, domain.ErrFilePasswordInvalid) {
+			err = Error{ErrAuthzFailed, err}
+		}
+		return file, err
 	}
 	return file, nil
 }

@@ -76,13 +76,27 @@ func UploadFile(args UploadFileArgs) (File, error) {
 	}, nil
 }
 
-func (f *File) Download(user UserID, password string, matchFunc PasswordMatchFunc) (bool, error) {
+var (
+	ErrFilePasswordRequired = fmt.Errorf("file access requires password")
+	ErrFilePasswordInvalid  = fmt.Errorf("invalid file password")
+)
+
+func (f *File) Download(user UserID, password string, matchFunc PasswordMatchFunc) error {
+	if f.PasswordHash == "" {
+		return nil
+	}
 	if f.Owner == user {
-		return true, nil
+		return nil
+	}
+	if password == "" {
+		return ErrFilePasswordRequired
 	}
 	match, err := matchFunc(f.PasswordHash, password)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return match, nil
+	if !match {
+		return ErrFilePasswordInvalid
+	}
+	return nil
 }

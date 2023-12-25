@@ -15,15 +15,17 @@
                 <th>File</th>
                 <th>Size</th>
                 <th>Upload Time</th>
+                <th>Access</th>
                 <th>Delete</th>
             </tr>
         </thead>
         <tbody>
         {{range $file := .content.Files}}
             <tr>
-                <td><a href="/file/{{$file.ID}}/download" target="_blank">{{$file.Name}}</a></td>
+                <td><a href="/file/{{$file.ID}}" target="_blank">{{$file.Name}}</a></td>
                 <td>{{$file.Size}}</td>
                 <td>{{$file.Uploaded}}</td>
+                <td>{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>
         {{end}}
