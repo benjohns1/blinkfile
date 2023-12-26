@@ -14,6 +14,7 @@ type (
 		Name         string
 		Owner        UserID
 		Created      time.Time
+		Expires      time.Time
 		Size         int64
 		PasswordHash string
 	}
@@ -23,23 +24,26 @@ type (
 		Data io.ReadCloser
 	}
 
+	NowFunc func() time.Time
+
 	PasswordHashFunc func(password string) (hash string, err error)
 
 	PasswordMatchFunc func(hashedPassword string, checkPassword string) (matched bool, err error)
 
 	UploadFileArgs struct {
-		ID       FileID
-		Name     string
-		Owner    UserID
-		Reader   io.ReadCloser
-		Size     int64
-		Now      func() time.Time
-		Password string
-		HashFunc PasswordHashFunc
+		ID        FileID
+		Name      string
+		Owner     UserID
+		Reader    io.ReadCloser
+		Size      int64
+		Now       NowFunc
+		Password  string
+		HashFunc  PasswordHashFunc
+		ExpiresIn LongDuration
 	}
 )
 
-func UploadFile(args UploadFileArgs) (File, error) {
+func UploadFile(args UploadFileArgs) (file File, err error) {
 	if args.ID == "" {
 		return File{}, fmt.Errorf("file ID cannot be empty")
 	}
@@ -55,22 +59,36 @@ func UploadFile(args UploadFileArgs) (File, error) {
 	if args.Now == nil {
 		return File{}, fmt.Errorf("now() service cannot be empty")
 	}
+	now := args.Now()
 	var hash string
 	if args.Password != "" {
-		var err error
+		if args.HashFunc == nil {
+			return File{}, fmt.Errorf("a password is set, so hashFunc() service cannot be empty")
+		}
 		hash, err = args.HashFunc(args.Password)
 		if err != nil {
 			return File{}, err
 		}
+	}
+	var expires time.Time
+	if args.ExpiresIn != "" {
+		expires, err = args.ExpiresIn.AddTo(now)
+		if err != nil {
+			return File{}, err
+		}
+	}
+	if !expires.IsZero() && !expires.After(now) {
+		return File{}, fmt.Errorf("expiration cannot be set in the past")
 	}
 	return File{
 		FileHeader: FileHeader{
 			ID:           args.ID,
 			Name:         args.Name,
 			Owner:        args.Owner,
-			Created:      args.Now(),
+			Created:      now,
 			Size:         args.Size,
 			PasswordHash: hash,
+			Expires:      expires,
 		},
 		Data: args.Reader,
 	}, nil
@@ -79,24 +97,34 @@ func UploadFile(args UploadFileArgs) (File, error) {
 var (
 	ErrFilePasswordRequired = fmt.Errorf("file access requires password")
 	ErrFilePasswordInvalid  = fmt.Errorf("invalid file password")
+	ErrFileExpired          = fmt.Errorf("file has expired")
 )
 
-func (f *File) Download(user UserID, password string, matchFunc PasswordMatchFunc) error {
-	if f.PasswordHash == "" {
+func (f *File) Download(user UserID, password string, matchFunc PasswordMatchFunc, nowFunc NowFunc) error {
+	if matchFunc == nil {
+		return fmt.Errorf("matchFunc() service cannot be empty")
+	}
+	if nowFunc == nil {
+		return fmt.Errorf("now() service cannot be empty")
+	}
+	now := nowFunc()
+	if !f.Expires.IsZero() && !now.Before(f.Expires) {
+		return ErrFileExpired
+	}
+	if f.Owner != "" && f.Owner == user {
 		return nil
 	}
-	if f.Owner == user {
-		return nil
-	}
-	if password == "" {
-		return ErrFilePasswordRequired
-	}
-	match, err := matchFunc(f.PasswordHash, password)
-	if err != nil {
-		return err
-	}
-	if !match {
-		return ErrFilePasswordInvalid
+	if f.PasswordHash != "" {
+		if password == "" {
+			return ErrFilePasswordRequired
+		}
+		match, err := matchFunc(f.PasswordHash, password)
+		if err != nil {
+			return err
+		}
+		if !match {
+			return ErrFilePasswordInvalid
+		}
 	}
 	return nil
 }

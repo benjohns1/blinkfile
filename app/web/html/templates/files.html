@@ -1,7 +1,19 @@
 <h3>Files</h3>
 <form action="/files" method="post" enctype="multipart/form-data">
-    <label for="password" hidden>File Password</label>
-    <input id="password" type="password" name="password" placeholder="File Password"/>
+    <h4 class="form_header">Upload File</h4>
+    <label for="password" hidden>Password</label>
+    <input id="password" type="password" name="password" placeholder="Password"/>
+    <span style="float: left">
+        <label for="expire_future_amount" hidden>Expires In</label>
+        <input id="expire_future_amount" type="number" name="expire_future_amount" placeholder="Expires In"/>
+    </span>
+    <label for="expire_future_unit" hidden>Expiration Unit</label>
+    <select id="expire_future_unit" name="expire_future_unit">
+        <option value="m">Minutes</option>
+        <option value="h">Hours</option>
+        <option value="d" selected="">Days</option>
+        <option value="w">Weeks</option>
+    </select>
     <label for="file" hidden>File</label>
     <input id="file" type="file" name="file" placeholder="File"/>
     <input type="submit" value="Upload"/>
@@ -14,7 +26,8 @@
             <tr>
                 <th>File</th>
                 <th>Size</th>
-                <th>Upload Time</th>
+                <th>Uploaded</th>
+                <th>Expires</th>
                 <th>Access</th>
                 <th>Delete</th>
             </tr>
@@ -25,6 +38,7 @@
                 <td><a href="/file/{{$file.ID}}" target="_blank">{{$file.Name}}</a></td>
                 <td>{{$file.Size}}</td>
                 <td>{{$file.Uploaded}}</td>
+                <td>{{$file.Expires}}</td>
                 <td>{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>

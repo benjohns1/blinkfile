@@ -23,6 +23,7 @@ type (
 		ID                string
 		Name              string
 		Uploaded          string
+		Expires           string
 		Size              string
 		PasswordProtected bool
 	}
@@ -41,10 +42,17 @@ func showFiles(ctx iris.Context, a App) error {
 	}
 	fileList := make([]FileView, 0, len(files))
 	for _, file := range files {
+		var expires string
+		if file.Expires.IsZero() {
+			expires = "Never"
+		} else {
+			expires = file.Expires.Format(time.RFC3339)
+		}
 		fileList = append(fileList, FileView{
 			ID:                string(file.ID),
 			Name:              file.Name,
 			Uploaded:          file.Created.Format(time.RFC3339),
+			Expires:           expires,
 			Size:              formatFileSize(file.Size),
 			PasswordProtected: file.PasswordHash != "",
 		})
@@ -71,13 +79,25 @@ func formatFileSize(size int64) string {
 }
 
 func uploadFile(ctx iris.Context, a App) error {
-	owner := loggedInUser(ctx)
 	file, header, err := ctx.FormFile("file")
 	if err != nil {
 		return app.Error{Type: app.ErrBadRequest, Err: err}
 	}
-	password := ctx.FormValue("password")
-	err = a.UploadFile(ctx, header.Filename, owner, file, header.Size, password)
+
+	var expiresIn domain.LongDuration
+	expireFutureAmount := ctx.FormValue("expire_future_amount")
+	if expireFutureAmount != "" {
+		expiresIn = domain.LongDuration(fmt.Sprintf("%s%s", expireFutureAmount, ctx.FormValue("expire_future_unit")))
+	}
+	args := app.UploadFileArgs{
+		Filename:  header.Filename,
+		Owner:     loggedInUser(ctx),
+		Reader:    file,
+		Size:      header.Size,
+		Password:  ctx.FormValue("password"),
+		ExpiresIn: expiresIn,
+	}
+	err = a.UploadFile(ctx, args)
 	if err != nil {
 		return err
 	}

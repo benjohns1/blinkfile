@@ -29,7 +29,16 @@ func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.File
 	return files, nil
 }
 
-func (a *App) UploadFile(ctx context.Context, filename string, owner domain.UserID, reader io.ReadCloser, size int64, password string) error {
+type UploadFileArgs struct {
+	Filename  string
+	Owner     domain.UserID
+	Reader    io.ReadCloser
+	Size      int64
+	Password  string
+	ExpiresIn domain.LongDuration
+}
+
+func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	fileID, err := generateFileID()
 	if err != nil {
 		return Error{ErrInternal, fmt.Errorf("generating file ID: %w", err)}
@@ -38,14 +47,15 @@ func (a *App) UploadFile(ctx context.Context, filename string, owner domain.User
 		return a.cfg.PasswordHasher.Hash([]byte(password))
 	}
 	file, err := domain.UploadFile(domain.UploadFileArgs{
-		ID:       fileID,
-		Name:     filename,
-		Owner:    owner,
-		Reader:   reader,
-		Size:     size,
-		Now:      a.cfg.Now,
-		Password: password,
-		HashFunc: hashFunc,
+		ID:        fileID,
+		Name:      args.Filename,
+		Owner:     args.Owner,
+		Reader:    args.Reader,
+		Size:      args.Size,
+		Now:       a.cfg.Now,
+		Password:  args.Password,
+		HashFunc:  hashFunc,
+		ExpiresIn: args.ExpiresIn,
 	})
 	if err != nil {
 		return Error{ErrBadRequest, err}
@@ -57,6 +67,17 @@ func (a *App) UploadFile(ctx context.Context, filename string, owner domain.User
 	return nil
 }
 
+var mimicErr = func(ctx context.Context, password string, err error) error {
+	if errors.Is(err, ErrFileNotFound) || errors.Is(err, domain.ErrFileExpired) {
+		Log.Errorf(ctx, fmt.Sprintf("mimicking a valid response for security, but real error was: %s", err))
+		if password == "" {
+			return Error{ErrAuthzFailed, domain.ErrFilePasswordRequired}
+		}
+		return Error{ErrAuthzFailed, domain.ErrFilePasswordInvalid}
+	}
+	return err
+}
+
 func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, password string) (domain.File, error) {
 	matchFunc := func(hashedPassword string, checkPassword string) (matched bool, err error) {
 		return a.cfg.PasswordHasher.Match(hashedPassword, []byte(checkPassword))
@@ -64,20 +85,15 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	file, err := a.cfg.FileRepo.Get(ctx, fileID)
 	if err != nil {
 		// Mimic responses for files that don't exist
-		if errors.Is(err, ErrFileNotFound) {
-			if password == "" {
-				err = domain.ErrFilePasswordRequired
-			} else {
-				err = Error{ErrAuthzFailed, domain.ErrFilePasswordInvalid}
-			}
-		}
+		err = mimicErr(ctx, password, err)
 		return domain.File{}, err
 	}
-	err = file.Download(userID, password, matchFunc)
+	err = file.Download(userID, password, matchFunc, a.cfg.Now)
 	if err != nil {
 		if errors.Is(err, domain.ErrFilePasswordInvalid) {
 			err = Error{ErrAuthzFailed, err}
 		}
+		err = mimicErr(ctx, password, err)
 		return file, err
 	}
 	return file, nil

@@ -29,6 +29,7 @@ type (
 		Name         string
 		Owner        domain.UserID
 		Created      time.Time
+		Expires      time.Time
 		Size         int64
 		PasswordHash string
 	}

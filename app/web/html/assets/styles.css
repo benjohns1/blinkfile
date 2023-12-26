@@ -68,7 +68,6 @@ input.warn {
 span.warn, p.warn {
     color: var(--color-warn);
 }
-.hidden {
-    display: none;
-    visibility: hidden;
+.form_header {
+    margin-top: 0;
 }
