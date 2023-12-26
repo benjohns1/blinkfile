@@ -1,10 +1,8 @@
 <h3>Download File</h3>
 <div id="download_form">{{ render "partials/message.html" .content.MessageView }}
     <form action="/file/{{.content.ID}}" method="post">
-        {{- if .content.PasswordRequired}}
         <label for="password" hidden>Password</label>
         <input id="password" type="password" name="password" placeholder="Password"/>
-        {{- end}}
         <input type="submit" value="Download" onclick="javascript:document.getElementById('download_form').setAttribute('hidden', '');document.getElementById('download_msg').innerText = 'Starting download!'"/>
     </form>
 </div>

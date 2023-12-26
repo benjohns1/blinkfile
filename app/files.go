@@ -58,12 +58,20 @@ func (a *App) UploadFile(ctx context.Context, filename string, owner domain.User
 }
 
 func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, password string) (domain.File, error) {
-	file, err := a.cfg.FileRepo.Get(ctx, fileID)
-	if err != nil {
-		return domain.File{}, err
-	}
 	matchFunc := func(hashedPassword string, checkPassword string) (matched bool, err error) {
 		return a.cfg.PasswordHasher.Match(hashedPassword, []byte(checkPassword))
+	}
+	file, err := a.cfg.FileRepo.Get(ctx, fileID)
+	if err != nil {
+		// Mimic responses for files that don't exist
+		if errors.Is(err, ErrFileNotFound) {
+			if password == "" {
+				err = domain.ErrFilePasswordRequired
+			} else {
+				err = Error{ErrAuthzFailed, domain.ErrFilePasswordInvalid}
+			}
+		}
+		return domain.File{}, err
 	}
 	err = file.Download(userID, password, matchFunc)
 	if err != nil {

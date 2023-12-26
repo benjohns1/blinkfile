@@ -8,6 +8,7 @@ import (
 	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -27,8 +28,7 @@ type (
 	}
 	FileDownloadView struct {
 		LayoutView
-		ID               string
-		PasswordRequired bool
+		ID string
 		MessageView
 	}
 )
@@ -94,7 +94,6 @@ func downloadFile(ctx iris.Context, a App) error {
 		user := loggedInUser(ctx)
 		password := ctx.FormValue("password")
 		file, err := a.DownloadFile(ctx, user, fileID, password)
-		view.PasswordRequired = file.PasswordHash != ""
 		if err != nil {
 			return err
 		}
@@ -105,14 +104,14 @@ func downloadFile(ctx iris.Context, a App) error {
 		return err
 	}()
 	if err != nil {
+		errID, _, _ := web.ParseAppErr(err)
+		web.LogError(ctx, errID, err)
 		if errors.Is(err, domain.ErrFilePasswordRequired) {
 			view.MessageView.SuccessMessage = "Password required"
 		} else if errors.Is(err, domain.ErrFilePasswordInvalid) {
-			errID, errStatus, _ := web.ParseAppErr(err)
-			web.LogError(ctx, errID, err)
 			view.ErrorView = ErrorView{
 				ID:      errID,
-				Status:  errStatus,
+				Status:  http.StatusUnauthorized,
 				Message: "Invalid password",
 			}
 		}

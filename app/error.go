@@ -29,4 +29,4 @@ const (
 	ErrNotFound    ErrorType = "not-found"
 )
 
-var ErrFileNotFound = Error{ErrNotFound, fmt.Errorf("file not found")}
+var ErrFileNotFound = fmt.Errorf("file not found")
