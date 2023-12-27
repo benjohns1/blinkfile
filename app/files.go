@@ -9,6 +9,7 @@ import (
 	domain "git.jfam.app/one-way-file-send"
 	"io"
 	"sort"
+	"time"
 )
 
 func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.FileHeader, error) {
@@ -35,7 +36,8 @@ type UploadFileArgs struct {
 	Reader    io.ReadCloser
 	Size      int64
 	Password  string
-	ExpiresIn domain.LongDuration
+	ExpiresIn LongDuration
+	Expires   time.Time
 }
 
 func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
@@ -46,16 +48,25 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	hashFunc := func(password string) (hash string, err error) {
 		return a.cfg.PasswordHasher.Hash([]byte(password))
 	}
+	if args.ExpiresIn != "" {
+		if !args.Expires.IsZero() {
+			return Error{ErrBadRequest, fmt.Errorf("cannot set both Expires In and Expires On fields")}
+		}
+		args.Expires, err = args.ExpiresIn.AddTo(a.cfg.Now())
+		if err != nil {
+			return Error{ErrBadRequest, err}
+		}
+	}
 	file, err := domain.UploadFile(domain.UploadFileArgs{
-		ID:        fileID,
-		Name:      args.Filename,
-		Owner:     args.Owner,
-		Reader:    args.Reader,
-		Size:      args.Size,
-		Now:       a.cfg.Now,
-		Password:  args.Password,
-		HashFunc:  hashFunc,
-		ExpiresIn: args.ExpiresIn,
+		ID:       fileID,
+		Name:     args.Filename,
+		Owner:    args.Owner,
+		Reader:   args.Reader,
+		Size:     args.Size,
+		Now:      a.cfg.Now,
+		Password: args.Password,
+		HashFunc: hashFunc,
+		Expires:  args.Expires,
 	})
 	if err != nil {
 		return Error{ErrBadRequest, err}

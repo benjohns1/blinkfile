@@ -84,10 +84,19 @@ func uploadFile(ctx iris.Context, a App) error {
 		return app.Error{Type: app.ErrBadRequest, Err: err}
 	}
 
-	var expiresIn domain.LongDuration
+	var expiresIn app.LongDuration
 	expireFutureAmount := ctx.FormValue("expire_future_amount")
 	if expireFutureAmount != "" {
-		expiresIn = domain.LongDuration(fmt.Sprintf("%s%s", expireFutureAmount, ctx.FormValue("expire_future_unit")))
+		expiresIn = app.LongDuration(fmt.Sprintf("%s%s", expireFutureAmount, ctx.FormValue("expire_future_unit")))
+	}
+	var expires time.Time
+	expirationTime := ctx.FormValue("expiration_time")
+	if expirationTime != "" {
+		expires, err = time.Parse(time.RFC3339, expirationTime)
+		if err != nil {
+			app.Log.Errorf(ctx, "parsing expiration time %q: %w", expirationTime, err)
+			return app.Error{Type: app.ErrBadRequest, Err: fmt.Errorf("parsing the file expiration time")}
+		}
 	}
 	args := app.UploadFileArgs{
 		Filename:  header.Filename,
@@ -96,6 +105,7 @@ func uploadFile(ctx iris.Context, a App) error {
 		Size:      header.Size,
 		Password:  ctx.FormValue("password"),
 		ExpiresIn: expiresIn,
+		Expires:   expires,
 	}
 	err = a.UploadFile(ctx, args)
 	if err != nil {

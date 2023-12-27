@@ -31,15 +31,15 @@ type (
 	PasswordMatchFunc func(hashedPassword string, checkPassword string) (matched bool, err error)
 
 	UploadFileArgs struct {
-		ID        FileID
-		Name      string
-		Owner     UserID
-		Reader    io.ReadCloser
-		Size      int64
-		Now       NowFunc
-		Password  string
-		HashFunc  PasswordHashFunc
-		ExpiresIn LongDuration
+		ID       FileID
+		Name     string
+		Owner    UserID
+		Reader   io.ReadCloser
+		Size     int64
+		Now      NowFunc
+		Password string
+		HashFunc PasswordHashFunc
+		Expires  time.Time
 	}
 )
 
@@ -71,11 +71,8 @@ func UploadFile(args UploadFileArgs) (file File, err error) {
 		}
 	}
 	var expires time.Time
-	if args.ExpiresIn != "" {
-		expires, err = args.ExpiresIn.AddTo(now)
-		if err != nil {
-			return File{}, err
-		}
+	if !args.Expires.IsZero() {
+		expires = args.Expires
 	}
 	if !expires.IsZero() && !expires.After(now) {
 		return File{}, fmt.Errorf("expiration cannot be set in the past")
