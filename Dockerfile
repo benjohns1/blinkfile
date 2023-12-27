@@ -1,12 +1,18 @@
-FROM golangci/golangci-lint:v1.55.2 AS linter
+FROM golang:1.21-alpine AS setup
+RUN apk add --update npm
 WORKDIR /src
-COPY go.mod go.sum ./
+COPY ./app/web/html/package.json ./app/web/html/package-lock.json /src/app/web/html/
+RUN cd app/web/html && npm ci
+COPY go.mod go.sum /src/
 RUN go mod download
 COPY . ./
+
+FROM golangci/golangci-lint:v1.55.2 AS linter
+WORKDIR /src
+COPY --from=setup /src /src
 RUN golangci-lint run
 
-FROM golang:1.21-alpine AS tester
-WORKDIR /src
+FROM setup AS tester
 COPY --from=linter /src /src
 RUN go test ./...
 
