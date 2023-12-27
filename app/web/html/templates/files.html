@@ -7,13 +7,20 @@
         <label for="expire_future_amount" hidden>Expires In</label>
         <input id="expire_future_amount" type="number" name="expire_future_amount" placeholder="Expires In"/>
     </span>
-    <label for="expire_future_unit" hidden>Expiration Unit</label>
-    <select id="expire_future_unit" name="expire_future_unit">
-        <option value="m">Minutes</option>
-        <option value="h">Hours</option>
-        <option value="d" selected="">Days</option>
-        <option value="w">Weeks</option>
-    </select>
+    <span style="float: left">
+        <label for="expire_future_unit" hidden>Expiration Unit</label>
+        <select id="expire_future_unit" name="expire_future_unit">
+            <option value="m">Minutes</option>
+            <option value="h">Hours</option>
+            <option value="d" selected="">Days</option>
+            <option value="w">Weeks</option>
+        </select>
+    </span>
+    <span style="float: left">
+        <label for="expiration_date_display" hidden>Expires On</label>
+        <input type="text" id="expiration_date_display" placeholder="Expires On" hidden/>
+    </span>
+    <input type="hidden" id="expiration_time" name="expiration_time"/>
     <label for="file" hidden>File</label>
     <input id="file" type="file" name="file" placeholder="File"/>
     <input type="submit" value="Upload"/>
@@ -51,3 +58,37 @@
 {{- else}}
 <p>No files. Upload one!</p>
 {{- end}}
+<script type="text/javascript">
+    // Initialize date picker
+    const datepickerElem = document.getElementById("expiration_date_display");
+    const tomorrow = () => {
+        const d = new Date(Date.now());
+        d.setDate(d.getDate() + 1);
+        return d;
+    }
+    const datepicker = new Datepicker(datepickerElem, {
+        autohide: true,
+        clearButton: true,
+        todayButton: true,
+        todayButtonMode: 1,
+        minDate: Date.now(),
+    });
+
+    // Set ISO date
+    const expirationElem = document.getElementById("expiration_time");
+    const setExpiration = (date) => {
+        let expiration = "";
+        if (date) {
+            date.setDate(date.getDate()+1);
+            expiration = date.toISOString();
+        }
+        expirationElem.value = expiration;
+    }
+    datepickerElem.addEventListener("changeDate", (event) => {
+        setExpiration(event.detail.date);
+    });
+    datepickerElem.addEventListener("change", () => {
+        setExpiration(datepicker.getDate());
+    });
+    datepickerElem.removeAttribute("hidden");
+</script>
