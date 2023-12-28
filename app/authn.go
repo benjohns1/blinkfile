@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
-	domain "git.jfam.app/one-way-file-send"
+	"git.jfam.app/one-way-file-send/domain"
 )
 
 type (

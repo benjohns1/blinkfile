@@ -1,10 +1,10 @@
-package html
+package web
 
 import (
 	"context"
 	"errors"
 	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/app/request"
+	"git.jfam.app/one-way-file-send/request"
 	"net/http"
 )
 

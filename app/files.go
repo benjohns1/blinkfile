@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	domain "git.jfam.app/one-way-file-send"
+	"git.jfam.app/one-way-file-send/domain"
 	"io"
 	"sort"
 	"time"

@@ -2,7 +2,7 @@ package domain_test
 
 import (
 	"fmt"
-	domain "git.jfam.app/one-way-file-send"
+	"git.jfam.app/one-way-file-send/domain"
 	"io"
 	"reflect"
 	"strings"

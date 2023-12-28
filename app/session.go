@@ -3,7 +3,7 @@ package app
 import (
 	"crypto/rand"
 	"encoding/base64"
-	domain "git.jfam.app/one-way-file-send"
+	"git.jfam.app/one-way-file-send/domain"
 	"time"
 )
 

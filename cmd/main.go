@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/app/log"
 	"git.jfam.app/one-way-file-send/app/repo"
-	"git.jfam.app/one-way-file-send/app/request"
-	"git.jfam.app/one-way-file-send/app/web/html"
+	"git.jfam.app/one-way-file-send/app/web"
 	"git.jfam.app/one-way-file-send/hash"
+	"git.jfam.app/one-way-file-send/log"
+	"git.jfam.app/one-way-file-send/request"
 	defaultLog "log"
 	"os"
 	"strconv"
@@ -53,7 +53,7 @@ func run(ctx context.Context) (err error) {
 		return appErr
 	}
 
-	srv, err := html.New(ctx, html.Config{
+	srv, err := web.New(ctx, web.Config{
 		App:  application,
 		Port: cfg.Port,
 	})

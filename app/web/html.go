@@ -1,4 +1,4 @@
-package html
+package web
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
-	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/app/request"
+	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/one-way-file-send/request"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/rate"
 	"github.com/kataras/iris/v12/sessions"

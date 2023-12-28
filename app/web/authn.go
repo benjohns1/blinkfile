@@ -1,9 +1,9 @@
-package html
+package web
 
 import (
 	"fmt"
-	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/domain"
 	"github.com/kataras/iris/v12"
 	"net/http"
 )

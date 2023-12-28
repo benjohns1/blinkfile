@@ -3,10 +3,10 @@ package app_test
 import (
 	"context"
 	"fmt"
-	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/app/log"
+	"git.jfam.app/one-way-file-send/domain"
 	"git.jfam.app/one-way-file-send/hash"
+	"git.jfam.app/one-way-file-send/log"
 	"reflect"
 	"testing"
 	"time"

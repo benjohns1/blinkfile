@@ -1,8 +1,8 @@
 FROM golang:1.21-alpine AS setup
 RUN apk add --update npm
 WORKDIR /src
-COPY ./app/web/html/package.json ./app/web/html/package-lock.json /src/app/web/html/
-RUN cd app/web/html && npm ci
+COPY app/web/package.json ./app/web/package-lock.json /src/app/web/
+RUN cd app/web && npm ci
 COPY go.mod go.sum /src/
 RUN go mod download
 COPY . ./

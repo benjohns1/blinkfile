@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
-	domain "git.jfam.app/one-way-file-send"
+	"git.jfam.app/one-way-file-send/domain"
 )
 
 const AdminUserID = "_admin"
