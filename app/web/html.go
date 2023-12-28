@@ -95,6 +95,9 @@ var (
 	//go:embed node_modules/vanillajs-datepicker/dist
 	datepickerFS embed.FS
 
+	//go:embed node_modules/dayjs
+	dayjsFS embed.FS
+
 	//go:embed favicon
 	faviconFS embed.FS
 
@@ -111,6 +114,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 
 	i.HandleDir("/assets", assetsFS)
 	i.HandleDir("/datepicker", datepickerFS)
+	i.HandleDir("/dayjs", dayjsFS)
 	i.HandleDir("/", faviconFS)
 
 	tpl := iris.HTML(templateFS, ".html").RootDir("templates")

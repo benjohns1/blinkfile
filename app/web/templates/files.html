@@ -51,8 +51,8 @@
             <tr>
                 <td><a href="/file/{{$file.ID}}" target="_blank">{{$file.Name}}</a></td>
                 <td>{{$file.Size}}</td>
-                <td>{{$file.Uploaded}}</td>
-                <td>{{$file.Expires}}</td>
+                <td class="datetime">{{$file.Uploaded}}</td>
+                <td class="datetime">{{$file.Expires}}</td>
                 <td>{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>
@@ -66,6 +66,20 @@
 <p>No files. Upload one!</p>
 {{- end}}
 <script type="text/javascript">
+    const parseDateTimes = () => {
+        dayjs.extend(window.dayjs_plugin_localizedFormat);
+        const dtElems = document.getElementsByClassName("datetime");
+        for (let i = 0; i < dtElems.length; i++) {
+            const innerHTML = dtElems[i].innerHTML
+            const dt = dayjs(innerHTML)
+            if (!dt.isValid()) {
+                continue;
+            }
+            dtElems[i].innerHTML = dt.format("L LT");
+        }
+    }
+    parseDateTimes();
+
     const uploadForm = () => {
         const submitElem = document.getElementById("submit_file_upload");
         const fileElem = document.getElementById("file");
@@ -81,6 +95,7 @@
         });
         checkEnableSubmit();
     }
+    uploadForm();
 
     const expiration = () => {
         const expiresInElem = document.getElementById("expire_future_amount");
@@ -120,8 +135,5 @@
         });
         expirationDateElem.removeAttribute("hidden");
     }
-
-    uploadForm();
     expiration();
-
 </script>
