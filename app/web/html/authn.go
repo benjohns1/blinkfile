@@ -4,7 +4,6 @@ import (
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/app/web"
 	"github.com/kataras/iris/v12"
 	"net/http"
 )
@@ -32,7 +31,7 @@ func isAuthenticated(ctx iris.Context, a App) bool {
 	}
 	userID, isAuthn, err := a.IsAuthenticated(ctx, app.Token(authnToken))
 	if err != nil {
-		app.Log.Errorf(ctx, "checking authentication state of token %q: %v", authnToken, err)
+		a.Errorf(ctx, "checking authentication state of token %q: %v", authnToken, err)
 		return false
 	}
 	if !isAuthn {
@@ -78,13 +77,8 @@ func logout(ctx iris.Context, a App) error {
 func login(ctx iris.Context, a App) error {
 	view, err := doLogin(ctx, a)
 	if err != nil {
-		errID, errStatus, errMsg := web.ParseAppErr(err)
-		web.LogError(ctx, errID, err)
-		view.ErrorView = ErrorView{
-			ID:      errID,
-			Status:  errStatus,
-			Message: errMsg,
-		}
+		a.Errorf(ctx, err.Error())
+		view.ErrorView = ParseAppErr(ctx, err)
 	}
 	ctx.ViewData("content", view)
 	return ctx.View("login.html")

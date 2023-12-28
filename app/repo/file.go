@@ -15,6 +15,7 @@ import (
 
 type (
 	FileRepoConfig struct {
+		Log
 		Dir string
 	}
 
@@ -22,6 +23,7 @@ type (
 		dir        string
 		ownerIndex map[domain.UserID]map[domain.FileID]fileHeader
 		idIndex    map[domain.FileID]fileHeader
+		Log
 	}
 
 	fileHeader struct {
@@ -32,6 +34,10 @@ type (
 		Expires      time.Time
 		Size         int64
 		PasswordHash string
+	}
+
+	Log interface {
+		Errorf(ctx context.Context, format string, v ...any)
 	}
 )
 
@@ -45,6 +51,7 @@ func NewFileRepo(ctx context.Context, cfg FileRepoConfig) (*FileRepo, error) {
 		dir,
 		make(map[domain.UserID]map[domain.FileID]fileHeader),
 		make(map[domain.FileID]fileHeader),
+		cfg.Log,
 	}
 	err = r.buildIndices(ctx, dir)
 	if err != nil {
@@ -59,7 +66,7 @@ func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 			return filepath.SkipAll
 		}
 		if err != nil {
-			app.Log.Errorf(ctx, "Loading file from %q: %v", path, err)
+			r.Errorf(ctx, "Loading file from %q: %v", path, err)
 			return nil
 		}
 		if path == dir {
@@ -71,7 +78,7 @@ func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 		_, _, headerFilename := filenames(dir, domain.FileID(d.Name()))
 		header, err := loadFileHeader(ctx, headerFilename)
 		if err != nil {
-			app.Log.Errorf(ctx, "Loading file header %q: %v", headerFilename, err)
+			r.Errorf(ctx, "Loading file header %q: %v", headerFilename, err)
 			return nil
 		}
 		r.addToIndices(header)

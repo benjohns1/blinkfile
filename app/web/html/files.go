@@ -5,7 +5,7 @@ import (
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/app/web"
+	"git.jfam.app/one-way-file-send/app/request"
 	"github.com/kataras/iris/v12"
 	"io"
 	"net/http"
@@ -94,7 +94,7 @@ func uploadFile(ctx iris.Context, a App) error {
 	if expirationTime != "" {
 		expires, err = time.Parse(time.RFC3339, expirationTime)
 		if err != nil {
-			app.Log.Errorf(ctx, "parsing expiration time %q: %w", expirationTime, err)
+			a.Errorf(ctx, "parsing expiration time %q: %w", expirationTime, err)
 			return app.Error{Type: app.ErrBadRequest, Err: fmt.Errorf("parsing the file expiration time")}
 		}
 	}
@@ -134,13 +134,12 @@ func downloadFile(ctx iris.Context, a App) error {
 		return err
 	}()
 	if err != nil {
-		errID, _, _ := web.ParseAppErr(err)
-		web.LogError(ctx, errID, err)
+		a.Errorf(ctx, err.Error())
 		if errors.Is(err, domain.ErrFilePasswordRequired) {
 			view.MessageView.SuccessMessage = "Password required"
 		} else if errors.Is(err, domain.ErrFilePasswordInvalid) {
 			view.ErrorView = ErrorView{
-				ID:      errID,
+				ID:      request.GetID(ctx),
 				Status:  http.StatusUnauthorized,
 				Message: "Invalid password",
 			}

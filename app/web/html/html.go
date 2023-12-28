@@ -8,7 +8,7 @@ import (
 	"fmt"
 	domain "git.jfam.app/one-way-file-send"
 	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/app/web"
+	"git.jfam.app/one-way-file-send/app/request"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/rate"
 	"github.com/kataras/iris/v12/sessions"
@@ -38,6 +38,8 @@ type (
 		UploadFile(ctx context.Context, args app.UploadFileArgs) error
 		DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, pass string) (domain.File, error)
 		DeleteFiles(context.Context, domain.UserID, []domain.FileID) error
+
+		app.Log
 	}
 
 	wrapper struct {
@@ -55,7 +57,7 @@ type (
 
 	ErrorView struct {
 		LayoutView
-		ID      web.ErrorID
+		ID      string
 		Status  int
 		Message string
 	}
@@ -65,7 +67,7 @@ func (c Config) parse(ctx context.Context) (Config, error) {
 	cfg := c
 	if cfg.Title == "" {
 		const defaultTitle = "File Sender"
-		app.Log.Printf(ctx, "Setting Title to default %q", defaultTitle)
+		c.App.Printf(ctx, "Setting Title to default %q", defaultTitle)
 		cfg.Title = defaultTitle
 	}
 	if cfg.Port <= 0 {
@@ -73,12 +75,12 @@ func (c Config) parse(ctx context.Context) (Config, error) {
 	}
 	if cfg.ReadTimeout == 0 {
 		const defaultTimeout = time.Hour
-		app.Log.Printf(ctx, "Setting ReadTimeout to default %v", defaultTimeout)
+		c.App.Printf(ctx, "Setting ReadTimeout to default %v", defaultTimeout)
 		cfg.ReadTimeout = defaultTimeout
 	}
 	if cfg.WriteTimeout == 0 {
 		const defaultTimeout = time.Hour
-		app.Log.Printf(ctx, "Setting WriteTimeout to default %v", defaultTimeout)
+		c.App.Printf(ctx, "Setting WriteTimeout to default %v", defaultTimeout)
 		cfg.WriteTimeout = defaultTimeout
 	}
 	return cfg, nil
@@ -127,6 +129,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	i.Use(iris.Compression)
 	i.Use(sess.Handler())
 	i.Use(setDefaultViewData(cfg.Title))
+	i.Use(addRequestID)
 	w := wrapper{cfg.App}
 
 	authenticated := i.Party("/")
@@ -151,6 +154,13 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	return &HTML{i, cfg}, nil
 }
 
+func addRequestID(ctx iris.Context) {
+	newCtx := request.CtxWithNewID(ctx)
+	r := ctx.Request().WithContext(newCtx)
+	ctx.ResetRequest(r)
+	ctx.Next()
+}
+
 func setDefaultViewData(title string) func(iris.Context) {
 	return func(ctx iris.Context) {
 		sess := sessions.Get(ctx)
@@ -170,28 +180,22 @@ func randomBase64String(length int) string {
 }
 
 func (w wrapper) f(h func(ctx iris.Context, a App) error) func(ctx iris.Context) {
-	return handleErrors(injectApp(w.App, h))
+	return injectApp(w.App, handleErrors(h))
 }
 
-func injectApp(a App, h func(ctx iris.Context, a App) error) func(ctx iris.Context) error {
-	return func(ctx iris.Context) error {
-		return h(ctx, a)
+func injectApp(a App, h func(ctx iris.Context, a App)) func(ctx iris.Context) {
+	return func(ctx iris.Context) {
+		h(ctx, a)
 	}
 }
 
-func handleErrors(h func(ctx iris.Context) error) func(iris.Context) {
-	return func(ctx iris.Context) {
-		err := h(ctx)
+func handleErrors(h func(ctx iris.Context, a App) error) func(iris.Context, App) {
+	return func(ctx iris.Context, a App) {
+		err := h(ctx, a)
 		if err == nil {
 			return
 		}
-		errID, errStatus, errMsg := web.ParseAppErr(err)
-		web.LogError(ctx, errID, err)
-		ctx.ViewData("content", ErrorView{
-			ID:      errID,
-			Status:  errStatus,
-			Message: errMsg,
-		})
+		ctx.ViewData("content", ParseAppErr(ctx, err))
 		err = ctx.View("error.html")
 		if err == nil {
 			return
@@ -201,7 +205,7 @@ func handleErrors(h func(ctx iris.Context) error) func(iris.Context) {
 			return
 		}
 		_, err = ctx.WriteString(err.Error())
-		web.LogError(ctx, errID, err)
+		a.Errorf(ctx, err.Error())
 	}
 }
 

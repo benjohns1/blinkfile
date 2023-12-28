@@ -9,6 +9,7 @@ import (
 
 type (
 	Config struct {
+		Log
 		AdminUsername     string
 		AdminPassword     string
 		SessionExpiration time.Duration
@@ -40,10 +41,19 @@ type (
 	App struct {
 		cfg         Config
 		credentials map[domain.Username]Credentials
+		Log
+	}
+
+	Log interface {
+		Printf(ctx context.Context, format string, v ...any)
+		Errorf(ctx context.Context, format string, v ...any)
 	}
 )
 
 func New(ctx context.Context, cfg Config) (*App, error) {
+	if cfg.Log == nil {
+		return nil, fmt.Errorf("log instance is required")
+	}
 	if cfg.Now == nil {
 		cfg.Now = func() time.Time { return time.Now().UTC() }
 	}
@@ -60,7 +70,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		return nil, fmt.Errorf("password hasher is required")
 	}
 
-	a := &App{cfg, make(map[domain.Username]Credentials, 1)}
+	a := &App{cfg, make(map[domain.Username]Credentials, 1), cfg.Log}
 
 	err := a.registerAdminUser(ctx, domain.Username(cfg.AdminUsername), cfg.AdminPassword)
 	if err != nil {

@@ -77,10 +77,9 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	}
 	return nil
 }
-
-var mimicErr = func(ctx context.Context, password string, err error) error {
+func (a *App) mimicErr(ctx context.Context, password string, err error) error {
 	if errors.Is(err, ErrFileNotFound) || errors.Is(err, domain.ErrFileExpired) {
-		Log.Errorf(ctx, fmt.Sprintf("mimicking a valid response for security, but real error was: %s", err))
+		a.Errorf(ctx, fmt.Sprintf("mimicking a valid response for security, but real error was: %s", err))
 		if password == "" {
 			return Error{ErrAuthzFailed, domain.ErrFilePasswordRequired}
 		}
@@ -96,7 +95,7 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	file, err := a.cfg.FileRepo.Get(ctx, fileID)
 	if err != nil {
 		// Mimic responses for files that don't exist
-		err = mimicErr(ctx, password, err)
+		err = a.mimicErr(ctx, password, err)
 		return domain.File{}, err
 	}
 	err = file.Download(userID, password, matchFunc, a.cfg.Now)
@@ -104,7 +103,7 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 		if errors.Is(err, domain.ErrFilePasswordInvalid) {
 			err = Error{ErrAuthzFailed, err}
 		}
-		err = mimicErr(ctx, password, err)
+		err = a.mimicErr(ctx, password, err)
 		return file, err
 	}
 	return file, nil

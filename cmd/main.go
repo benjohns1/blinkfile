@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
+	"git.jfam.app/one-way-file-send/app/log"
 	"git.jfam.app/one-way-file-send/app/repo"
+	"git.jfam.app/one-way-file-send/app/request"
 	"git.jfam.app/one-way-file-send/app/web/html"
 	"git.jfam.app/one-way-file-send/hash"
-	"log"
+	defaultLog "log"
 	"os"
 	"strconv"
 	"time"
@@ -16,9 +18,9 @@ import (
 func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
-		log.Fatalf("ERROR: %v", err)
+		defaultLog.Fatalf("ERROR: %v", err)
 	}
-	log.Println("Exited")
+	defaultLog.Println("Exited")
 }
 
 func run(ctx context.Context) (err error) {
@@ -39,6 +41,7 @@ func run(ctx context.Context) (err error) {
 	}
 
 	application, appErr := app.New(ctx, app.Config{
+		Log:               log.New(log.Config{GetRequestID: request.GetID}),
 		AdminUsername:     cfg.AdminUsername,
 		AdminPassword:     cfg.AdminPassword,
 		SessionExpiration: 7 * 24 * time.Hour,
@@ -58,7 +61,7 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 
-	log.Printf("Starting server on port %d", cfg.Port)
+	defaultLog.Printf("Starting server on port %d", cfg.Port)
 	done := srv.Start(ctx)
 	return <-done
 }
