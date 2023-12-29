@@ -45,7 +45,7 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	if err != nil {
 		return Error{ErrInternal, fmt.Errorf("generating file ID: %w", err)}
 	}
-	hashFunc := func(password string) (hash string, err error) {
+	hashFunc := func(password string) (hash string) {
 		return a.cfg.PasswordHasher.Hash([]byte(password))
 	}
 	if args.ExpiresIn != "" {

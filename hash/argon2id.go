@@ -44,10 +44,13 @@ func (h *Argon2id) Match(encodedHash string, data []byte) (matched bool, err err
 	return true, nil
 }
 
-func (h *Argon2id) Hash(data []byte) (encodedHash string, err error) {
-	salt, err := generateRandomBytes(h.SaltLength)
+var RandRead = rand.Read
+
+func (h *Argon2id) Hash(data []byte) (encodedHash string) {
+	salt := make([]byte, h.SaltLength)
+	_, err := RandRead(salt)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 	hash := h.hash(salt, data)
 
@@ -55,17 +58,11 @@ func (h *Argon2id) Hash(data []byte) (encodedHash string, err error) {
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
 
 	encoded := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, h.Memory, h.Time, h.Parallelism, b64Salt, b64Hash)
-	return encoded, nil
+	return encoded
 }
 
 func (h *Argon2id) hash(salt, pass []byte) []byte {
 	return argon2.IDKey(pass, salt, h.Time, h.Memory, h.Parallelism, h.KeyLength)
-}
-
-func generateRandomBytes(n uint32) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	return b, err
 }
 
 func decodeHash(encodedHash string) (salt, hash []byte, params Argon2id, err error) {
@@ -77,7 +74,7 @@ func decodeHash(encodedHash string) (salt, hash []byte, params Argon2id, err err
 
 	var version int
 	if _, err = fmt.Sscanf(versionPart, "v=%d", &version); err != nil {
-		return nil, nil, params, err
+		return nil, nil, params, fmt.Errorf("%w: %s", ErrInvalidHash, err)
 	}
 	if version != argon2.Version {
 		return nil, nil, params, fmt.Errorf("expected version %d, found version %d: %w", argon2.Version, version, ErrIncompatibleVersion)

@@ -27,10 +27,7 @@ func (a *App) NewCredentials(userID domain.UserID, user domain.Username, pass st
 	if len(pass) < passwordMinLength {
 		return Credentials{}, fmt.Errorf("password must be at least %d characters long", passwordMinLength)
 	}
-	encodedHash, err := a.cfg.PasswordHasher.Hash([]byte(pass))
-	if err != nil {
-		return Credentials{}, err
-	}
+	encodedHash := a.cfg.PasswordHasher.Hash([]byte(pass))
 	return Credentials{
 		UserID:              userID,
 		username:            user,

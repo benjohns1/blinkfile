@@ -26,7 +26,7 @@ type (
 
 	NowFunc func() time.Time
 
-	PasswordHashFunc func(password string) (hash string, err error)
+	PasswordHashFunc func(password string) (hash string)
 
 	PasswordMatchFunc func(hashedPassword string, checkPassword string) (matched bool, err error)
 
@@ -65,10 +65,7 @@ func UploadFile(args UploadFileArgs) (file File, err error) {
 		if args.HashFunc == nil {
 			return File{}, fmt.Errorf("a password is set, so hashFunc() service cannot be empty")
 		}
-		hash, err = args.HashFunc(args.Password)
-		if err != nil {
-			return File{}, err
-		}
+		hash = args.HashFunc(args.Password)
 	}
 	var expires time.Time
 	if !args.Expires.IsZero() {

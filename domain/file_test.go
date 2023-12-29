@@ -94,21 +94,6 @@ func TestUploadFile(t *testing.T) {
 			wantErr: fmt.Errorf("a password is set, so hashFunc() service cannot be empty"),
 		},
 		{
-			name: "should fail if hashing the password fails",
-			args: domain.UploadFileArgs{
-				ID:       "file1",
-				Name:     "file1",
-				Owner:    "user1",
-				Reader:   io.NopCloser(strings.NewReader("file-data")),
-				Now:      func() time.Time { return time.Unix(1, 0).UTC() },
-				Password: "secret-password",
-				HashFunc: func(string) (string, error) {
-					return "", fmt.Errorf("hash err")
-				},
-			},
-			wantErr: fmt.Errorf("hash err"),
-		},
-		{
 			name: "should upload a new file with a password",
 			args: domain.UploadFileArgs{
 				ID:       "file1",
@@ -117,8 +102,8 @@ func TestUploadFile(t *testing.T) {
 				Reader:   io.NopCloser(strings.NewReader("file-data")),
 				Now:      func() time.Time { return time.Unix(1, 0).UTC() },
 				Password: "secret-password",
-				HashFunc: func(string) (string, error) {
-					return "hashed-password", nil
+				HashFunc: func(string) string {
+					return "hashed-password"
 				},
 			},
 			want: domain.File{

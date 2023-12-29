@@ -34,7 +34,7 @@ type (
 	}
 
 	PasswordHasher interface {
-		Hash(data []byte) (hash string, err error)
+		Hash(data []byte) (hash string)
 		Match(hash string, data []byte) (matched bool, err error)
 	}
 
