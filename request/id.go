@@ -10,9 +10,11 @@ type requestIDKey struct{}
 
 const requestIDLength = 32
 
+var ReadRandomBytes = rand.Read
+
 func NewID() string {
 	b := make([]byte, requestIDLength)
-	_, err := rand.Read(b)
+	_, err := ReadRandomBytes(b)
 	if err != nil {
 		panic(err)
 	}

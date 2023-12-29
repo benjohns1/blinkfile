@@ -16,10 +16,12 @@ type (
 	}
 )
 
+var Printf = log.Printf
+
 func New(cfg Config) Log {
 	l := Log{cfg, cfg.GetRequestID}
 	if l.getRequestID == nil {
-		l.getRequestID = func(ctx context.Context) string { return "" }
+		l.getRequestID = func(context.Context) string { return "" }
 	}
 	return l
 }
@@ -31,7 +33,7 @@ func (l Log) Printf(ctx context.Context, format string, v ...any) {
 	if reqID := l.getRequestID(ctx); reqID != "" {
 		reqIDSuffix = fmt.Sprintf(", Request ID: %s", reqID)
 	}
-	log.Printf("%s%s", fmt.Sprintf(format, v...), reqIDSuffix)
+	Printf("%s%s", fmt.Sprintf(format, v...), reqIDSuffix)
 }
 
 func (l Log) Errorf(ctx context.Context, format string, v ...any) {
