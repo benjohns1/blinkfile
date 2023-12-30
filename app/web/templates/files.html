@@ -2,6 +2,10 @@
 <form action="/files" method="post" enctype="multipart/form-data">
     <h4 class="form_header">Upload File</h4>
     <div>
+        <label for="file" hidden>File</label>
+        <input id="file" type="file" name="file" placeholder="File"/>
+    </div>
+    <div>
         <label for="password" hidden>Password</label>
         <input id="password" type="password" name="password" placeholder="Password"/>
     </div>
@@ -26,10 +30,7 @@
         </span>
     </div>
     <input type="hidden" id="expiration_time" name="expiration_time"/>
-    <div style="clear: both">
-        <label for="file" hidden>File</label>
-        <input id="file" type="file" name="file" placeholder="File"/>
-    </div>
+    <div style="clear: both"></div>
     <input id="submit_file_upload" type="submit" value="Upload"/>
 </form>
 {{ render "partials/message.html" .content.MessageView }}
