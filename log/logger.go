@@ -26,8 +26,6 @@ func New(cfg Config) Log {
 	return l
 }
 
-type DefaultLogger struct{}
-
 func (l Log) Printf(ctx context.Context, format string, v ...any) {
 	var reqIDSuffix string
 	if reqID := l.getRequestID(ctx); reqID != "" {

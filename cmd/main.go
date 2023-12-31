@@ -9,7 +9,6 @@ import (
 	"git.jfam.app/one-way-file-send/hash"
 	"git.jfam.app/one-way-file-send/log"
 	"git.jfam.app/one-way-file-send/request"
-	defaultLog "log"
 	"os"
 	"strconv"
 	"time"
@@ -18,9 +17,10 @@ import (
 func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
-		defaultLog.Fatalf("ERROR: %v", err)
+		log.Printf("ERROR: %v", err)
+		os.Exit(0)
 	}
-	defaultLog.Println("Exited")
+	log.Printf("Exited")
 }
 
 func run(ctx context.Context) (err error) {
@@ -61,7 +61,7 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 
-	defaultLog.Printf("Starting server on port %d", cfg.Port)
+	log.Printf("Starting server on port %d", cfg.Port)
 	done := srv.Start(ctx)
 	return <-done
 }

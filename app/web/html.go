@@ -20,6 +20,7 @@ type (
 		Title                    string
 		App                      App
 		Port                     int
+		MaxFileByteSize          int64
 		BrowserSessionExpiration time.Duration
 		ReadTimeout              time.Duration
 		WriteTimeout             time.Duration
@@ -65,6 +66,9 @@ type (
 
 func (c Config) parse(ctx context.Context) (Config, error) {
 	cfg := c
+	if cfg.MaxFileByteSize <= 0 {
+		cfg.MaxFileByteSize = 2 * iris.GB
+	}
 	if cfg.Title == "" {
 		const defaultTitle = "File Sender"
 		c.App.Printf(ctx, "Setting Title to default %q", defaultTitle)
@@ -140,7 +144,8 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	{
 		authenticated.Use(w.f(loginRequired))
 		authenticated.Get("/", w.f(showFiles))
-		authenticated.Post("/files", w.f(uploadFile))
+		upload := authenticated.Post("/files", w.f(uploadFile))
+		upload.Use(maxSize(cfg.MaxFileByteSize))
 		authenticated.Post("/files/delete", w.f(deleteFiles))
 	}
 
@@ -156,6 +161,13 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	}
 
 	return &HTML{i, cfg}, nil
+}
+
+func maxSize(byteSize int64) func(iris.Context) {
+	return func(ctx iris.Context) {
+		ctx.SetMaxRequestBodySize(byteSize)
+		ctx.Next()
+	}
 }
 
 func addRequestID(ctx iris.Context) {
