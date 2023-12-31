@@ -38,7 +38,7 @@ type (
 		IsAuthenticated(context.Context, app.Token) (domain.UserID, bool, error)
 		ListFiles(context.Context, domain.UserID) ([]domain.FileHeader, error)
 		UploadFile(ctx context.Context, args app.UploadFileArgs) error
-		DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, pass string) (domain.File, error)
+		DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, pass string) (domain.FileHeader, error)
 		DeleteFiles(context.Context, domain.UserID, []domain.FileID) error
 
 		app.Log
@@ -124,10 +124,6 @@ func verifyTmpDir() error {
 	_, err = fmt.Fprintf(tmpFile, "write_test_data")
 	if err != nil {
 		return fmt.Errorf("writing to test tmp file %q: %w", tmpName, err)
-	}
-	err = os.Remove(tmpFile.Name())
-	if err != nil {
-		return fmt.Errorf("removing tmp file %q: %w", tmpName, err)
 	}
 	return nil
 }

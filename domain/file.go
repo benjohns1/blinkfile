@@ -12,6 +12,7 @@ type (
 	FileHeader struct {
 		ID           FileID
 		Name         string
+		Location     string
 		Owner        UserID
 		Created      time.Time
 		Expires      time.Time
@@ -94,7 +95,7 @@ var (
 	ErrFileExpired          = fmt.Errorf("file has expired")
 )
 
-func (f *File) Download(user UserID, password string, matchFunc PasswordMatchFunc, nowFunc NowFunc) error {
+func (f *FileHeader) Download(user UserID, password string, matchFunc PasswordMatchFunc, nowFunc NowFunc) error {
 	if matchFunc == nil {
 		return fmt.Errorf("matchFunc() service cannot be empty")
 	}

@@ -29,6 +29,7 @@ type (
 	fileHeader struct {
 		ID           domain.FileID
 		Name         string
+		Location     string
 		Owner        domain.UserID
 		Created      time.Time
 		Expires      time.Time
@@ -110,6 +111,7 @@ func loadFileHeader(_ context.Context, path string) (header fileHeader, err erro
 func (r *FileRepo) Save(_ context.Context, file domain.File) error {
 	header := fileHeader(file.FileHeader)
 	dir, filename, headerFilename := filenames(r.dir, header.ID)
+	header.Location = filename
 	err := os.MkdirAll(dir, os.ModeDir)
 	if err != nil {
 		return fmt.Errorf("making directory %q: %w", dir, err)
@@ -147,21 +149,15 @@ func (r *FileRepo) ListByUser(_ context.Context, userID domain.UserID) ([]domain
 	return out, nil
 }
 
-func (r *FileRepo) Get(_ context.Context, fileID domain.FileID) (domain.File, error) {
+func (r *FileRepo) Get(_ context.Context, fileID domain.FileID) (domain.FileHeader, error) {
 	header, found := r.idIndex[fileID]
 	if !found {
-		return domain.File{}, app.ErrFileNotFound
+		return domain.FileHeader{}, app.ErrFileNotFound
 	}
-	fh := domain.FileHeader(header)
-	_, filename, _ := filenames(r.dir, fileID)
-	file, err := os.Open(filename)
-	if err != nil {
-		return domain.File{}, err
+	if header.Location == "" {
+		_, header.Location, _ = filenames(r.dir, header.ID)
 	}
-	return domain.File{
-		FileHeader: fh,
-		Data:       file,
-	}, nil
+	return domain.FileHeader(header), nil
 }
 
 func (r *FileRepo) Delete(_ context.Context, owner domain.UserID, deleteFiles []domain.FileID) error {

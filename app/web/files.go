@@ -7,7 +7,6 @@ import (
 	"git.jfam.app/one-way-file-send/domain"
 	"git.jfam.app/one-way-file-send/request"
 	"github.com/kataras/iris/v12"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -127,11 +126,11 @@ func downloadFile(ctx iris.Context, a App) error {
 		if err != nil {
 			return err
 		}
-		defer func() { _ = file.Data.Close() }()
-		ctx.Header("Content-Type", "application/octet-stream")
-		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", file.Name))
-		_, err = io.Copy(ctx.ResponseWriter(), file.Data)
-		return err
+		err = ctx.SendFile(file.Location, file.Name)
+		if err != nil {
+			return fmt.Errorf("sending file data: %w", err)
+		}
+		return nil
 	}()
 	if err != nil {
 		a.Errorf(ctx, err.Error())

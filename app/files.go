@@ -88,7 +88,7 @@ func (a *App) mimicErr(ctx context.Context, password string, err error) error {
 	return err
 }
 
-func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, password string) (domain.File, error) {
+func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, password string) (domain.FileHeader, error) {
 	matchFunc := func(hashedPassword string, checkPassword string) (matched bool, err error) {
 		return a.cfg.PasswordHasher.Match(hashedPassword, []byte(checkPassword))
 	}
@@ -96,7 +96,7 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	if err != nil {
 		// Mimic responses for files that don't exist
 		err = a.mimicErr(ctx, password, err)
-		return domain.File{}, err
+		return domain.FileHeader{}, err
 	}
 	err = file.Download(userID, password, matchFunc, a.cfg.Now)
 	if err != nil {
