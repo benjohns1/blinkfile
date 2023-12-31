@@ -12,6 +12,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/rate"
 	"github.com/kataras/iris/v12/sessions"
+	"os"
 	"time"
 )
 
@@ -109,11 +110,38 @@ var (
 	templateFS embed.FS
 )
 
+func verifyTmpDir() error {
+	tmpDir := os.TempDir()
+	if err := os.MkdirAll(tmpDir, os.ModeDir); err != nil {
+		return err
+	}
+	tmpFile, err := os.CreateTemp("", "init_check_")
+	if err != nil {
+		return fmt.Errorf("creating test tmp file: %w", err)
+	}
+	defer func() { _ = tmpFile.Close() }()
+	tmpName := tmpFile.Name()
+	_, err = fmt.Fprintf(tmpFile, "write_test_data")
+	if err != nil {
+		return fmt.Errorf("writing to test tmp file %q: %w", tmpName, err)
+	}
+	err = os.Remove(tmpFile.Name())
+	if err != nil {
+		return fmt.Errorf("removing tmp file %q: %w", tmpName, err)
+	}
+	return nil
+}
+
 func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	cfg, err = cfg.parse(ctx)
 	if err != nil {
 		return nil, err
 	}
+	err = verifyTmpDir()
+	if err != nil {
+		return nil, fmt.Errorf("verifying tmp directory: %w", err)
+	}
+
 	i := iris.New()
 
 	i.HandleDir("/assets", assetsFS)
