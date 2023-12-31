@@ -30,6 +30,13 @@ type (
 	}
 )
 
+var (
+	RemoveFile = os.Remove
+	WriteFile  = os.WriteFile
+	Unmarshal  = json.Unmarshal
+	Marshal    = json.Marshal
+)
+
 func NewSession(cfg SessionConfig) (*Session, error) {
 	dir := filepath.Clean(cfg.Dir)
 	err := mkdirValidate(dir)
@@ -40,11 +47,11 @@ func (r *Session) Save(_ context.Context, session app.Session) error {
 	if session.Token == "" {
 		return fmt.Errorf("token cannot be empty")
 	}
-	data, err := json.Marshal(sessionData(session))
+	data, err := Marshal(sessionData(session))
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(r.filename(session.Token), data, os.ModePerm)
+	err = WriteFile(r.filename(session.Token), data, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -67,7 +74,7 @@ func (r *Session) Get(_ context.Context, token app.Token) (app.Session, bool, er
 		return app.Session{}, false, err
 	}
 	var sd sessionData
-	err = json.Unmarshal(data, &sd)
+	err = Unmarshal(data, &sd)
 	if err != nil {
 		return app.Session{}, false, err
 	}
@@ -80,7 +87,7 @@ func (r *Session) Delete(_ context.Context, token app.Token) error {
 	if token == "" {
 		return fmt.Errorf("token cannot be empty")
 	}
-	err := os.Remove(r.filename(token))
+	err := RemoveFile(r.filename(token))
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
