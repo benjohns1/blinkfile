@@ -128,7 +128,8 @@ func downloadFile(ctx iris.Context, a App) error {
 		if err != nil {
 			return err
 		}
-		err = ctx.SendFile(file.Location, file.Name)
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", file.Name))
+		err = ctx.ServeFileWithRate(file.Location, 0, 0)
 		if err != nil {
 			return fmt.Errorf("sending file data: %w", err)
 		}

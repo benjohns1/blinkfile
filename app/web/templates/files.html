@@ -35,7 +35,10 @@
 </form>
 {{ render "partials/message.html" .content.MessageView }}
 {{- if (len .content.Files)}}
+
 <form action="/files/delete" method="post">
+    <label for="search" hidden>search</label>
+    <input id="search" type="text" name="search" placeholder="Search" hidden class="standard"/>
     <table id="file_table">
         <thead>
             <tr>
@@ -50,7 +53,7 @@
         <tbody>
         {{range $file := .content.Files}}
             <tr>
-                <td><a href="/file/{{$file.ID}}" target="_blank">{{$file.Name}}</a></td>
+                <td data-search><a href="/file/{{$file.ID}}" target="_blank">{{$file.Name}}</a></td>
                 <td data-sort-value="{{$file.ByteSize}}">{{$file.Size}}</td>
                 <td class="datetime" data-sort-value="{{$file.Uploaded}}">{{$file.Uploaded}}</td>
                 <td class="datetime" data-sort-value="{{$file.Expires}}">{{$file.Expires}}</td>
@@ -61,12 +64,21 @@
         </tbody>
     </table>
     <br/>
+    <p class="file_search_filtered_count" hidden></p>
     <input class="warn right" type="submit" value="Delete Selected"/>
 </form>
 {{- else}}
 <p>No files. Upload one!</p>
 {{- end}}
 <script type="text/javascript">
+    const attr = (elem, attr, bool) => {
+        if (bool) {
+            elem.setAttribute(attr, "");
+        } else {
+            elem.removeAttribute(attr);
+        }
+    }
+
     const parseDateTimes = () => {
         dayjs.extend(window.dayjs_plugin_localizedFormat);
         const dtElems = document.getElementsByClassName("datetime");
@@ -85,11 +97,7 @@
         const submitElem = document.getElementById("submit_file_upload");
         const fileElem = document.getElementById("file");
         const checkEnableSubmit = () => {
-            if (fileElem.value) {
-                submitElem.removeAttribute("disabled")
-            } else {
-                submitElem.setAttribute("disabled","")
-            }
+            attr(submitElem, "disabled", !fileElem.value)
         }
         fileElem.addEventListener("change", () => {
             checkEnableSubmit();
@@ -134,12 +142,61 @@
         datepickerElem.addEventListener("change", () => {
             datePickerChanged(datepicker.getDate());
         });
-        expirationDateElem.removeAttribute("hidden");
+        attr(expirationDateElem, "hidden", false);
     }
     expiration();
 
-    const dataTable = () => {
+    const sortTable = () => {
         document.getElementById("file_table").tsortable();
     }
-    dataTable();
+    sortTable();
+
+    const searchTable = () => {
+        const input = document.getElementById("search");
+        const rows = document.getElementById("file_table").querySelectorAll("tbody tr");
+        const countElems = document.querySelectorAll(".file_search_filtered_count");
+
+        const search = (value) => {
+            const search = value.toLowerCase();
+            let hideCount = 0;
+            let showCount = 0;
+            for (let i = rows.length-1; i >= 0; i--) {
+                const cells = rows[i].querySelectorAll("td[data-search]")
+                let match = false;
+                for (let j = cells.length-1; j >= 0; j--) {
+                    if (cells[j].textContent.toLowerCase().includes(search)) {
+                        match = true;
+                        break;
+                    }
+                }
+                attr(rows[i], "hidden", !match);
+                if (match) {
+                    showCount++;
+                } else {
+                    hideCount++;
+                }
+            }
+            if (countElems.length > 0) {
+                const pluralRows = (count) => {
+                    const r = count === 1 ? "row" : "rows";
+                    return `${count} ${r}`;
+                }
+                for (let i = 0; i < countElems.length; i++) {
+                    countElems[i].innerHTML = (showCount === 0) ?
+                        `No matches found in ${pluralRows(hideCount)}` :
+                        `Matched ${pluralRows(showCount)}, hiding ${hideCount}`;
+                    attr(countElems[i], "hidden", hideCount === 0);
+                }
+            }
+        }
+
+        input.addEventListener("input", (e) => search(e.target.value));
+
+        attr(input, "hidden", false);
+        const searchValue = input.value;
+        if (searchValue) {
+            search(searchValue);
+        }
+    }
+    searchTable();
 </script>
