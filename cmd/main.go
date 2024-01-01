@@ -61,9 +61,29 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 
-	log.Printf("Starting server on port %d", cfg.Port)
 	done := srv.Start(ctx)
+	log.Printf("Started server on port %d", cfg.Port)
+
+	go startExpiredFileCleanup(ctx, application)
+
 	return <-done
+}
+
+const expireCheckCycleTime = 15 * time.Minute
+
+func startExpiredFileCleanup(ctx context.Context, a *app.App) {
+	log.Printf("Starting expired file deletion process, running every %v", expireCheckCycleTime)
+	for {
+		if err := ctx.Err(); err != nil {
+			break
+		}
+		time.Sleep(expireCheckCycleTime)
+		err := a.DeleteExpiredFiles(ctx)
+		if err != nil {
+			log.Printf("Error deleting expired files: %v", err)
+		}
+	}
+	log.Printf("Stopped expired file deletion process")
 }
 
 type config struct {

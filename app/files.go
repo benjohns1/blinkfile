@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+func (a *App) DeleteExpiredFiles(ctx context.Context) error {
+	start := a.cfg.Now()
+	count, err := a.cfg.FileRepo.DeleteExpiredBefore(ctx, start)
+	if count > 0 {
+		a.Log.Printf(ctx, "Deleted %d expired files, took %v", count, time.Since(start))
+	}
+	return err
+}
+
 func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.FileHeader, error) {
 	files, err := a.cfg.FileRepo.ListByUser(ctx, owner)
 	if err != nil {

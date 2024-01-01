@@ -29,6 +29,7 @@ type (
 	FileRepo interface {
 		Save(context.Context, domain.File) error
 		ListByUser(context.Context, domain.UserID) ([]domain.FileHeader, error)
+		DeleteExpiredBefore(context.Context, time.Time) (int, error)
 		Get(context.Context, domain.FileID) (domain.FileHeader, error)
 		Delete(context.Context, domain.UserID, []domain.FileID) error
 	}

@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type (
 	}
 
 	FileRepo struct {
+		mu         sync.RWMutex
 		dir        string
 		ownerIndex map[domain.UserID]map[domain.FileID]fileHeader
 		idIndex    map[domain.FileID]fileHeader
@@ -49,11 +51,14 @@ func NewFileRepo(ctx context.Context, cfg FileRepoConfig) (*FileRepo, error) {
 		return nil, err
 	}
 	r := &FileRepo{
+		sync.RWMutex{},
 		dir,
 		make(map[domain.UserID]map[domain.FileID]fileHeader),
 		make(map[domain.FileID]fileHeader),
 		cfg.Log,
 	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	err = r.buildIndices(ctx, dir)
 	if err != nil {
 		return nil, err
@@ -109,6 +114,8 @@ func loadFileHeader(_ context.Context, path string) (header fileHeader, err erro
 }
 
 func (r *FileRepo) Save(_ context.Context, file domain.File) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	header := fileHeader(file.FileHeader)
 	dir, filename, headerFilename := filenames(r.dir, header.ID)
 	header.Location = filename
@@ -140,7 +147,29 @@ func (r *FileRepo) Save(_ context.Context, file domain.File) error {
 	return nil
 }
 
+func (r *FileRepo) DeleteExpiredBefore(_ context.Context, t time.Time) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var count int
+	for _, header := range r.idIndex {
+		if header.Expires.IsZero() {
+			continue
+		}
+		if header.Expires.After(t) {
+			continue
+		}
+		err := r.deleteFile(header)
+		if err != nil {
+			return count, err
+		}
+		count++
+	}
+	return count, nil
+}
+
 func (r *FileRepo) ListByUser(_ context.Context, userID domain.UserID) ([]domain.FileHeader, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	ownedFiles := r.ownerIndex[userID]
 	out := make([]domain.FileHeader, 0, len(ownedFiles))
 	for _, header := range ownedFiles {
@@ -150,6 +179,8 @@ func (r *FileRepo) ListByUser(_ context.Context, userID domain.UserID) ([]domain
 }
 
 func (r *FileRepo) Get(_ context.Context, fileID domain.FileID) (domain.FileHeader, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	header, found := r.idIndex[fileID]
 	if !found {
 		return domain.FileHeader{}, app.ErrFileNotFound
@@ -161,28 +192,34 @@ func (r *FileRepo) Get(_ context.Context, fileID domain.FileID) (domain.FileHead
 }
 
 func (r *FileRepo) Delete(_ context.Context, owner domain.UserID, deleteFiles []domain.FileID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	ownedFiles := r.ownerIndex[owner]
 
-	type deleteFile struct {
-		dir    string
-		header fileHeader
-	}
-	toRemove := make([]deleteFile, 0, len(deleteFiles))
+	toRemove := make([]fileHeader, 0, len(deleteFiles))
 	for _, fileID := range deleteFiles {
 		header, exists := ownedFiles[fileID]
 		if !exists {
 			return fmt.Errorf("file %q not found to delete by user %q", fileID, owner)
 		}
-		dir, _, _ := filenames(r.dir, fileID)
-		toRemove = append(toRemove, deleteFile{dir, header})
+		toRemove = append(toRemove, header)
 	}
 
 	for _, file := range toRemove {
-		if err := os.RemoveAll(file.dir); err != nil {
+		err := r.deleteFile(file)
+		if err != nil {
 			return err
 		}
-		r.removeFromIndices(file.header)
 	}
+	return nil
+}
+
+func (r *FileRepo) deleteFile(file fileHeader) error {
+	dir, _, _ := filenames(r.dir, file.ID)
+	if err := os.RemoveAll(dir); err != nil {
+		return err
+	}
+	r.removeFromIndices(file)
 	return nil
 }
 
