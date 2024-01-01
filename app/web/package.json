@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "dayjs": "^1.11.10",
+    "the-basicest-tablesort": "^1.2.0",
     "vanillajs-datepicker": "^1.3.4"
   }
 }

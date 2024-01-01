@@ -23,6 +23,7 @@ type (
 		Name              string
 		Uploaded          string
 		Expires           string
+		ByteSize          int64
 		Size              string
 		PasswordProtected bool
 	}
@@ -52,6 +53,7 @@ func showFiles(ctx iris.Context, a App) error {
 			Name:              file.Name,
 			Uploaded:          file.Created.Format(time.RFC3339),
 			Expires:           expires,
+			ByteSize:          file.Size,
 			Size:              formatFileSize(file.Size),
 			PasswordProtected: file.PasswordHash != "",
 		})

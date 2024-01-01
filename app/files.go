@@ -28,11 +28,11 @@ func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.File
 	}
 	sort.Slice(files, func(i, j int) bool {
 		x, y := files[i], files[j]
+		if !x.Created.Equal(y.Created) {
+			return x.Created.After(y.Created)
+		}
 		if x.Name != y.Name {
 			return x.Name < y.Name
-		}
-		if !x.Created.Equal(y.Created) {
-			return x.Created.Before(y.Created)
 		}
 		return x.ID < y.ID
 	})

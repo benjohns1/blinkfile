@@ -36,14 +36,14 @@
 {{ render "partials/message.html" .content.MessageView }}
 {{- if (len .content.Files)}}
 <form action="/files/delete" method="post">
-    <table>
+    <table id="file_table">
         <thead>
             <tr>
-                <th>File</th>
-                <th>Size</th>
-                <th>Uploaded</th>
-                <th>Expires</th>
-                <th>Access</th>
+                <th data-sort="string">File</th>
+                <th data-sort="float">Size</th>
+                <th data-sort="date" data-dir="desc">Uploaded</th>
+                <th data-sort="date">Expires</th>
+                <th data-sort="string">Access</th>
                 <th>Delete</th>
             </tr>
         </thead>
@@ -51,9 +51,9 @@
         {{range $file := .content.Files}}
             <tr>
                 <td><a href="/file/{{$file.ID}}" target="_blank">{{$file.Name}}</a></td>
-                <td>{{$file.Size}}</td>
-                <td class="datetime">{{$file.Uploaded}}</td>
-                <td class="datetime">{{$file.Expires}}</td>
+                <td data-sort-value="{{$file.ByteSize}}">{{$file.Size}}</td>
+                <td class="datetime" data-sort-value="{{$file.Uploaded}}">{{$file.Uploaded}}</td>
+                <td class="datetime" data-sort-value="{{$file.Expires}}">{{$file.Expires}}</td>
                 <td>{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>
@@ -137,4 +137,9 @@
         expirationDateElem.removeAttribute("hidden");
     }
     expiration();
+
+    const dataTable = () => {
+        document.getElementById("file_table").tsortable();
+    }
+    dataTable();
 </script>
