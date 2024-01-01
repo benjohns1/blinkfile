@@ -79,20 +79,6 @@
         }
     }
 
-    const parseDateTimes = () => {
-        dayjs.extend(window.dayjs_plugin_localizedFormat);
-        const dtElems = document.getElementsByClassName("datetime");
-        for (let i = 0; i < dtElems.length; i++) {
-            const innerHTML = dtElems[i].innerHTML
-            const dt = dayjs(innerHTML)
-            if (!dt.isValid()) {
-                continue;
-            }
-            dtElems[i].innerHTML = dt.format("L LT");
-        }
-    }
-    parseDateTimes();
-
     const uploadForm = () => {
         const submitElem = document.getElementById("submit_file_upload");
         const fileElem = document.getElementById("file");
@@ -146,14 +132,36 @@
     }
     expiration();
 
+    const parseDateTimes = () => {
+        dayjs.extend(window.dayjs_plugin_localizedFormat);
+        const dtElems = document.getElementsByClassName("datetime");
+        for (let i = 0; i < dtElems.length; i++) {
+            const innerHTML = dtElems[i].innerHTML
+            const dt = dayjs(innerHTML)
+            if (!dt.isValid()) {
+                continue;
+            }
+            dtElems[i].innerHTML = dt.format("L LT");
+        }
+    }
+    parseDateTimes();
+
+    const fileTable = document.getElementById("file_table");
+
     const sortTable = () => {
-        document.getElementById("file_table").tsortable();
+        if (fileTable) {
+            fileTable.tsortable();
+        }
     }
     sortTable();
 
     const searchTable = () => {
+        if (!fileTable) {
+            return;
+        }
+
         const input = document.getElementById("search");
-        const rows = document.getElementById("file_table").querySelectorAll("tbody tr");
+        const rows = fileTable.querySelectorAll("tbody tr");
         const countElems = document.querySelectorAll(".file_search_filtered_count");
 
         const search = (value) => {
