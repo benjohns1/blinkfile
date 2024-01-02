@@ -56,13 +56,6 @@ type (
 		SuccessMessage string
 		ErrorView
 	}
-
-	ErrorView struct {
-		LayoutView
-		ID      string
-		Status  int
-		Message string
-	}
 )
 
 func (c Config) parse(ctx context.Context) (Config, error) {
@@ -161,11 +154,18 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 			return randomBase64String(64)
 		},
 	})
-
 	i.Use(iris.Compression)
+	i.Use(addRequestID)
+	i.UseError(func(ctx iris.Context) {
+		irisErr := ctx.GetErr()
+		if irisErr == nil {
+			irisErr = fmt.Errorf("unknown error")
+		}
+		appErr := app.Err(app.ErrUnknown, irisErr).AddStatus(ctx.GetStatusCode())
+		showError(ctx, cfg.App, appErr)
+	})
 	i.Use(sess.Handler())
 	i.Use(setDefaultViewData(cfg.Title))
-	i.Use(addRequestID)
 	w := wrapper{cfg.App}
 
 	authenticated := i.Party("/")
@@ -236,21 +236,24 @@ func injectApp(a App, h func(ctx iris.Context, a App)) func(ctx iris.Context) {
 func handleErrors(h func(ctx iris.Context, a App) error) func(iris.Context, App) {
 	return func(ctx iris.Context, a App) {
 		err := h(ctx, a)
-		if err == nil {
-			return
+		if err != nil {
+			showError(ctx, a, err)
 		}
-		ctx.ViewData("content", ParseAppErr(ctx, err))
-		err = ctx.View("error.html")
-		if err == nil {
-			return
-		}
-		_, err = ctx.HTML("<h3>%s</h3>", err)
-		if err == nil {
-			return
-		}
-		_, err = ctx.WriteString(err.Error())
-		a.Errorf(ctx, err.Error())
 	}
+}
+
+func showError(ctx iris.Context, a App, err error) {
+	ctx.ViewData("content", ParseAppErr(ctx, a, err))
+	err = ctx.View("error.html")
+	if err == nil {
+		return
+	}
+	_, err = ctx.HTML("<h3>%s</h3>", err)
+	if err == nil {
+		return
+	}
+	_, err = ctx.WriteString(err.Error())
+	a.Errorf(ctx, err.Error())
 }
 
 const shutdownWaitTime = 10 * time.Second

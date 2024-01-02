@@ -52,18 +52,18 @@ type UploadFileArgs struct {
 func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	fileID, err := generateFileID()
 	if err != nil {
-		return Error{ErrInternal, fmt.Errorf("generating file ID: %w", err)}
+		return Err(ErrInternal, fmt.Errorf("generating file ID: %w", err))
 	}
 	hashFunc := func(password string) (hash string) {
 		return a.cfg.PasswordHasher.Hash([]byte(password))
 	}
 	if args.ExpiresIn != "" {
 		if !args.Expires.IsZero() {
-			return Error{ErrBadRequest, fmt.Errorf("cannot set both Expires In and Expires On fields")}
+			return ErrUser("Error validating file expiration.", "Can only set one of the expiration fields at a time.", nil)
 		}
 		args.Expires, err = args.ExpiresIn.AddTo(a.cfg.Now())
 		if err != nil {
-			return Error{ErrBadRequest, err}
+			return ErrUser("Error calculating file expiration.", "Expires In field is not in a valid format.", err)
 		}
 	}
 	file, err := domain.UploadFile(domain.UploadFileArgs{
@@ -78,11 +78,11 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 		Expires:  args.Expires,
 	})
 	if err != nil {
-		return Error{ErrBadRequest, err}
+		return Err(ErrBadRequest, err)
 	}
 	err = a.cfg.FileRepo.Save(ctx, file)
 	if err != nil {
-		return Error{ErrRepo, err}
+		return Err(ErrRepo, err)
 	}
 	return nil
 }
@@ -90,9 +90,9 @@ func (a *App) mimicErr(ctx context.Context, password string, err error) error {
 	if errors.Is(err, ErrFileNotFound) || errors.Is(err, domain.ErrFileExpired) {
 		a.Errorf(ctx, fmt.Sprintf("mimicking a valid response for security, but real error was: %s", err))
 		if password == "" {
-			return Error{ErrAuthzFailed, domain.ErrFilePasswordRequired}
+			return Err(ErrAuthzFailed, domain.ErrFilePasswordRequired)
 		}
-		return Error{ErrAuthzFailed, domain.ErrFilePasswordInvalid}
+		return Err(ErrAuthzFailed, domain.ErrFilePasswordInvalid)
 	}
 	return err
 }
@@ -110,7 +110,7 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	err = file.Download(userID, password, matchFunc, a.cfg.Now)
 	if err != nil {
 		if errors.Is(err, domain.ErrFilePasswordInvalid) {
-			err = Error{ErrAuthzFailed, err}
+			err = Err(ErrAuthzFailed, err)
 		}
 		err = a.mimicErr(ctx, password, err)
 		return file, err

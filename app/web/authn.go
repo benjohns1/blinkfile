@@ -78,7 +78,7 @@ func login(ctx iris.Context, a App) error {
 	view, err := doLogin(ctx, a)
 	if err != nil {
 		a.Errorf(ctx, err.Error())
-		view.ErrorView = ParseAppErr(ctx, err)
+		view.ErrorView = ParseAppErr(ctx, a, err)
 	}
 	ctx.ViewData("content", view)
 	return ctx.View("login.html")

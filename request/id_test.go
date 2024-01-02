@@ -64,11 +64,17 @@ func TestRequestID(t *testing.T) {
 		want     string
 	}{
 		{
-			name: "should retrieve an empty string if request ID is not set",
+			name: "should retrieve a new request ID if none was set",
+			randRead: func(b []byte) (n int, err error) {
+				for i := range b {
+					b[i] = 1
+				}
+				return 0, nil
+			},
 			args: args{
 				ctx: context.Background(),
 			},
-			want: "",
+			want: "0101010101010101010101010101010101010101010101010101010101010101",
 		},
 		{
 			name: "should retrieve a valid 32-byte hex-encoded request ID",
@@ -91,6 +97,11 @@ func TestRequestID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.randRead != nil {
+				prev := request.ReadRandomBytes
+				request.ReadRandomBytes = tt.randRead
+				defer func() { request.ReadRandomBytes = prev }()
+			}
 			if got := request.GetID(tt.args.ctx); got != tt.want {
 				t.Errorf("GetID() = %v, want %v", got, tt.want)
 			}

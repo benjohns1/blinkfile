@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/domain"
-	"git.jfam.app/one-way-file-send/request"
 	"github.com/kataras/iris/v12"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -82,7 +80,7 @@ func formatFileSize(size int64) string {
 func uploadFile(ctx iris.Context, a App) error {
 	file, header, err := ctx.FormFile("file")
 	if err != nil {
-		return app.Error{Type: app.ErrBadRequest, Err: err}
+		return app.ErrUser("Invalid file.", "We couldn't retrieve the uploaded file, please try again.", err)
 	}
 
 	var expiresIn app.LongDuration
@@ -95,8 +93,8 @@ func uploadFile(ctx iris.Context, a App) error {
 	if expirationTime != "" {
 		expires, err = time.Parse(time.RFC3339, expirationTime)
 		if err != nil {
-			a.Errorf(ctx, "parsing expiration time %q: %w", expirationTime, err)
-			return app.Error{Type: app.ErrBadRequest, Err: fmt.Errorf("parsing the file expiration time")}
+			err = fmt.Errorf("parsing expiration time %q: %w", expirationTime, err)
+			return app.ErrUser("Invalid expiration time.", fmt.Sprintf("We couldn't understand the file expiration time %q, please make sure the date format is correct.", expirationTime), err)
 		}
 	}
 	args := app.UploadFileArgs{
@@ -116,6 +114,10 @@ func uploadFile(ctx iris.Context, a App) error {
 	return nil
 }
 
+func sanitizeFilename(in string) string {
+	return strings.ReplaceAll(in, ";", "_")
+}
+
 func downloadFile(ctx iris.Context, a App) error {
 	fileID := domain.FileID(ctx.Params().Get("file_id"))
 	view := FileDownloadView{
@@ -128,7 +130,7 @@ func downloadFile(ctx iris.Context, a App) error {
 		if err != nil {
 			return err
 		}
-		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", file.Name))
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", sanitizeFilename(file.Name)))
 		err = ctx.ServeFileWithRate(file.Location, 0, 0)
 		if err != nil {
 			return fmt.Errorf("sending file data: %w", err)
@@ -136,15 +138,12 @@ func downloadFile(ctx iris.Context, a App) error {
 		return nil
 	}()
 	if err != nil {
-		a.Errorf(ctx, err.Error())
 		if errors.Is(err, domain.ErrFilePasswordRequired) {
 			view.MessageView.SuccessMessage = "Password required"
 		} else if errors.Is(err, domain.ErrFilePasswordInvalid) {
-			view.ErrorView = ErrorView{
-				ID:      request.GetID(ctx),
-				Status:  http.StatusUnauthorized,
-				Message: "Invalid password",
-			}
+			errView := ParseAppErr(ctx, a, err)
+			errView.Detail = "Invalid password"
+			view.ErrorView = errView
 		}
 		ctx.ViewData("content", view)
 		return ctx.View("file.html")

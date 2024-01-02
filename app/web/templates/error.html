@@ -1,3 +1,8 @@
 <h3>{{.content.Status}} Error</h3>
-<h4>{{.content.Message}}</h4>
-<p>Code: {{.content.ID}}</p>
+<h4>{{.content.Title}}</h4>
+<p>{{.content.Detail}}</p>
+<ul>
+    {{if .content.ID}}<li><b>ID:</b> {{.content.ID}}</li>{{end}}
+    {{if .content.Type}}<li><b>Type: </b>{{.content.Type}}</li>{{end}}
+    {{if .content.Instance}}<li><b>Instance: </b>{{.content.Instance}}</li>{{end}}
+</ul>

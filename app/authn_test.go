@@ -32,7 +32,7 @@ func TestApp_Login(t *testing.T) {
 			args: args{
 				username: "",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrAuthnFailed,
 				Err:  fmt.Errorf("invalid credentials: username cannot be empty"),
 			},
@@ -43,7 +43,7 @@ func TestApp_Login(t *testing.T) {
 				username: "admin",
 				password: "",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrAuthnFailed,
 				Err:  fmt.Errorf("invalid credentials: password cannot be empty"),
 			},
@@ -54,7 +54,7 @@ func TestApp_Login(t *testing.T) {
 				username: "unknown-username",
 				password: "super-secret-password",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrAuthnFailed,
 				Err:  fmt.Errorf(`invalid credentials: no username "unknown-username" found`),
 			},
@@ -69,7 +69,7 @@ func TestApp_Login(t *testing.T) {
 				username: "admin-username",
 				password: "bad-password",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrAuthnFailed,
 				Err:  fmt.Errorf(`invalid credentials: passwords do not match`),
 			},
@@ -87,7 +87,7 @@ func TestApp_Login(t *testing.T) {
 				username: "admin-username",
 				password: "super-secret-password",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrInternal,
 				Err:  fmt.Errorf("token generation error"),
 			},
@@ -110,7 +110,7 @@ func TestApp_Login(t *testing.T) {
 				username: "admin-username",
 				password: "super-secret-password",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrRepo,
 				Err:  fmt.Errorf("session save error"),
 			},
@@ -220,7 +220,7 @@ func TestApp_Logout(t *testing.T) {
 			args: args{
 				token: "token1",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrRepo,
 				Err:  fmt.Errorf("session delete error"),
 			},
@@ -288,7 +288,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			args: args{
 				token: "",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrBadRequest,
 				Err:  fmt.Errorf("session token cannot be empty"),
 			},
@@ -305,7 +305,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			args: args{
 				token: "token1",
 			},
-			wantErr: app.Error{
+			wantErr: &app.Error{
 				Type: app.ErrRepo,
 				Err:  fmt.Errorf("session get error"),
 			},

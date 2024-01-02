@@ -44,11 +44,11 @@ func (a *App) CredentialsMatch(c Credentials, username domain.Username, password
 
 func (a *App) IsAuthenticated(ctx context.Context, token Token) (domain.UserID, bool, error) {
 	if token == "" {
-		return "", false, Error{ErrBadRequest, fmt.Errorf("session token cannot be empty")}
+		return "", false, Err(ErrBadRequest, fmt.Errorf("session token cannot be empty"))
 	}
 	session, found, err := a.cfg.SessionRepo.Get(ctx, token)
 	if err != nil {
-		return "", false, Error{ErrRepo, err}
+		return "", false, Err(ErrRepo, err)
 	}
 	if !found {
 		return "", false, nil
@@ -74,7 +74,7 @@ func (a *App) Login(ctx context.Context, username domain.Username, password stri
 func (a *App) Logout(ctx context.Context, token Token) error {
 	err := a.cfg.SessionRepo.Delete(ctx, token)
 	if err != nil {
-		return Error{ErrRepo, err}
+		return Err(ErrRepo, err)
 	}
 	return nil
 }
@@ -82,7 +82,7 @@ func (a *App) Logout(ctx context.Context, token Token) error {
 func (a *App) newSession(ctx context.Context, userID domain.UserID, data SessionRequestData) (Session, error) {
 	token, err := a.cfg.GenerateToken()
 	if err != nil {
-		return Session{}, Error{ErrInternal, err}
+		return Session{}, Err(ErrInternal, err)
 	}
 	session := Session{
 		Token:              token,
@@ -93,49 +93,31 @@ func (a *App) newSession(ctx context.Context, userID domain.UserID, data Session
 	}
 	err = a.cfg.SessionRepo.Save(ctx, session)
 	if err != nil {
-		return Session{}, Error{ErrRepo, err}
+		return Session{}, Err(ErrRepo, err)
 	}
 	return session, nil
 }
 
 func (a *App) authenticate(username domain.Username, password string) (domain.UserID, error) {
 	if username == "" {
-		return "", Error{
-			Type: ErrAuthnFailed,
-			Err:  fmt.Errorf("invalid credentials: username cannot be empty"),
-		}
+		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: username cannot be empty"))
 	}
 	if password == "" {
-		return "", Error{
-			Type: ErrAuthnFailed,
-			Err:  fmt.Errorf("invalid credentials: password cannot be empty"),
-		}
+		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: password cannot be empty"))
 	}
 	credentials, found, err := a.getCredentials(username)
 	if err != nil {
-		return "", Error{
-			Type: ErrInternal,
-			Err:  fmt.Errorf("error retrieving credentials for %q: %w", username, err),
-		}
+		return "", Err(ErrInternal, fmt.Errorf("error retrieving credentials for %q: %w", username, err))
 	}
 	if !found {
-		return "", Error{
-			Type: ErrAuthnFailed,
-			Err:  fmt.Errorf("invalid credentials: no username %q found", username),
-		}
+		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: no username %q found", username))
 	}
 	match, err := a.CredentialsMatch(credentials, username, password)
 	if err != nil {
-		return "", Error{
-			Type: ErrInternal,
-			Err:  fmt.Errorf("error matching credentials: %w", err),
-		}
+		return "", Err(ErrInternal, fmt.Errorf("error matching credentials: %w", err))
 	}
 	if !match {
-		return "", Error{
-			Type: ErrAuthnFailed,
-			Err:  fmt.Errorf("invalid credentials: passwords do not match"),
-		}
+		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: passwords do not match"))
 	}
 	return credentials.UserID, nil
 }
