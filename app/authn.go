@@ -68,14 +68,18 @@ func (a *App) Login(ctx context.Context, username domain.Username, password stri
 	if err != nil {
 		return Session{}, err
 	}
+	a.Log.Printf(ctx, "User ID %q logged in", userID)
 	return session, nil
 }
 
 func (a *App) Logout(ctx context.Context, token Token) error {
+	session, _, _ := a.cfg.SessionRepo.Get(ctx, token)
+	userID := session.UserID
 	err := a.cfg.SessionRepo.Delete(ctx, token)
 	if err != nil {
 		return Err(ErrRepo, err)
 	}
+	a.Log.Printf(ctx, "User ID %q logged out", userID)
 	return nil
 }
 
