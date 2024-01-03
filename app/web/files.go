@@ -3,8 +3,8 @@ package web
 import (
 	"errors"
 	"fmt"
-	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/blinkfile/app"
+	"git.jfam.app/blinkfile/domain"
 	"github.com/kataras/iris/v12"
 	"strings"
 	"time"

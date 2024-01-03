@@ -6,9 +6,9 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
-	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/domain"
-	"git.jfam.app/one-way-file-send/request"
+	"git.jfam.app/blinkfile/app"
+	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile/request"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/rate"
 	"github.com/kataras/iris/v12/sessions"
@@ -64,7 +64,7 @@ func (c Config) parse(ctx context.Context) (Config, error) {
 		cfg.MaxFileByteSize = 2 * iris.GB
 	}
 	if cfg.Title == "" {
-		const defaultTitle = "File Sender"
+		const defaultTitle = "BlinkFile"
 		c.App.Printf(ctx, "Setting Title to default %q", defaultTitle)
 		cfg.Title = defaultTitle
 	}

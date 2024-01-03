@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"git.jfam.app/one-way-file-send/app"
-	"git.jfam.app/one-way-file-send/request"
+	"git.jfam.app/blinkfile/app"
+	"git.jfam.app/blinkfile/request"
 	"net/http"
 )
 

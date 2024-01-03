@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/blinkfile/domain"
 	"time"
 )
 

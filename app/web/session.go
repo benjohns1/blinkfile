@@ -2,7 +2,7 @@ package web
 
 import (
 	"fmt"
-	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/blinkfile/domain"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/sessions"
 )

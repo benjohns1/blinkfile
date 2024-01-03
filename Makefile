@@ -1,9 +1,13 @@
-build:
-	docker build --tag one-way-file-send .
-
 run: build
-	docker volume create one-way-file-send-data
-	docker run --name one-way-file-send -p 8000:8000 -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD=1234123412341234 -e DATA_DIR=/data -v one-way-file-send-data:/data --rm one-way-file-send
+	docker volume create blinkfile-data
+	docker run --name blinkfile -p 8000:8000 -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD=1234123412341234 -e DATA_DIR=/data -v blinkfile-data:/data --rm blinkfile
+
+build:
+	docker build --tag blinkfile .
+
+deploy: build
+	docker tag blinkfile ${REGISTRY}/blinkfile
+	docker push ${REGISTRY}/blinkfile
 
 test:
 	go test -coverprofile coverage.out ./...

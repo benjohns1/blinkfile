@@ -3,8 +3,8 @@ package repo_test
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/one-way-file-send/app/repo"
-	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/blinkfile/app/repo"
+	"git.jfam.app/blinkfile/domain"
 	"io"
 	"os"
 	"path/filepath"

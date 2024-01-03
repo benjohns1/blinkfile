@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/blinkfile/domain"
 )
 
 type (

@@ -1,4 +1,4 @@
-module git.jfam.app/one-way-file-send
+module git.jfam.app/blinkfile
 
 go 1.21
 

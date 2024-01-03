@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/blinkfile/domain"
 	"io"
 	"sort"
 	"time"

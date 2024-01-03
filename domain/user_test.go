@@ -2,7 +2,7 @@ package domain_test
 
 import (
 	"fmt"
-	"git.jfam.app/one-way-file-send/domain"
+	"git.jfam.app/blinkfile/domain"
 	"reflect"
 	"testing"
 	"time"
