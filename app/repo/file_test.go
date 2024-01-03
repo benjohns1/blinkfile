@@ -38,13 +38,16 @@ func newFileDir(t *testing.T, dirName string) string {
 
 func TestNewFileRepo(t *testing.T) {
 	type args struct {
+		ctx context.Context
 		cfg repo.FileRepoConfig
 	}
 	tests := []struct {
-		name     string
-		mkdirAll func(path string, perm os.FileMode) error
-		args     args
-		wantErr  error
+		name        string
+		mkdirAll    func(path string, perm os.FileMode) error
+		readFile    func(name string) ([]byte, error)
+		args        args
+		wantErr     error
+		wantErrLogs []string
 	}{
 		{
 			name: "should fail if making directory fails",
@@ -57,9 +60,93 @@ func TestNewFileRepo(t *testing.T) {
 			wantErr: fmt.Errorf(`making directory %q: %w`, filepath.Clean("_test/repo_file/new1"), fmt.Errorf("mkdir err")),
 		},
 		{
+			name: "should halt building existing indexes if context is cancelled",
+			args: args{
+				ctx: func() context.Context {
+					ctx, cancelFunc := context.WithCancel(context.Background())
+					cancelFunc()
+					return ctx
+				}(),
+				cfg: func() repo.FileRepoConfig {
+					cfg := repo.FileRepoConfig{Dir: newFileDir(t, "haltIndexing1")}
+					r, err := repo.NewFileRepo(context.Background(), cfg)
+					if err != nil {
+						t.Fatal(err)
+					}
+					err = r.Save(context.Background(), domain.File{
+						FileHeader: domain.FileHeader{
+							ID:    "file1",
+							Name:  "filename",
+							Owner: "user1",
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					})
+					if err != nil {
+						t.Fatal(err)
+					}
+					return cfg
+				}(),
+			},
+			wantErr: fmt.Errorf("context canceled"),
+		},
+		{
+			name: "should still create a file repo even if reading an existing file header fails, but log an error",
+			args: args{
+				cfg: func() repo.FileRepoConfig {
+					cfg := repo.FileRepoConfig{Dir: newFileDir(t, "readFileHeader1")}
+					r, err := repo.NewFileRepo(context.Background(), cfg)
+					if err != nil {
+						t.Fatal(err)
+					}
+					err = r.Save(context.Background(), domain.File{
+						FileHeader: domain.FileHeader{
+							ID:    "file1",
+							Name:  "filename",
+							Owner: "user1",
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					})
+					if err != nil {
+						t.Fatal(err)
+					}
+					return cfg
+				}(),
+			},
+			readFile: func(name string) ([]byte, error) {
+				return nil, fmt.Errorf("file read err")
+			},
+			wantErrLogs: []string{
+				fmt.Sprintf("Loading file header %q: file read err", `_test\repo_file\readFileHeader1\file1\header.json`),
+			},
+		},
+		{
 			name: "should create a new file repo",
 			args: args{
 				cfg: repo.FileRepoConfig{Dir: newFileDir(t, "new1")},
+			},
+		},
+		{
+			name: "should create a new file repo with existing files",
+			args: args{
+				cfg: func() repo.FileRepoConfig {
+					cfg := repo.FileRepoConfig{Dir: newFileDir(t, "existingFiles1")}
+					r, err := repo.NewFileRepo(context.Background(), cfg)
+					if err != nil {
+						t.Fatal(err)
+					}
+					err = r.Save(context.Background(), domain.File{
+						FileHeader: domain.FileHeader{
+							ID:    "file1",
+							Name:  "filename",
+							Owner: "user1",
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					})
+					if err != nil {
+						t.Fatal(err)
+					}
+					return cfg
+				}(),
 			},
 		},
 	}
@@ -70,11 +157,26 @@ func TestNewFileRepo(t *testing.T) {
 				repo.MkdirAll = tt.mkdirAll
 				defer func() { repo.MkdirAll = prev }()
 			}
+			if tt.readFile != nil {
+				prev := repo.ReadFile
+				repo.ReadFile = tt.readFile
+				defer func() { repo.ReadFile = prev }()
+			}
+			spy := &spyLog{}
+			if tt.args.cfg.Log == nil {
+				tt.args.cfg.Log = spy
+			}
 			defer cleanDir(t, tt.args.cfg.Dir)
-			_, err := repo.NewFileRepo(context.Background(), tt.args.cfg)
+			if tt.args.ctx == nil {
+				tt.args.ctx = context.Background()
+			}
+			_, err := repo.NewFileRepo(tt.args.ctx, tt.args.cfg)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("NewSession() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if tt.wantErrLogs != nil && !reflect.DeepEqual(spy.errors, tt.wantErrLogs) {
+				t.Errorf("NewSession() error logs = %v, wantErrLogs %v", spy.errors, tt.wantErrLogs)
 			}
 		})
 	}
@@ -158,4 +260,12 @@ func TestFileRepo_Save(t *testing.T) {
 			}
 		})
 	}
+}
+
+type spyLog struct {
+	errors []string
+}
+
+func (l *spyLog) Errorf(_ context.Context, format string, v ...any) {
+	l.errors = append(l.errors, fmt.Sprintf(format, v...))
 }

@@ -68,7 +68,7 @@ func NewFileRepo(ctx context.Context, cfg FileRepoConfig) (*FileRepo, error) {
 func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			return filepath.SkipAll
+			return ctxErr
 		}
 		if err != nil {
 			r.Errorf(ctx, "Loading file from %q: %v", path, err)
