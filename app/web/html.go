@@ -155,7 +155,10 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		},
 	})
 	i.Use(iris.Compression)
-	i.Use(addRequestID)
+	i.Use(func(ctx iris.Context) {
+		ctx = withRequestID(ctx)
+		ctx.Next()
+	})
 	i.UseError(func(ctx iris.Context) {
 		irisErr := ctx.GetErr()
 		if irisErr == nil {
@@ -198,11 +201,11 @@ func maxSize(byteSize int64) func(iris.Context) {
 	}
 }
 
-func addRequestID(ctx iris.Context) {
+func withRequestID(ctx iris.Context) iris.Context {
 	newCtx := request.CtxWithNewID(ctx)
 	r := ctx.Request().WithContext(newCtx)
 	ctx.ResetRequest(r)
-	ctx.Next()
+	return ctx
 }
 
 func setDefaultViewData(title string) func(iris.Context) {
@@ -243,6 +246,10 @@ func handleErrors(h func(ctx iris.Context, a App) error) func(iris.Context, App)
 }
 
 func showError(ctx iris.Context, a App, err error) {
+	reqID := request.GetID(ctx)
+	if reqID == "" {
+		ctx = withRequestID(ctx)
+	}
 	ctx.ViewData("content", ParseAppErr(ctx, a, err))
 	err = ctx.View("error.html")
 	if err == nil {
