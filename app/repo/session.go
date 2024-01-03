@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
@@ -28,13 +27,6 @@ type (
 		Expires  time.Time
 		app.SessionRequestData
 	}
-)
-
-var (
-	RemoveFile = os.Remove
-	WriteFile  = os.WriteFile
-	Unmarshal  = json.Unmarshal
-	Marshal    = json.Marshal
 )
 
 func NewSession(cfg SessionConfig) (*Session, error) {
@@ -66,7 +58,7 @@ func (r *Session) Get(_ context.Context, token app.Token) (app.Session, bool, er
 	if token == "" {
 		return app.Session{}, false, fmt.Errorf("token cannot be empty")
 	}
-	data, err := os.ReadFile(r.filename(token))
+	data, err := ReadFile(r.filename(token))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			err = nil

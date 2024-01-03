@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"git.jfam.app/one-way-file-send/app"
 	"git.jfam.app/one-way-file-send/domain"
@@ -106,34 +105,37 @@ func (r *FileRepo) removeFromIndices(header fileHeader) {
 }
 
 func loadFileHeader(_ context.Context, path string) (header fileHeader, err error) {
-	data, err := os.ReadFile(path)
+	data, err := ReadFile(path)
 	if err != nil {
 		return header, err
 	}
-	return header, json.Unmarshal(data, &header)
+	return header, Unmarshal(data, &header)
 }
 
 func (r *FileRepo) Save(_ context.Context, file domain.File) error {
+	if file.Data == nil {
+		return fmt.Errorf("file data cannot be nil")
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	header := fileHeader(file.FileHeader)
 	dir, filename, headerFilename := filenames(r.dir, header.ID)
 	header.Location = filename
-	err := os.MkdirAll(dir, os.ModeDir)
+	err := MkdirAll(dir, os.ModeDir)
 	if err != nil {
 		return fmt.Errorf("making directory %q: %w", dir, err)
 	}
 
-	data, err := json.Marshal(header)
+	data, err := Marshal(header)
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(headerFilename, data, os.ModePerm)
+	err = WriteFile(headerFilename, data, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	target, err := os.Create(filename)
+	target, err := CreateFile(filename)
 	if err != nil {
 		return fmt.Errorf("creating file %q: %w", filename, err)
 	}
@@ -227,5 +229,5 @@ func filenames(root string, fileID domain.FileID) (dir, file, header string) {
 	dir = fmt.Sprintf("%s/%s", root, fileID)
 	file = fmt.Sprintf("%s/file", dir)
 	header = fmt.Sprintf("%s/header.json", dir)
-	return dir, file, header
+	return filepath.Clean(dir), filepath.Clean(file), filepath.Clean(header)
 }
