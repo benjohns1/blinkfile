@@ -6,8 +6,8 @@ build:
 	docker build --tag blinkfile .
 
 deploy: build
-	docker tag blinkfile ${REGISTRY}/blinkfile
-	docker push ${REGISTRY}/blinkfile
+	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
+	docker push ${CONTAINER_REGISTRY}/blinkfile
 
 test:
 	go test -coverprofile coverage.out ./...
