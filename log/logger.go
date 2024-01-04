@@ -27,11 +27,11 @@ func New(cfg Config) Log {
 }
 
 func (l Log) Printf(ctx context.Context, format string, v ...any) {
-	var reqIDSuffix string
+	var prefix string
 	if reqID := l.getRequestID(ctx); reqID != "" {
-		reqIDSuffix = fmt.Sprintf(", Request ID: %s", reqID)
+		prefix = fmt.Sprintf("%s: ", reqID)
 	}
-	Printf("%s%s", fmt.Sprintf(format, v...), reqIDSuffix)
+	Printf("%s%s", prefix, fmt.Sprintf(format, v...))
 }
 
 func (l Log) Errorf(ctx context.Context, format string, v ...any) {

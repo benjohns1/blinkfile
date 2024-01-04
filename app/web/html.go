@@ -159,12 +159,14 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		ctx = withRequestID(ctx)
 		ctx.Next()
 	})
+	i.Use(logRequest(cfg.App))
 	i.UseError(func(ctx iris.Context) {
-		irisErr := ctx.GetErr()
-		if irisErr == nil {
-			irisErr = fmt.Errorf("unknown error")
+		reqID := request.GetID(ctx)
+		if reqID == "" {
+			ctx = withRequestID(ctx)
 		}
-		appErr := app.Err(app.ErrUnknown, irisErr).AddStatus(ctx.GetStatusCode())
+		logRequestStart(ctx, cfg.App)
+		appErr := parseIrisErr(ctx)
 		showError(ctx, cfg.App, appErr)
 	})
 	i.Use(sess.Handler())
@@ -192,6 +194,21 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	}
 
 	return &HTML{i, cfg}, nil
+}
+
+func logRequestStart(ctx iris.Context, l app.Log) {
+	req := ctx.Request()
+	l.Printf(ctx, "%s %s | RemoteAddr: %s | UserAgent: %s", req.Method, req.RequestURI, req.RemoteAddr, req.UserAgent())
+}
+
+func logRequest(l app.Log) func(iris.Context) {
+	return func(ctx iris.Context) {
+		start := time.Now()
+		logRequestStart(ctx, l)
+		ctx.Next()
+		resp := ctx.ResponseWriter()
+		l.Printf(ctx, "%d response took %v", resp.StatusCode(), time.Since(start))
+	}
 }
 
 func maxSize(byteSize int64) func(iris.Context) {
@@ -234,33 +251,6 @@ func injectApp(a App, h func(ctx iris.Context, a App)) func(ctx iris.Context) {
 	return func(ctx iris.Context) {
 		h(ctx, a)
 	}
-}
-
-func handleErrors(h func(ctx iris.Context, a App) error) func(iris.Context, App) {
-	return func(ctx iris.Context, a App) {
-		err := h(ctx, a)
-		if err != nil {
-			showError(ctx, a, err)
-		}
-	}
-}
-
-func showError(ctx iris.Context, a App, err error) {
-	reqID := request.GetID(ctx)
-	if reqID == "" {
-		ctx = withRequestID(ctx)
-	}
-	ctx.ViewData("content", ParseAppErr(ctx, a, err))
-	err = ctx.View("error.html")
-	if err == nil {
-		return
-	}
-	_, err = ctx.HTML("<h3>%s</h3>", err)
-	if err == nil {
-		return
-	}
-	_, err = ctx.WriteString(err.Error())
-	a.Errorf(ctx, err.Error())
 }
 
 const shutdownWaitTime = 10 * time.Second

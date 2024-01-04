@@ -63,6 +63,10 @@ func NewFileRepo(ctx context.Context, cfg FileRepoConfig) (*FileRepo, error) {
 	return r, err
 }
 
+func (r *FileRepo) Dir() string {
+	return r.dir
+}
+
 func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if ctxErr := ctx.Err(); ctxErr != nil {

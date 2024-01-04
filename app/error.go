@@ -15,7 +15,11 @@ type (
 )
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("%s: %s", e.Type, e.Err.Error())
+	var moreDetail string
+	if e.Status != 0 || e.Title != "" || e.Detail != "" {
+		moreDetail = fmt.Sprintf(" (%d %s: %s)", e.Status, e.Title, e.Detail)
+	}
+	return fmt.Sprintf("%s: %s%s", e.Type, e.Err.Error(), moreDetail)
 }
 
 func (e *Error) Unwrap() error {

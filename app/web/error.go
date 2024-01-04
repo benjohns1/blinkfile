@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"git.jfam.app/blinkfile/app"
 	"git.jfam.app/blinkfile/request"
+	"github.com/kataras/iris/v12"
 	"net/http"
 )
 
@@ -17,6 +18,56 @@ type ErrorView struct {
 	Detail   string
 	Instance string
 	Status   int
+}
+
+func parseIrisErr(ctx iris.Context) *app.Error {
+	status := ctx.GetStatusCode()
+	text := http.StatusText(status)
+	if text == "" {
+		text = "Unknown Error"
+	}
+	irisErr := ctx.GetErr()
+	if irisErr == nil {
+		irisErr = fmt.Errorf(text)
+	}
+	errType := app.ErrUnknown
+	var detail string
+	switch status {
+	case http.StatusNotFound:
+		errType = app.ErrNotFound
+		detail = fmt.Sprintf("Sorry, but the resource at %q could not be found.", ctx.Request().RequestURI)
+	}
+	appErr := &app.Error{
+		Type:   errType,
+		Title:  text,
+		Detail: detail,
+		Err:    irisErr,
+		Status: status,
+	}
+	return appErr
+}
+
+func handleErrors(h func(ctx iris.Context, a App) error) func(iris.Context, App) {
+	return func(ctx iris.Context, a App) {
+		err := h(ctx, a)
+		if err != nil {
+			showError(ctx, a, err)
+		}
+	}
+}
+
+func showError(ctx iris.Context, a App, err error) {
+	ctx.ViewData("content", ParseAppErr(ctx, a, err))
+	err = ctx.View("error.html")
+	if err == nil {
+		return
+	}
+	_, err = ctx.HTML("<h3>%s</h3>", err)
+	if err == nil {
+		return
+	}
+	_, err = ctx.WriteString(err.Error())
+	a.Errorf(ctx, err.Error())
 }
 
 func ParseAppErr(ctx context.Context, a App, err error) ErrorView {
@@ -31,6 +82,12 @@ func ParseAppErr(ctx context.Context, a App, err error) ErrorView {
 }
 
 var defaultErrors = map[app.ErrorType]ErrorView{
+	app.ErrNotFound: {
+		Type:   "/problems/not-found",
+		Title:  "Not Found",
+		Detail: "Sorry, but the resource could not be found.",
+		Status: http.StatusNotFound,
+	},
 	app.ErrBadRequest: {
 		Type:   "/problems/bad-request",
 		Title:  "Bad Request",

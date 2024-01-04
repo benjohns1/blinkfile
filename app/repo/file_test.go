@@ -123,7 +123,7 @@ func TestNewFileRepo(t *testing.T) {
 				return func() { repo.ReadFile = prev }
 			},
 			wantErrLogs: []string{
-				fmt.Sprintf("Loading file header %q: file read err", `_test\repo_file\readFileHeader1\file1\header.json`),
+				fmt.Sprintf("Loading file header %q: file read err", filepath.Clean(`_test/repo_file/readFileHeader1/file1/header.json`)),
 			},
 		},
 		{
@@ -188,14 +188,13 @@ func TestFileRepo_Save(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		cfg     repo.FileRepoConfig
+		r       *repo.FileRepo
 		patch   func(*testing.T) func()
 		args    args
 		wantErr error
 	}{
 		{
 			name: "should fail if the file data is nil",
-			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "")},
 			args: args{
 				file: domain.File{
 					FileHeader: domain.FileHeader{
@@ -208,7 +207,7 @@ func TestFileRepo_Save(t *testing.T) {
 		},
 		{
 			name: "should fail if making the file directory fails",
-			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "mkdirfail1")},
+			r:    newTestFileRepo(t, "mkdirfail1"),
 			args: args{
 				file: domain.File{
 					FileHeader: domain.FileHeader{
@@ -231,7 +230,6 @@ func TestFileRepo_Save(t *testing.T) {
 		},
 		{
 			name: "should fail if marshaling the file header fails",
-			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "")},
 			args: args{
 				file: domain.File{
 					FileHeader: domain.FileHeader{
@@ -254,7 +252,6 @@ func TestFileRepo_Save(t *testing.T) {
 		},
 		{
 			name: "should fail if writing the file header fails",
-			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "")},
 			args: args{
 				file: domain.File{
 					FileHeader: domain.FileHeader{
@@ -277,7 +274,7 @@ func TestFileRepo_Save(t *testing.T) {
 		},
 		{
 			name: "should fail if creating the data file fails",
-			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "createFail")},
+			r:    newTestFileRepo(t, "createFail"),
 			args: args{
 				file: domain.File{
 					FileHeader: domain.FileHeader{
@@ -300,7 +297,7 @@ func TestFileRepo_Save(t *testing.T) {
 		},
 		{
 			name: "should fail if copying the buffer for the data file fails",
-			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "bufferCopyFail")},
+			r:    newTestFileRepo(t, "bufferCopyFail"),
 			args: args{
 				file: domain.File{
 					FileHeader: domain.FileHeader{
@@ -323,7 +320,6 @@ func TestFileRepo_Save(t *testing.T) {
 		},
 		{
 			name: "should save a file",
-			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "")},
 			args: args{
 				file: domain.File{
 					FileHeader: domain.FileHeader{
@@ -343,12 +339,11 @@ func TestFileRepo_Save(t *testing.T) {
 			if tt.patch != nil {
 				defer tt.patch(t)()
 			}
-			defer cleanDir(t, tt.cfg.Dir)
-			r, err := repo.NewFileRepo(context.Background(), tt.cfg)
-			if err != nil {
-				t.Fatal(err)
+			if tt.r == nil {
+				tt.r = newTestFileRepo(t, "")
 			}
-			err = r.Save(context.Background(), tt.args.file)
+			defer cleanDir(t, tt.r.Dir())
+			err := tt.r.Save(context.Background(), tt.args.file)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -362,4 +357,48 @@ type spyLog struct {
 
 func (l *spyLog) Errorf(_ context.Context, format string, v ...any) {
 	l.errors = append(l.errors, fmt.Sprintf(format, v...))
+}
+
+func newTestFileRepo(t *testing.T, dir string) *repo.FileRepo {
+	r, err := repo.NewFileRepo(context.Background(), repo.FileRepoConfig{Dir: newFileDir(t, dir)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return r
+}
+
+func TestFileRepo_DeleteExpiredBefore(t *testing.T) {
+	type args struct {
+		t time.Time
+	}
+	tests := []struct {
+		name    string
+		r       *repo.FileRepo
+		args    args
+		want    int
+		wantErr error
+	}{
+		{
+			name:    "should do nothing if repo is empty",
+			want:    0,
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			if tt.r == nil {
+				tt.r = newTestFileRepo(t, "")
+			}
+			defer cleanDir(t, tt.r.Dir())
+			got, err := tt.r.DeleteExpiredBefore(ctx, tt.args.t)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("DeleteExpiredBefore() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("DeleteExpiredBefore() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

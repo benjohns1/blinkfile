@@ -58,7 +58,7 @@ func TestLog_Printf(t *testing.T) {
 				ctx:    context.Background(),
 				format: "msg",
 			},
-			wantSpy: []string{"msg, Request ID: 12345"},
+			wantSpy: []string{"12345: msg"},
 		},
 	}
 	for _, tt := range tests {
