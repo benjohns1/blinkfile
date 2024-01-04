@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"git.jfam.app/blinkfile/app"
 	"git.jfam.app/blinkfile/domain"
-	"io"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -121,18 +119,18 @@ func (r *FileRepo) Save(_ context.Context, file domain.File) error {
 	header := fileHeader(file.FileHeader)
 	dir, filename, headerFilename := filenames(r.dir, header.ID)
 	header.Location = filename
-	err := MkdirAll(dir, os.ModeDir)
+	err := MkdirAll(dir, ModeDir)
 	if err != nil {
 		return fmt.Errorf("making directory %q: %w", dir, err)
 	}
 
 	data, err := Marshal(header)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshaling file header: %w", err)
 	}
-	err = WriteFile(headerFilename, data, os.ModePerm)
+	err = WriteFile(headerFilename, data, ModePerm)
 	if err != nil {
-		return err
+		return fmt.Errorf("writing file header: %w", err)
 	}
 
 	target, err := CreateFile(filename)
@@ -140,7 +138,7 @@ func (r *FileRepo) Save(_ context.Context, file domain.File) error {
 		return fmt.Errorf("creating file %q: %w", filename, err)
 	}
 	defer func() { _ = target.Close() }()
-	_, err = io.Copy(target, file.Data)
+	_, err = Copy(target, file.Data)
 	if err != nil {
 		return fmt.Errorf("writing file %q: %w", filename, err)
 	}
@@ -218,7 +216,7 @@ func (r *FileRepo) Delete(_ context.Context, owner domain.UserID, deleteFiles []
 
 func (r *FileRepo) deleteFile(file fileHeader) error {
 	dir, _, _ := filenames(r.dir, file.ID)
-	if err := os.RemoveAll(dir); err != nil {
+	if err := RemoveAll(dir); err != nil {
 		return err
 	}
 	r.removeFromIndices(file)

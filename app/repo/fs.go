@@ -3,6 +3,7 @@ package repo
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -12,9 +13,16 @@ var (
 	ReadFile   = os.ReadFile
 	CreateFile = os.Create
 	MkdirAll   = os.MkdirAll
+	RemoveAll  = os.RemoveAll
+	Copy       = io.Copy
 	Lstat      = os.Lstat
 	Unmarshal  = json.Unmarshal
 	Marshal    = json.Marshal
+)
+
+const (
+	ModeDir  = os.ModeDir
+	ModePerm = os.ModePerm
 )
 
 func mkdirValidate(dir string) error {

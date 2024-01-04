@@ -43,19 +43,22 @@ func TestNewFileRepo(t *testing.T) {
 	}
 	tests := []struct {
 		name        string
-		mkdirAll    func(path string, perm os.FileMode) error
-		readFile    func(name string) ([]byte, error)
 		args        args
+		patch       func(*testing.T) func()
 		wantErr     error
 		wantErrLogs []string
 	}{
 		{
 			name: "should fail if making directory fails",
-			mkdirAll: func(string, os.FileMode) error {
-				return fmt.Errorf("mkdir err")
-			},
 			args: args{
 				cfg: repo.FileRepoConfig{Dir: newFileDir(t, "new1")},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.MkdirAll
+				repo.MkdirAll = func(string, os.FileMode) error {
+					return fmt.Errorf("mkdir err")
+				}
+				return func() { repo.MkdirAll = prev }
 			},
 			wantErr: fmt.Errorf(`making directory %q: %w`, filepath.Clean("_test/repo_file/new1"), fmt.Errorf("mkdir err")),
 		},
@@ -68,7 +71,7 @@ func TestNewFileRepo(t *testing.T) {
 					return ctx
 				}(),
 				cfg: func() repo.FileRepoConfig {
-					cfg := repo.FileRepoConfig{Dir: newFileDir(t, "haltIndexing1")}
+					cfg := repo.FileRepoConfig{Dir: newFileDir(t, "")}
 					r, err := repo.NewFileRepo(context.Background(), cfg)
 					if err != nil {
 						t.Fatal(err)
@@ -112,8 +115,12 @@ func TestNewFileRepo(t *testing.T) {
 					return cfg
 				}(),
 			},
-			readFile: func(name string) ([]byte, error) {
-				return nil, fmt.Errorf("file read err")
+			patch: func(t *testing.T) func() {
+				prev := repo.ReadFile
+				repo.ReadFile = func(name string) ([]byte, error) {
+					return nil, fmt.Errorf("file read err")
+				}
+				return func() { repo.ReadFile = prev }
 			},
 			wantErrLogs: []string{
 				fmt.Sprintf("Loading file header %q: file read err", `_test\repo_file\readFileHeader1\file1\header.json`),
@@ -129,7 +136,7 @@ func TestNewFileRepo(t *testing.T) {
 			name: "should create a new file repo with existing files",
 			args: args{
 				cfg: func() repo.FileRepoConfig {
-					cfg := repo.FileRepoConfig{Dir: newFileDir(t, "existingFiles1")}
+					cfg := repo.FileRepoConfig{Dir: newFileDir(t, "")}
 					r, err := repo.NewFileRepo(context.Background(), cfg)
 					if err != nil {
 						t.Fatal(err)
@@ -152,15 +159,8 @@ func TestNewFileRepo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.mkdirAll != nil {
-				prev := repo.MkdirAll
-				repo.MkdirAll = tt.mkdirAll
-				defer func() { repo.MkdirAll = prev }()
-			}
-			if tt.readFile != nil {
-				prev := repo.ReadFile
-				repo.ReadFile = tt.readFile
-				defer func() { repo.ReadFile = prev }()
+			if tt.patch != nil {
+				defer tt.patch(t)()
 			}
 			spy := &spyLog{}
 			if tt.args.cfg.Log == nil {
@@ -187,11 +187,11 @@ func TestFileRepo_Save(t *testing.T) {
 		file domain.File
 	}
 	tests := []struct {
-		name     string
-		cfg      repo.FileRepoConfig
-		mkdirAll func(path string, perm os.FileMode) error
-		args     args
-		wantErr  error
+		name    string
+		cfg     repo.FileRepoConfig
+		patch   func(*testing.T) func()
+		args    args
+		wantErr error
 	}{
 		{
 			name: "should fail if the file data is nil",
@@ -217,13 +217,109 @@ func TestFileRepo_Save(t *testing.T) {
 					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
 			},
-			mkdirAll: func(path string, perm os.FileMode) error {
-				if path == filepath.Clean("_test/repo_file/mkdirfail1/file1") {
-					return fmt.Errorf("mkdir err")
+			patch: func(t *testing.T) func() {
+				prev := repo.MkdirAll
+				repo.MkdirAll = func(path string, perm os.FileMode) error {
+					if path == filepath.Clean("_test/repo_file/mkdirfail1/file1") {
+						return fmt.Errorf("mkdir err")
+					}
+					return os.MkdirAll(path, perm)
 				}
-				return os.MkdirAll(path, perm)
+				return func() { repo.MkdirAll = prev }
 			},
 			wantErr: fmt.Errorf(`making directory %q: %w`, filepath.Clean("_test/repo_file/mkdirfail1/file1"), fmt.Errorf("mkdir err")),
+		},
+		{
+			name: "should fail if marshaling the file header fails",
+			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "")},
+			args: args{
+				file: domain.File{
+					FileHeader: domain.FileHeader{
+						ID:      "file1",
+						Name:    "file1.txt",
+						Owner:   "user1",
+						Created: time.Unix(1, 0),
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.Marshal
+				repo.Marshal = func(any) ([]byte, error) {
+					return nil, fmt.Errorf("marshal err")
+				}
+				return func() { repo.Marshal = prev }
+			},
+			wantErr: fmt.Errorf("marshaling file header: %w", fmt.Errorf("marshal err")),
+		},
+		{
+			name: "should fail if writing the file header fails",
+			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "")},
+			args: args{
+				file: domain.File{
+					FileHeader: domain.FileHeader{
+						ID:      "file1",
+						Name:    "file1.txt",
+						Owner:   "user1",
+						Created: time.Unix(1, 0),
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.WriteFile
+				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {
+					return fmt.Errorf("file write err")
+				}
+				return func() { repo.WriteFile = prev }
+			},
+			wantErr: fmt.Errorf("writing file header: %w", fmt.Errorf("file write err")),
+		},
+		{
+			name: "should fail if creating the data file fails",
+			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "createFail")},
+			args: args{
+				file: domain.File{
+					FileHeader: domain.FileHeader{
+						ID:      "id_of_file1",
+						Name:    "file1.txt",
+						Owner:   "user1",
+						Created: time.Unix(1, 0),
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.CreateFile
+				repo.CreateFile = func(string) (*os.File, error) {
+					return nil, fmt.Errorf("create err")
+				}
+				return func() { repo.CreateFile = prev }
+			},
+			wantErr: fmt.Errorf(`creating file %q: %w`, filepath.Clean("_test/repo_file/createFail/id_of_file1/file"), fmt.Errorf("create err")),
+		},
+		{
+			name: "should fail if copying the buffer for the data file fails",
+			cfg:  repo.FileRepoConfig{Dir: newFileDir(t, "bufferCopyFail")},
+			args: args{
+				file: domain.File{
+					FileHeader: domain.FileHeader{
+						ID:      "id_of_file1",
+						Name:    "file1.txt",
+						Owner:   "user1",
+						Created: time.Unix(1, 0),
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.Copy
+				repo.Copy = func(io.Writer, io.Reader) (int64, error) {
+					return 0, fmt.Errorf("copy err")
+				}
+				return func() { repo.Copy = prev }
+			},
+			wantErr: fmt.Errorf(`writing file %q: %w`, filepath.Clean("_test/repo_file/bufferCopyFail/id_of_file1/file"), fmt.Errorf("copy err")),
 		},
 		{
 			name: "should save a file",
@@ -244,10 +340,8 @@ func TestFileRepo_Save(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.mkdirAll != nil {
-				prev := repo.MkdirAll
-				repo.MkdirAll = tt.mkdirAll
-				defer func() { repo.MkdirAll = prev }()
+			if tt.patch != nil {
+				defer tt.patch(t)()
 			}
 			defer cleanDir(t, tt.cfg.Dir)
 			r, err := repo.NewFileRepo(context.Background(), tt.cfg)
