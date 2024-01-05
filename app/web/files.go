@@ -3,8 +3,8 @@ package web
 import (
 	"errors"
 	"fmt"
+	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/domain"
 	"github.com/kataras/iris/v12"
 	"strings"
 	"time"
@@ -119,7 +119,7 @@ func sanitizeFilename(in string) string {
 }
 
 func downloadFile(ctx iris.Context, a App) error {
-	fileID := domain.FileID(ctx.Params().Get("file_id"))
+	fileID := blinkfile.FileID(ctx.Params().Get("file_id"))
 	view := FileDownloadView{
 		ID: string(fileID),
 	}
@@ -138,9 +138,9 @@ func downloadFile(ctx iris.Context, a App) error {
 		return nil
 	}()
 	if err != nil {
-		if errors.Is(err, domain.ErrFilePasswordRequired) {
+		if errors.Is(err, blinkfile.ErrFilePasswordRequired) {
 			view.MessageView.SuccessMessage = "Password required"
-		} else if errors.Is(err, domain.ErrFilePasswordInvalid) {
+		} else if errors.Is(err, blinkfile.ErrFilePasswordInvalid) {
 			errView := ParseAppErr(ctx, a, err)
 			errView.Detail = "Invalid password"
 			view.ErrorView = errView
@@ -158,12 +158,12 @@ func deleteFiles(ctx iris.Context, a App) error {
 	if err != nil {
 		return err
 	}
-	deleteFileIDs := make([]domain.FileID, 0, len(req.Form))
+	deleteFileIDs := make([]blinkfile.FileID, 0, len(req.Form))
 	for name, values := range req.Form {
 		if len(values) == 0 || values[0] != "on" {
 			continue
 		}
-		deleteFileIDs = append(deleteFileIDs, domain.FileID(strings.TrimPrefix(name, "select-")))
+		deleteFileIDs = append(deleteFileIDs, blinkfile.FileID(strings.TrimPrefix(name, "select-")))
 	}
 	if len(deleteFileIDs) > 0 {
 		err = a.DeleteFiles(ctx, owner, deleteFileIDs)

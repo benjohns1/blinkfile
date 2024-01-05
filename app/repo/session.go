@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/domain"
 	"os"
 	"path/filepath"
 	"time"
@@ -22,7 +22,7 @@ type (
 
 	sessionData struct {
 		app.Token `json:"-"`
-		domain.UserID
+		blinkfile.UserID
 		LoggedIn time.Time
 		Expires  time.Time
 		app.SessionRequestData

@@ -3,8 +3,8 @@ package app_test
 import (
 	"context"
 	"fmt"
+	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/domain"
 	"git.jfam.app/blinkfile/hash"
 	"git.jfam.app/blinkfile/log"
 	"reflect"
@@ -15,8 +15,8 @@ import (
 func TestApp_Login(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
-		username    domain.Username
-		password    string
+		username blinkfile.Username
+		password string
 		requestData app.SessionRequestData
 	}
 	tests := []struct {
@@ -278,9 +278,9 @@ func TestApp_IsAuthenticated(t *testing.T) {
 		name           string
 		cfg            app.Config
 		args           args
-		wantErr        error
-		wantUserID     domain.UserID
-		want           bool
+		wantErr    error
+		wantUserID blinkfile.UserID
+		want       bool
 		wantSessionGet []app.Token
 	}{
 		{

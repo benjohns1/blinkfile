@@ -3,8 +3,8 @@ package repo
 import (
 	"context"
 	"fmt"
+	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/domain"
 	"io/fs"
 	"path/filepath"
 	"sync"
@@ -20,17 +20,17 @@ type (
 	FileRepo struct {
 		mu         sync.RWMutex
 		dir        string
-		ownerIndex map[domain.UserID]map[domain.FileID]fileHeader
-		idIndex    map[domain.FileID]fileHeader
+		ownerIndex map[blinkfile.UserID]map[blinkfile.FileID]fileHeader
+		idIndex    map[blinkfile.FileID]fileHeader
 		Log
 	}
 
 	fileHeader struct {
-		ID           domain.FileID
-		Name         string
-		Location     string
-		Owner        domain.UserID
-		Created      time.Time
+		ID       blinkfile.FileID
+		Name     string
+		Location string
+		Owner    blinkfile.UserID
+		Created  time.Time
 		Expires      time.Time
 		Size         int64
 		PasswordHash string
@@ -50,8 +50,8 @@ func NewFileRepo(ctx context.Context, cfg FileRepoConfig) (*FileRepo, error) {
 	r := &FileRepo{
 		sync.RWMutex{},
 		dir,
-		make(map[domain.UserID]map[domain.FileID]fileHeader),
-		make(map[domain.FileID]fileHeader),
+		make(map[blinkfile.UserID]map[blinkfile.FileID]fileHeader),
+		make(map[blinkfile.FileID]fileHeader),
 		cfg.Log,
 	}
 	r.mu.Lock()
@@ -82,7 +82,7 @@ func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 		if !d.IsDir() {
 			return nil
 		}
-		_, _, headerFilename := filenames(dir, domain.FileID(d.Name()))
+		_, _, headerFilename := filenames(dir, blinkfile.FileID(d.Name()))
 		header, err := loadFileHeader(ctx, headerFilename)
 		if err != nil {
 			r.Errorf(ctx, "Loading file header %q: %v", headerFilename, err)
@@ -95,7 +95,7 @@ func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 
 func (r *FileRepo) addToIndices(header fileHeader) {
 	if _, ok := r.ownerIndex[header.Owner]; !ok {
-		r.ownerIndex[header.Owner] = make(map[domain.FileID]fileHeader, 1)
+		r.ownerIndex[header.Owner] = make(map[blinkfile.FileID]fileHeader, 1)
 	}
 	r.ownerIndex[header.Owner][header.ID] = header
 	r.idIndex[header.ID] = header
@@ -114,7 +114,7 @@ func loadFileHeader(_ context.Context, path string) (header fileHeader, err erro
 	return header, Unmarshal(data, &header)
 }
 
-func (r *FileRepo) Save(_ context.Context, file domain.File) error {
+func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
 	if file.Data == nil {
 		return fmt.Errorf("file data cannot be nil")
 	}
@@ -171,31 +171,31 @@ func (r *FileRepo) DeleteExpiredBefore(_ context.Context, t time.Time) (int, err
 	return count, nil
 }
 
-func (r *FileRepo) ListByUser(_ context.Context, userID domain.UserID) ([]domain.FileHeader, error) {
+func (r *FileRepo) ListByUser(_ context.Context, userID blinkfile.UserID) ([]blinkfile.FileHeader, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	ownedFiles := r.ownerIndex[userID]
-	out := make([]domain.FileHeader, 0, len(ownedFiles))
+	out := make([]blinkfile.FileHeader, 0, len(ownedFiles))
 	for _, header := range ownedFiles {
-		out = append(out, domain.FileHeader(header))
+		out = append(out, blinkfile.FileHeader(header))
 	}
 	return out, nil
 }
 
-func (r *FileRepo) Get(_ context.Context, fileID domain.FileID) (domain.FileHeader, error) {
+func (r *FileRepo) Get(_ context.Context, fileID blinkfile.FileID) (blinkfile.FileHeader, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	header, found := r.idIndex[fileID]
 	if !found {
-		return domain.FileHeader{}, app.ErrFileNotFound
+		return blinkfile.FileHeader{}, app.ErrFileNotFound
 	}
 	if header.Location == "" {
 		_, header.Location, _ = filenames(r.dir, header.ID)
 	}
-	return domain.FileHeader(header), nil
+	return blinkfile.FileHeader(header), nil
 }
 
-func (r *FileRepo) Delete(_ context.Context, owner domain.UserID, deleteFiles []domain.FileID) error {
+func (r *FileRepo) Delete(_ context.Context, owner blinkfile.UserID, deleteFiles []blinkfile.FileID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	ownedFiles := r.ownerIndex[owner]
@@ -227,7 +227,7 @@ func (r *FileRepo) deleteFile(file fileHeader) error {
 	return nil
 }
 
-func filenames(root string, fileID domain.FileID) (dir, file, header string) {
+func filenames(root string, fileID blinkfile.FileID) (dir, file, header string) {
 	dir = fmt.Sprintf("%s/%s", root, fileID)
 	file = fmt.Sprintf("%s/file", dir)
 	header = fmt.Sprintf("%s/header.json", dir)

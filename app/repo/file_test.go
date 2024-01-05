@@ -3,8 +3,8 @@ package repo_test
 import (
 	"context"
 	"fmt"
+	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app/repo"
-	"git.jfam.app/blinkfile/domain"
 	"io"
 	"os"
 	"path/filepath"
@@ -76,8 +76,8 @@ func TestNewFileRepo(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					err = r.Save(context.Background(), domain.File{
-						FileHeader: domain.FileHeader{
+					err = r.Save(context.Background(), blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
 							ID:    "file1",
 							Name:  "filename",
 							Owner: "user1",
@@ -101,8 +101,8 @@ func TestNewFileRepo(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					err = r.Save(context.Background(), domain.File{
-						FileHeader: domain.FileHeader{
+					err = r.Save(context.Background(), blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
 							ID:    "file1",
 							Name:  "filename",
 							Owner: "user1",
@@ -141,8 +141,8 @@ func TestNewFileRepo(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					err = r.Save(context.Background(), domain.File{
-						FileHeader: domain.FileHeader{
+					err = r.Save(context.Background(), blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
 							ID:    "file1",
 							Name:  "filename",
 							Owner: "user1",
@@ -184,7 +184,7 @@ func TestNewFileRepo(t *testing.T) {
 
 func TestFileRepo_Save(t *testing.T) {
 	type args struct {
-		file domain.File
+		file blinkfile.File
 	}
 	tests := []struct {
 		name    string
@@ -196,8 +196,8 @@ func TestFileRepo_Save(t *testing.T) {
 		{
 			name: "should fail if the file data is nil",
 			args: args{
-				file: domain.File{
-					FileHeader: domain.FileHeader{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
 						ID: "file1",
 					},
 					Data: nil,
@@ -209,8 +209,8 @@ func TestFileRepo_Save(t *testing.T) {
 			name: "should fail if making the file directory fails",
 			r:    newTestFileRepo(t, "mkdirfail1"),
 			args: args{
-				file: domain.File{
-					FileHeader: domain.FileHeader{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
 						ID: "file1",
 					},
 					Data: io.NopCloser(strings.NewReader("file-data")),
@@ -231,8 +231,8 @@ func TestFileRepo_Save(t *testing.T) {
 		{
 			name: "should fail if marshaling the file header fails",
 			args: args{
-				file: domain.File{
-					FileHeader: domain.FileHeader{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
 						ID:      "file1",
 						Name:    "file1.txt",
 						Owner:   "user1",
@@ -253,8 +253,8 @@ func TestFileRepo_Save(t *testing.T) {
 		{
 			name: "should fail if writing the file header fails",
 			args: args{
-				file: domain.File{
-					FileHeader: domain.FileHeader{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
 						ID:      "file1",
 						Name:    "file1.txt",
 						Owner:   "user1",
@@ -276,8 +276,8 @@ func TestFileRepo_Save(t *testing.T) {
 			name: "should fail if creating the data file fails",
 			r:    newTestFileRepo(t, "createFail"),
 			args: args{
-				file: domain.File{
-					FileHeader: domain.FileHeader{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
 						ID:      "id_of_file1",
 						Name:    "file1.txt",
 						Owner:   "user1",
@@ -299,8 +299,8 @@ func TestFileRepo_Save(t *testing.T) {
 			name: "should fail if copying the buffer for the data file fails",
 			r:    newTestFileRepo(t, "bufferCopyFail"),
 			args: args{
-				file: domain.File{
-					FileHeader: domain.FileHeader{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
 						ID:      "id_of_file1",
 						Name:    "file1.txt",
 						Owner:   "user1",
@@ -321,8 +321,8 @@ func TestFileRepo_Save(t *testing.T) {
 		{
 			name: "should save a file",
 			args: args{
-				file: domain.File{
-					FileHeader: domain.FileHeader{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
 						ID:      "file1",
 						Name:    "file1.txt",
 						Owner:   "user1",

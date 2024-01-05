@@ -3,12 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 )
 
 const AdminUserID = "_admin"
 
-func (a *App) registerAdminUser(ctx context.Context, username domain.Username, password string) error {
+func (a *App) registerAdminUser(ctx context.Context, username blinkfile.Username, password string) error {
 	if username == "" {
 		return nil
 	}

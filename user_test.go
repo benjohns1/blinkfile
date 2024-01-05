@@ -1,8 +1,8 @@
-package domain_test
+package blinkfile_test
 
 import (
 	"fmt"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 	"reflect"
 	"testing"
 	"time"
@@ -10,14 +10,14 @@ import (
 
 func TestCreateUser(t *testing.T) {
 	type args struct {
-		id   domain.UserID
-		name domain.Username
+		id   blinkfile.UserID
+		name blinkfile.Username
 		now  func() time.Time
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    domain.User
+		want    blinkfile.User
 		wantErr error
 	}{
 		{
@@ -51,7 +51,7 @@ func TestCreateUser(t *testing.T) {
 				name: "user1",
 				now:  func() time.Time { return time.Unix(1, 0).UTC() },
 			},
-			want: domain.User{
+			want: blinkfile.User{
 				Username: "user1",
 				Created:  time.Unix(1, 0).UTC(),
 			},
@@ -59,7 +59,7 @@ func TestCreateUser(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := domain.CreateUser(tt.args.id, tt.args.name, tt.args.now)
+			got, err := blinkfile.CreateUser(tt.args.id, tt.args.name, tt.args.now)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("CreateUser() error = %v, wantErr %v", err, tt.wantErr)
 				return

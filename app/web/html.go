@@ -6,8 +6,8 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
+	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/domain"
 	"git.jfam.app/blinkfile/request"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/rate"
@@ -33,13 +33,13 @@ type (
 	}
 
 	App interface {
-		Login(ctx context.Context, username domain.Username, password string, requestData app.SessionRequestData) (app.Session, error)
+		Login(ctx context.Context, username blinkfile.Username, password string, requestData app.SessionRequestData) (app.Session, error)
 		Logout(context.Context, app.Token) error
-		IsAuthenticated(context.Context, app.Token) (domain.UserID, bool, error)
-		ListFiles(context.Context, domain.UserID) ([]domain.FileHeader, error)
+		IsAuthenticated(context.Context, app.Token) (blinkfile.UserID, bool, error)
+		ListFiles(context.Context, blinkfile.UserID) ([]blinkfile.FileHeader, error)
 		UploadFile(ctx context.Context, args app.UploadFileArgs) error
-		DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, pass string) (domain.FileHeader, error)
-		DeleteFiles(context.Context, domain.UserID, []domain.FileID) error
+		DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID blinkfile.FileID, pass string) (blinkfile.FileHeader, error)
+		DeleteFiles(context.Context, blinkfile.UserID, []blinkfile.FileID) error
 
 		app.Log
 	}

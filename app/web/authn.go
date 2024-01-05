@@ -2,8 +2,8 @@ package web
 
 import (
 	"fmt"
+	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/domain"
 	"github.com/kataras/iris/v12"
 	"net/http"
 )
@@ -88,7 +88,7 @@ func doLogin(ctx iris.Context, a App) (LoginView, error) {
 	if err != nil {
 		return LoginView{}, err
 	}
-	username := domain.Username(ctx.FormValue("username"))
+	username := blinkfile.Username(ctx.FormValue("username"))
 	session.setUsername(username)
 	password := ctx.FormValue("password")
 	req := ctx.Request()

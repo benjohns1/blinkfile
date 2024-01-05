@@ -4,18 +4,18 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 )
 
 type Credentials struct {
-	domain.UserID
-	username            domain.Username
+	blinkfile.UserID
+	username            blinkfile.Username
 	encodedPasswordHash string
 }
 
 const passwordMinLength = 16
 
-func (a *App) NewCredentials(userID domain.UserID, user domain.Username, pass string) (Credentials, error) {
+func (a *App) NewCredentials(userID blinkfile.UserID, user blinkfile.Username, pass string) (Credentials, error) {
 	if userID == "" {
 		return Credentials{}, fmt.Errorf("user ID cannot be empty")
 	}
@@ -33,14 +33,14 @@ func (a *App) NewCredentials(userID domain.UserID, user domain.Username, pass st
 	}, nil
 }
 
-func (a *App) CredentialsMatch(c Credentials, username domain.Username, password string) (bool, error) {
+func (a *App) CredentialsMatch(c Credentials, username blinkfile.Username, password string) (bool, error) {
 	if !stringsAreEqual(string(c.username), string(username)) {
 		return false, nil
 	}
 	return a.cfg.PasswordHasher.Match(c.encodedPasswordHash, []byte(password))
 }
 
-func (a *App) IsAuthenticated(ctx context.Context, token Token) (domain.UserID, bool, error) {
+func (a *App) IsAuthenticated(ctx context.Context, token Token) (blinkfile.UserID, bool, error) {
 	if token == "" {
 		return "", false, Err(ErrBadRequest, fmt.Errorf("session token cannot be empty"))
 	}
@@ -61,7 +61,7 @@ func (a *App) IsAuthenticated(ctx context.Context, token Token) (domain.UserID, 
 	return session.UserID, true, nil
 }
 
-func (a *App) Login(ctx context.Context, username domain.Username, password string, requestData SessionRequestData) (Session, error) {
+func (a *App) Login(ctx context.Context, username blinkfile.Username, password string, requestData SessionRequestData) (Session, error) {
 	userID, err := a.authenticate(username, password)
 	if err != nil {
 		return Session{}, err
@@ -85,7 +85,7 @@ func (a *App) Logout(ctx context.Context, token Token) error {
 	return nil
 }
 
-func (a *App) newSession(ctx context.Context, userID domain.UserID, data SessionRequestData) (Session, error) {
+func (a *App) newSession(ctx context.Context, userID blinkfile.UserID, data SessionRequestData) (Session, error) {
 	token, err := a.cfg.GenerateToken()
 	if err != nil {
 		return Session{}, Err(ErrInternal, err)
@@ -104,7 +104,7 @@ func (a *App) newSession(ctx context.Context, userID domain.UserID, data Session
 	return session, nil
 }
 
-func (a *App) authenticate(username domain.Username, password string) (domain.UserID, error) {
+func (a *App) authenticate(username blinkfile.Username, password string) (blinkfile.UserID, error) {
 	if username == "" {
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: username cannot be empty"))
 	}
@@ -128,7 +128,7 @@ func (a *App) authenticate(username domain.Username, password string) (domain.Us
 	return credentials.UserID, nil
 }
 
-func (a *App) getCredentials(username domain.Username) (Credentials, bool, error) {
+func (a *App) getCredentials(username blinkfile.Username) (Credentials, bool, error) {
 	creds, found := a.credentials[username]
 	if !found {
 		return Credentials{}, false, nil
@@ -136,7 +136,7 @@ func (a *App) getCredentials(username domain.Username) (Credentials, bool, error
 	return creds, true, nil
 }
 
-func (a *App) userIsValid(userID domain.UserID) bool {
+func (a *App) userIsValid(userID blinkfile.UserID) bool {
 	for _, creds := range a.credentials {
 		if creds.UserID == userID {
 			return true

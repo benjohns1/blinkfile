@@ -3,7 +3,7 @@ package app
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 	"time"
 )
 
@@ -12,7 +12,7 @@ type (
 
 	Session struct {
 		Token
-		domain.UserID
+		blinkfile.UserID
 		LoggedIn time.Time
 		Expires  time.Time
 		SessionRequestData

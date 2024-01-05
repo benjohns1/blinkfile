@@ -2,7 +2,7 @@ package web
 
 import (
 	"fmt"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/sessions"
 )
@@ -22,19 +22,19 @@ func getSession(ctx iris.Context) (Session, error) {
 	return Session{sess}, nil
 }
 
-func loggedInUser(ctx iris.Context) domain.UserID {
+func loggedInUser(ctx iris.Context) blinkfile.UserID {
 	session, err := getSession(ctx)
 	if err != nil {
 		return ""
 	}
-	return domain.UserID(session.GetString("authenticated"))
+	return blinkfile.UserID(session.GetString("authenticated"))
 }
 
-func (s *Session) setAuthenticated(userID domain.UserID) {
+func (s *Session) setAuthenticated(userID blinkfile.UserID) {
 	s.Set("authenticated", string(userID))
 }
 
-func (s *Session) setUsername(username domain.Username) {
+func (s *Session) setUsername(username blinkfile.Username) {
 	s.Set("username", username)
 }
 

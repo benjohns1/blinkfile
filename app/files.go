@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 	"io"
 	"sort"
 	"time"
@@ -21,7 +21,7 @@ func (a *App) DeleteExpiredFiles(ctx context.Context) error {
 	return err
 }
 
-func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.FileHeader, error) {
+func (a *App) ListFiles(ctx context.Context, owner blinkfile.UserID) ([]blinkfile.FileHeader, error) {
 	files, err := a.cfg.FileRepo.ListByUser(ctx, owner)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (a *App) ListFiles(ctx context.Context, owner domain.UserID) ([]domain.File
 
 type UploadFileArgs struct {
 	Filename  string
-	Owner     domain.UserID
+	Owner     blinkfile.UserID
 	Reader    io.ReadCloser
 	Size      int64
 	Password  string
@@ -66,7 +66,7 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 			return ErrUser("Error calculating file expiration.", "Expires In field is not in a valid format.", err)
 		}
 	}
-	file, err := domain.UploadFile(domain.UploadFileArgs{
+	file, err := blinkfile.UploadFile(blinkfile.UploadFileArgs{
 		ID:       fileID,
 		Name:     args.Filename,
 		Owner:    args.Owner,
@@ -87,17 +87,17 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	return nil
 }
 func (a *App) mimicErr(ctx context.Context, password string, err error) error {
-	if errors.Is(err, ErrFileNotFound) || errors.Is(err, domain.ErrFileExpired) {
+	if errors.Is(err, ErrFileNotFound) || errors.Is(err, blinkfile.ErrFileExpired) {
 		a.Errorf(ctx, fmt.Sprintf("mimicking a valid response for security, but real error was: %s", err))
 		if password == "" {
-			return Err(ErrAuthzFailed, domain.ErrFilePasswordRequired)
+			return Err(ErrAuthzFailed, blinkfile.ErrFilePasswordRequired)
 		}
-		return Err(ErrAuthzFailed, domain.ErrFilePasswordInvalid)
+		return Err(ErrAuthzFailed, blinkfile.ErrFilePasswordInvalid)
 	}
 	return err
 }
 
-func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID domain.FileID, password string) (domain.FileHeader, error) {
+func (a *App) DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID blinkfile.FileID, password string) (blinkfile.FileHeader, error) {
 	matchFunc := func(hashedPassword string, checkPassword string) (matched bool, err error) {
 		return a.cfg.PasswordHasher.Match(hashedPassword, []byte(checkPassword))
 	}
@@ -105,11 +105,11 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	if err != nil {
 		// Mimic responses for files that don't exist
 		err = a.mimicErr(ctx, password, err)
-		return domain.FileHeader{}, err
+		return blinkfile.FileHeader{}, err
 	}
 	err = file.Download(userID, password, matchFunc, a.cfg.Now)
 	if err != nil {
-		if errors.Is(err, domain.ErrFilePasswordInvalid) {
+		if errors.Is(err, blinkfile.ErrFilePasswordInvalid) {
 			err = Err(ErrAuthzFailed, err)
 		}
 		err = a.mimicErr(ctx, password, err)
@@ -118,16 +118,16 @@ func (a *App) DownloadFile(ctx context.Context, userID domain.UserID, fileID dom
 	return file, nil
 }
 
-func (a *App) DeleteFiles(ctx context.Context, owner domain.UserID, deleteFiles []domain.FileID) error {
+func (a *App) DeleteFiles(ctx context.Context, owner blinkfile.UserID, deleteFiles []blinkfile.FileID) error {
 	return a.cfg.FileRepo.Delete(ctx, owner, deleteFiles)
 }
 
-func generateFileID() (domain.FileID, error) {
+func generateFileID() (blinkfile.FileID, error) {
 	b := make([]byte, 64)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}
 	id := base64.URLEncoding.EncodeToString(b)
-	return domain.FileID(id), nil
+	return blinkfile.FileID(id), nil
 }

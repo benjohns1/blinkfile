@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 	"time"
 )
 
@@ -27,11 +27,11 @@ type (
 	}
 
 	FileRepo interface {
-		Save(context.Context, domain.File) error
-		ListByUser(context.Context, domain.UserID) ([]domain.FileHeader, error)
+		Save(context.Context, blinkfile.File) error
+		ListByUser(context.Context, blinkfile.UserID) ([]blinkfile.FileHeader, error)
 		DeleteExpiredBefore(context.Context, time.Time) (int, error)
-		Get(context.Context, domain.FileID) (domain.FileHeader, error)
-		Delete(context.Context, domain.UserID, []domain.FileID) error
+		Get(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error)
+		Delete(context.Context, blinkfile.UserID, []blinkfile.FileID) error
 	}
 
 	PasswordHasher interface {
@@ -41,7 +41,7 @@ type (
 
 	App struct {
 		cfg         Config
-		credentials map[domain.Username]Credentials
+		credentials map[blinkfile.Username]Credentials
 		Log
 	}
 
@@ -71,9 +71,9 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		return nil, fmt.Errorf("password hasher is required")
 	}
 
-	a := &App{cfg, make(map[domain.Username]Credentials, 1), cfg.Log}
+	a := &App{cfg, make(map[blinkfile.Username]Credentials, 1), cfg.Log}
 
-	err := a.registerAdminUser(ctx, domain.Username(cfg.AdminUsername), cfg.AdminPassword)
+	err := a.registerAdminUser(ctx, blinkfile.Username(cfg.AdminUsername), cfg.AdminPassword)
 	if err != nil {
 		return nil, err
 	}

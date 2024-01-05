@@ -1,8 +1,8 @@
-package domain_test
+package blinkfile_test
 
 import (
 	"fmt"
-	"git.jfam.app/blinkfile/domain"
+	"git.jfam.app/blinkfile"
 	"io"
 	"reflect"
 	"strings"
@@ -13,20 +13,20 @@ import (
 func TestUploadFile(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    domain.UploadFileArgs
-		want    domain.File
+		args    blinkfile.UploadFileArgs
+		want    blinkfile.File
 		wantErr error
 	}{
 		{
 			name: "should fail with empty file ID",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID: "",
 			},
 			wantErr: fmt.Errorf("file ID cannot be empty"),
 		},
 		{
 			name: "should fail with empty file name",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:   "file1",
 				Name: "",
 			},
@@ -34,7 +34,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should fail with empty owner",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:    "file1",
 				Name:  "file1",
 				Owner: "",
@@ -43,7 +43,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should fail with a nil reader",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:     "file1",
 				Name:   "file1",
 				Owner:  "user1",
@@ -53,7 +53,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should fail with a nil now() service",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:     "file1",
 				Name:   "file1",
 				Owner:  "user1",
@@ -64,15 +64,15 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should upload a new file without a password",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:     "file1",
 				Name:   "file1",
 				Owner:  "user1",
 				Reader: io.NopCloser(strings.NewReader("file-data")),
 				Now:    func() time.Time { return time.Unix(1, 0).UTC() },
 			},
-			want: domain.File{
-				FileHeader: domain.FileHeader{
+			want: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					ID:      "file1",
 					Name:    "file1",
 					Owner:   "user1",
@@ -83,7 +83,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should fail with a nil hashFunc() service if password is set",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:       "file1",
 				Name:     "file1",
 				Owner:    "user1",
@@ -95,7 +95,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should upload a new file with a password",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:       "file1",
 				Name:     "file1",
 				Owner:    "user1",
@@ -106,8 +106,8 @@ func TestUploadFile(t *testing.T) {
 					return "hashed-password"
 				},
 			},
-			want: domain.File{
-				FileHeader: domain.FileHeader{
+			want: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					ID:           "file1",
 					Name:         "file1",
 					Owner:        "user1",
@@ -119,7 +119,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should fail if expiration is in the past",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:      "file1",
 				Name:    "file1",
 				Owner:   "user1",
@@ -131,7 +131,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should fail if expiration is right now",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:      "file1",
 				Name:    "file1",
 				Owner:   "user1",
@@ -143,7 +143,7 @@ func TestUploadFile(t *testing.T) {
 		},
 		{
 			name: "should upload a new file with an expiration time",
-			args: domain.UploadFileArgs{
+			args: blinkfile.UploadFileArgs{
 				ID:      "file1",
 				Name:    "file1",
 				Owner:   "user1",
@@ -151,8 +151,8 @@ func TestUploadFile(t *testing.T) {
 				Now:     func() time.Time { return time.Unix(0, 0).UTC() },
 				Expires: time.Unix(1, 0).UTC(),
 			},
-			want: domain.File{
-				FileHeader: domain.FileHeader{
+			want: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					ID:      "file1",
 					Name:    "file1",
 					Owner:   "user1",
@@ -165,7 +165,7 @@ func TestUploadFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := domain.UploadFile(tt.args)
+			got, err := blinkfile.UploadFile(tt.args)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("UploadFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -179,20 +179,20 @@ func TestUploadFile(t *testing.T) {
 
 func TestFile_Download(t *testing.T) {
 	type args struct {
-		user      domain.UserID
+		user      blinkfile.UserID
 		password  string
-		matchFunc domain.PasswordMatchFunc
-		nowFunc   domain.NowFunc
+		matchFunc blinkfile.PasswordMatchFunc
+		nowFunc   blinkfile.NowFunc
 	}
 	tests := []struct {
-		name    string
-		f       domain.File
-		args    args
+		name string
+		f    blinkfile.File
+		args args
 		wantErr error
 	}{
 		{
 			name: "should fail if a matchFunc() service was not passed in",
-			f:    domain.File{},
+			f:    blinkfile.File{},
 			args: args{
 				matchFunc: nil,
 			},
@@ -200,7 +200,7 @@ func TestFile_Download(t *testing.T) {
 		},
 		{
 			name: "should fail if a now() service was not passed in",
-			f:    domain.File{},
+			f:    blinkfile.File{},
 			args: args{
 				matchFunc: func(string, string) (bool, error) { return false, nil },
 				nowFunc:   nil,
@@ -209,8 +209,8 @@ func TestFile_Download(t *testing.T) {
 		},
 		{
 			name: "should fail if file is password-protected but no password is supplied",
-			f: domain.File{
-				FileHeader: domain.FileHeader{
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					PasswordHash: "password-hash",
 				},
 			},
@@ -218,12 +218,12 @@ func TestFile_Download(t *testing.T) {
 				matchFunc: func(string, string) (bool, error) { return false, nil },
 				nowFunc:   func() time.Time { return time.Unix(0, 0).UTC() },
 			},
-			wantErr: domain.ErrFilePasswordRequired,
+			wantErr: blinkfile.ErrFilePasswordRequired,
 		},
 		{
 			name: "should fail if file is password-protected but the matchFunc() service returns an error",
-			f: domain.File{
-				FileHeader: domain.FileHeader{
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					PasswordHash: "password-hash",
 				},
 			},
@@ -238,8 +238,8 @@ func TestFile_Download(t *testing.T) {
 		},
 		{
 			name: "should fail if file is password-protected but passwords do not match",
-			f: domain.File{
-				FileHeader: domain.FileHeader{
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					PasswordHash: "password-hash",
 				},
 			},
@@ -248,12 +248,12 @@ func TestFile_Download(t *testing.T) {
 				matchFunc: func(string, string) (bool, error) { return false, nil },
 				nowFunc:   func() time.Time { return time.Unix(0, 0).UTC() },
 			},
-			wantErr: domain.ErrFilePasswordInvalid,
+			wantErr: blinkfile.ErrFilePasswordInvalid,
 		},
 		{
 			name: "should succeed if file is password-protected but the user is the owner of the file and no password is sent",
-			f: domain.File{
-				FileHeader: domain.FileHeader{
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					Owner:        "user1",
 					PasswordHash: "password-hash",
 				},
@@ -267,8 +267,8 @@ func TestFile_Download(t *testing.T) {
 		},
 		{
 			name: "should fail if file has expired",
-			f: domain.File{
-				FileHeader: domain.FileHeader{
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					Expires: time.Unix(1, 0).UTC(),
 				},
 			},
@@ -278,11 +278,11 @@ func TestFile_Download(t *testing.T) {
 					return time.Unix(2, 0).UTC()
 				},
 			},
-			wantErr: domain.ErrFileExpired,
+			wantErr: blinkfile.ErrFileExpired,
 		},
 		{
 			name: "should succeed if the file has no password or expiration time",
-			f:    domain.File{},
+			f:    blinkfile.File{},
 			args: args{
 				matchFunc: func(string, string) (bool, error) { return false, nil },
 				nowFunc:   func() time.Time { return time.Unix(0, 0).UTC() },
@@ -290,8 +290,8 @@ func TestFile_Download(t *testing.T) {
 		},
 		{
 			name: "should succeed if the password matches and the file is not yet expired",
-			f: domain.File{
-				FileHeader: domain.FileHeader{
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
 					Owner:        "file-owner",
 					Expires:      time.Unix(2, 0).UTC(),
 					PasswordHash: "password-hash",
