@@ -1,0 +1,12 @@
+version: "3.7"
+services:
+  blinkfile:
+    image: benjohns1/blinkfile:latest
+    volumes:
+      - data:/data
+    environment:
+      - ADMIN_USERNAME=blinkfile_admin
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - DATA_DIR=/data
+volumes:
+  data:

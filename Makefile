@@ -5,10 +5,11 @@ run: build
 build:
 	docker build --tag blinkfile .
 
-deploy: build
-	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
-	docker push ${CONTAINER_REGISTRY}/blinkfile
-
 test:
 	go test -coverprofile coverage.out ./...
 	go tool cover -html=coverage.out -o=coverage.html
+
+CONTAINER_REGISTRY = docker.io/benjohns1
+deploy: build
+	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
+	docker push ${CONTAINER_REGISTRY}/blinkfile
