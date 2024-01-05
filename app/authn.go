@@ -7,13 +7,11 @@ import (
 	"git.jfam.app/blinkfile/domain"
 )
 
-type (
-	Credentials struct {
-		domain.UserID
-		username            domain.Username
-		encodedPasswordHash string
-	}
-)
+type Credentials struct {
+	domain.UserID
+	username            domain.Username
+	encodedPasswordHash string
+}
 
 const passwordMinLength = 16
 
@@ -56,6 +54,10 @@ func (a *App) IsAuthenticated(ctx context.Context, token Token) (domain.UserID, 
 	if !session.isValid(a.cfg.Now) {
 		return "", false, nil
 	}
+	if !a.userIsValid(session.UserID) {
+		return "", false, Err(ErrAuthnFailed, fmt.Errorf("session is valid but user ID %q isn't valid", session.UserID))
+	}
+
 	return session.UserID, true, nil
 }
 
@@ -132,6 +134,15 @@ func (a *App) getCredentials(username domain.Username) (Credentials, bool, error
 		return Credentials{}, false, nil
 	}
 	return creds, true, nil
+}
+
+func (a *App) userIsValid(userID domain.UserID) bool {
+	for _, creds := range a.credentials {
+		if creds.UserID == userID {
+			return true
+		}
+	}
+	return false
 }
 
 func stringsAreEqual(a, b string) bool {

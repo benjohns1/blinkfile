@@ -10,7 +10,14 @@ Send files quickly and securely.
 ## Self-host
 Easy [docker compose setup](examples/docker-compose.yml) for your home lab
 
-## Running locally
+## Official image
+[On DockerHub](https://hub.docker.com/repository/docker/benjohns1/blinkfile)
+
+```
+docker pull benjohns1/blinkfile
+```
+
+## Run locally
 ### With Docker
 Prerequisites: Docker, Make
 #### Test, build & run
@@ -21,17 +28,21 @@ make
 ```
 make build
 ```
-### On host
+### On host machine
 Prerequisites: Go, NPM, Make
 
-Required environment variables:
-- ADMIN_USERNAME
-- ADMIN_PASSWORD
+#### Install
+```
+make install
+```
 #### Test with unit coverage
 ```
 make test
 ```
-#### Build
+#### Run
+Required environment variables:
+- ADMIN_USERNAME
+- ADMIN_PASSWORD
 ```
-go build -o /app ./cmd/main.go
+go run ./...
 ```

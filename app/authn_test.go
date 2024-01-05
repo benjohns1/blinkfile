@@ -288,10 +288,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			args: args{
 				token: "",
 			},
-			wantErr: &app.Error{
-				Type: app.ErrBadRequest,
-				Err:  fmt.Errorf("session token cannot be empty"),
-			},
+			wantErr: app.Err(app.ErrBadRequest, fmt.Errorf("session token cannot be empty")),
 		},
 		{
 			name: "should fail with a repo error if getting the session state fails",
@@ -305,10 +302,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			args: args{
 				token: "token1",
 			},
-			wantErr: &app.Error{
-				Type: app.ErrRepo,
-				Err:  fmt.Errorf("session get error"),
-			},
+			wantErr: app.Err(app.ErrRepo, fmt.Errorf("session get error")),
 		},
 		{
 			name: "should return false if no session found for the given token",
@@ -342,7 +336,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "should return userID if session is valid",
+			name: "should fail if user doesn't exist even though they have a valid session",
 			cfg: app.Config{
 				SessionRepo: stubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
@@ -357,7 +351,27 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			args: args{
 				token: "token1",
 			},
-			wantUserID: "user1",
+			wantErr: app.Err(app.ErrAuthnFailed, fmt.Errorf(`session is valid but user ID "user1" isn't valid`)),
+		},
+		{
+			name: "should return userID if session is valid",
+			cfg: app.Config{
+				SessionRepo: stubSessionRepo{
+					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
+						return app.Session{
+							UserID:  app.AdminUserID,
+							Expires: time.Unix(1, 1),
+						}, true, nil
+					},
+				},
+				Now:           func() time.Time { return time.Unix(1, 0) },
+				AdminUsername: "my-admin-user",
+				AdminPassword: "super-secure-admin-password",
+			},
+			args: args{
+				token: "token1",
+			},
+			wantUserID: app.AdminUserID,
 			want:       true,
 		},
 	}

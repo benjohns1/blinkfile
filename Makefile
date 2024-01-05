@@ -1,3 +1,4 @@
+# Container scripts
 run: build
 	docker volume create blinkfile-data
 	docker run --name blinkfile -p 8000:8000 -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD=1234123412341234 -e DATA_DIR=/data -v blinkfile-data:/data --rm blinkfile
@@ -5,11 +6,16 @@ run: build
 build:
 	docker build --tag blinkfile .
 
-test:
-	go test -coverprofile coverage.out ./...
-	go tool cover -html=coverage.out -o=coverage.html
-
 CONTAINER_REGISTRY = docker.io/benjohns1
 deploy: build
 	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
 	docker push ${CONTAINER_REGISTRY}/blinkfile
+
+# Host machine scripts
+test:
+	go test -coverprofile coverage.out ./...
+	go tool cover -html=coverage.out -o=coverage.html
+
+install:
+	go mod download
+	cd app/web && npm ci
