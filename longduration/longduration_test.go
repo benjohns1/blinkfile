@@ -1,4 +1,4 @@
-package app
+package longduration
 
 import (
 	"errors"

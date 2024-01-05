@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"git.jfam.app/blinkfile"
+	"git.jfam.app/blinkfile/longduration"
 	"io"
 	"sort"
 	"time"
@@ -45,7 +46,7 @@ type UploadFileArgs struct {
 	Reader    io.ReadCloser
 	Size      int64
 	Password  string
-	ExpiresIn LongDuration
+	ExpiresIn longduration.LongDuration
 	Expires   time.Time
 }
 

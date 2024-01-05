@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"git.jfam.app/blinkfile"
 	"git.jfam.app/blinkfile/app"
+	"git.jfam.app/blinkfile/longduration"
 	"github.com/kataras/iris/v12"
 	"strings"
 	"time"
@@ -83,10 +84,10 @@ func uploadFile(ctx iris.Context, a App) error {
 		return app.ErrUser("Invalid file.", "We couldn't retrieve the uploaded file, please try again.", err)
 	}
 
-	var expiresIn app.LongDuration
+	var expiresIn longduration.LongDuration
 	expireFutureAmount := ctx.FormValue("expire_future_amount")
 	if expireFutureAmount != "" {
-		expiresIn = app.LongDuration(fmt.Sprintf("%s%s", expireFutureAmount, ctx.FormValue("expire_future_unit")))
+		expiresIn = longduration.LongDuration(fmt.Sprintf("%s%s", expireFutureAmount, ctx.FormValue("expire_future_unit")))
 	}
 	var expires time.Time
 	expirationTime := ctx.FormValue("expiration_time")
