@@ -22,11 +22,10 @@ var (
 
 const (
 	ModeDir  = os.ModeDir
-	ModePerm = os.ModePerm
 )
 
 func mkdirValidate(dir string) error {
-	err := MkdirAll(dir, os.ModeDir)
+	err := MkdirAll(dir, ModeDir | os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("making directory %q: %w", dir, err)
 	}

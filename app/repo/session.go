@@ -43,7 +43,7 @@ func (r *Session) Save(_ context.Context, session app.Session) error {
 	if err != nil {
 		return err
 	}
-	err = WriteFile(r.filename(session.Token), data, os.ModePerm)
+	err = WriteFile(r.filename(session.Token), data, 0644)
 	if err != nil {
 		return err
 	}

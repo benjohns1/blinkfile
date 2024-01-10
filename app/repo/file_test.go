@@ -77,17 +77,16 @@ func TestNewFileRepo(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					err = r.Save(context.Background(), blinkfile.File{
-						FileHeader: blinkfile.FileHeader{
-							ID:    "file1",
-							Name:  "filename",
-							Owner: "user1",
-						},
-						Data: io.NopCloser(strings.NewReader("file-data")),
-					})
-					if err != nil {
-						t.Fatal(err)
-					}
+					fatalOnErr(t,
+						r.Save(context.Background(), blinkfile.File{
+							FileHeader: blinkfile.FileHeader{
+								ID:    "file1",
+								Name:  "filename",
+								Owner: "user1",
+							},
+							Data: io.NopCloser(strings.NewReader("file-data")),
+						}),
+					)
 					return cfg
 				}(),
 			},
@@ -102,17 +101,14 @@ func TestNewFileRepo(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					err = r.Save(context.Background(), blinkfile.File{
+					fatalOnErr(t, r.Save(context.Background(), blinkfile.File{
 						FileHeader: blinkfile.FileHeader{
 							ID:    "file1",
 							Name:  "filename",
 							Owner: "user1",
 						},
 						Data: io.NopCloser(strings.NewReader("file-data")),
-					})
-					if err != nil {
-						t.Fatal(err)
-					}
+					}))
 					return cfg
 				}(),
 			},
@@ -142,17 +138,14 @@ func TestNewFileRepo(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					err = r.Save(context.Background(), blinkfile.File{
+					fatalOnErr(t, r.Save(context.Background(), blinkfile.File{
 						FileHeader: blinkfile.FileHeader{
 							ID:    "file1",
 							Name:  "filename",
 							Owner: "user1",
 						},
 						Data: io.NopCloser(strings.NewReader("file-data")),
-					})
-					if err != nil {
-						t.Fatal(err)
-					}
+					}))
 					return cfg
 				}(),
 			},
@@ -386,7 +379,7 @@ func (l *spyLog) Errorf(_ context.Context, format string, v ...any) {
 }
 
 func newTestFileRepo(t *testing.T, dir string) *repo.FileRepo {
-	r, err := repo.NewFileRepo(context.Background(), repo.FileRepoConfig{Dir: newFileDir(t, dir)})
+	r, err := repo.NewFileRepo(context.Background(), repo.FileRepoConfig{Dir: newFileDir(t, dir), Log: &spyLog{}})
 	if err != nil {
 		t.Fatal(err)
 	}

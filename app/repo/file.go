@@ -130,7 +130,7 @@ func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
 	header := fileHeader(file.FileHeader)
 	dir, filename, headerFilename := filenames(r.dir, header.ID)
 	header.Location = filename
-	err := MkdirAll(dir, ModeDir)
+	err := MkdirAll(dir, ModeDir|0755)
 	if err != nil {
 		return fmt.Errorf("making directory %q: %w", dir, err)
 	}
@@ -139,7 +139,7 @@ func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
 	if err != nil {
 		return fmt.Errorf("marshaling file header: %w", err)
 	}
-	err = WriteFile(headerFilename, data, ModePerm)
+	err = WriteFile(headerFilename, data, 0644)
 	if err != nil {
 		return fmt.Errorf("writing file header: %w", err)
 	}
