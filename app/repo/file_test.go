@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"git.jfam.app/blinkfile"
+	"git.jfam.app/blinkfile/app"
 	"git.jfam.app/blinkfile/app/repo"
 	"io"
 	"os"
@@ -194,6 +195,17 @@ func TestFileRepo_Save(t *testing.T) {
 		wantErr error
 	}{
 		{
+			name: "should fail if the file ID is empty",
+			args: args{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
+						ID: "",
+					},
+				},
+			},
+			wantErr: fmt.Errorf("file ID cannot be empty"),
+		},
+		{
 			name: "should fail if the file data is nil",
 			args: args{
 				file: blinkfile.File{
@@ -206,12 +218,26 @@ func TestFileRepo_Save(t *testing.T) {
 			wantErr: fmt.Errorf("file data cannot be nil"),
 		},
 		{
+			name: "should fail if the file owner is empty",
+			args: args{
+				file: blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
+						ID:    "file1",
+						Owner: "",
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				},
+			},
+			wantErr: fmt.Errorf("file owner cannot be empty"),
+		},
+		{
 			name: "should fail if making the file directory fails",
 			r:    newTestFileRepo(t, "mkdirfail1"),
 			args: args{
 				file: blinkfile.File{
 					FileHeader: blinkfile.FileHeader{
-						ID: "file1",
+						ID:    "file1",
+						Owner: "owner1",
 					},
 					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
@@ -367,26 +393,192 @@ func newTestFileRepo(t *testing.T, dir string) *repo.FileRepo {
 	return r
 }
 
+func fatalOnErr(t *testing.T, errs ...error) {
+	t.Helper()
+	for _, err := range errs {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestFileRepo_DeleteExpiredBefore(t *testing.T) {
+	ctx := context.Background()
 	type args struct {
 		t time.Time
 	}
 	tests := []struct {
 		name    string
+		patch   func(*testing.T) func()
 		r       *repo.FileRepo
 		args    args
 		want    int
 		wantErr error
+		assert  func(*testing.T, *repo.FileRepo)
 	}{
 		{
-			name:    "should do nothing if repo is empty",
-			want:    0,
-			wantErr: nil,
+			name: "should do nothing if repo is empty",
+			want: 0,
+		},
+		{
+			name: "should do nothing if all files have expirations in the future or no expiration",
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "deleteExpiredBefore_noExpiration")
+				fatalOnErr(t,
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:      "file1",
+							Owner:   "user1",
+							Expires: time.Time{},
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:      "file2",
+							Owner:   "user1",
+							Expires: time.Unix(1, 1),
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+				)
+				return r
+			}(),
+			args: args{
+				t: time.Unix(1, 0),
+			},
+			want: 0,
+			assert: func(t *testing.T, r *repo.FileRepo) {
+				want := []blinkfile.FileHeader{
+					{
+						ID:       "file1",
+						Location: filepath.Clean("_test/repo_file/deleteExpiredBefore_noExpiration/file1/file"),
+						Owner:    "user1",
+						Expires:  time.Time{},
+					},
+					{
+						ID:       "file2",
+						Location: filepath.Clean("_test/repo_file/deleteExpiredBefore_noExpiration/file2/file"),
+						Owner:    "user1",
+						Expires:  time.Unix(1, 1),
+					},
+				}
+
+				got, err := r.ListByUser(ctx, "user1")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("After DeleteExpiredBefore(), ListByUser() for user1 got: \n\t%+v\nwant: \n\t%+v", got, want)
+				}
+			},
+		},
+		{
+			name: "should fail if deleting an expired file fails, but still return the number of deleted files up to that point",
+			patch: func(t *testing.T) func() {
+				prev := repo.RemoveAll
+				var count int
+				repo.RemoveAll = func(path string) error {
+					if count == 0 {
+						count++
+						return nil
+					}
+					return fmt.Errorf("remove file failure")
+				}
+				return func() { repo.RemoveAll = prev }
+			},
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "deleteExpiredBefore_deleteFailure")
+				fatalOnErr(t,
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:      "file1",
+							Owner:   "user1",
+							Expires: time.Unix(0, 0),
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:      "file2",
+							Owner:   "user1",
+							Expires: time.Unix(1, 0),
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+				)
+				return r
+			}(),
+			args: args{
+				t: time.Unix(2, 0),
+			},
+			want:    1,
+			wantErr: fmt.Errorf("remove file failure"),
+			assert: func(t *testing.T, r *repo.FileRepo) {
+				want := []blinkfile.FileHeader{
+					{
+						ID:       "file2",
+						Location: filepath.Clean("_test/repo_file/deleteExpiredBefore_deleteFailure/file2/file"),
+						Owner:    "user1",
+						Expires:  time.Unix(1, 0),
+					},
+				}
+
+				got, err := r.ListByUser(ctx, "user1")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("After DeleteExpiredBefore(), ListByUser() for user1 got: \n\t%+v\nwant: \n\t%+v", got, want)
+				}
+			},
+		},
+		{
+			name: "should delete all files older than or equal to the given time",
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "deleteExpiredBefore_success")
+				fatalOnErr(t,
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:      "file1",
+							Owner:   "user1",
+							Expires: time.Unix(0, 0),
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:      "file2",
+							Owner:   "user1",
+							Expires: time.Unix(1, 0),
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+				)
+				return r
+			}(),
+			args: args{
+				t: time.Unix(1, 0),
+			},
+			want: 2,
+			assert: func(t *testing.T, r *repo.FileRepo) {
+				want := []blinkfile.FileHeader{}
+
+				got, err := r.ListByUser(ctx, "user1")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("After DeleteExpiredBefore(), ListByUser() for user1 got: \n\t%+v\nwant: \n\t%+v", got, want)
+				}
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			if tt.patch != nil {
+				defer tt.patch(t)()
+			}
 			if tt.r == nil {
 				tt.r = newTestFileRepo(t, "")
 			}
@@ -398,6 +590,209 @@ func TestFileRepo_DeleteExpiredBefore(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("DeleteExpiredBefore() got = %v, want %v", got, tt.want)
+			}
+			if tt.assert != nil {
+				tt.assert(t, tt.r)
+			}
+		})
+	}
+}
+
+func TestFileRepo_Get(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		fileID blinkfile.FileID
+	}
+	tests := []struct {
+		name    string
+		r       *repo.FileRepo
+		args    args
+		want    blinkfile.FileHeader
+		wantErr error
+	}{
+		{
+			name: "should fail if file ID is empty",
+			args: args{
+				fileID: "",
+			},
+			wantErr: fmt.Errorf("file ID cannot be empty"),
+		},
+		{
+			name: "should fail if file not found",
+			args: args{
+				fileID: "file1",
+			},
+			wantErr: app.ErrFileNotFound,
+		},
+		{
+			name: "should return file header with its location",
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "get_withLocation")
+				fatalOnErr(t, r.Save(ctx, blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
+						ID:    "file1",
+						Owner: "user1",
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				}))
+				return r
+			}(),
+			args: args{
+				fileID: "file1",
+			},
+			want: blinkfile.FileHeader{
+				ID:       "file1",
+				Owner:    "user1",
+				Location: filepath.Clean(`_test/repo_file/get_withLocation/file1/file`),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.r == nil {
+				tt.r = newTestFileRepo(t, "")
+			}
+			defer cleanDir(t, tt.r.Dir())
+			got, err := tt.r.Get(ctx, tt.args.fileID)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Get() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFileRepo_Delete(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		owner       blinkfile.UserID
+		deleteFiles []blinkfile.FileID
+	}
+	tests := []struct {
+		name    string
+		patch   func(*testing.T) func()
+		r       *repo.FileRepo
+		args    args
+		wantErr error
+		assert  func(*testing.T, *repo.FileRepo)
+	}{
+		{
+			name: "should fail if file owner is empty",
+			args: args{
+				owner: "",
+			},
+			wantErr: fmt.Errorf("file owner ID cannot be empty"),
+		},
+		{
+			name: "should do nothing if list of files to delete is empty",
+			args: args{
+				owner:       "user1",
+				deleteFiles: nil,
+			},
+		},
+		{
+			name: "should fail if any files are not found without deleting any files",
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "delete_failWithoutDelete")
+				fatalOnErr(t,
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:    "file1",
+							Owner: "user1",
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+				)
+				return r
+			}(),
+			args: args{
+				owner:       "user1",
+				deleteFiles: []blinkfile.FileID{"file1", "this-file-doesn't-exist"},
+			},
+			wantErr: fmt.Errorf(`file "this-file-doesn't-exist" not found to delete by user "user1"`),
+			assert: func(t *testing.T, r *repo.FileRepo) {
+				want := blinkfile.FileHeader{
+					ID:       "file1",
+					Owner:    "user1",
+					Location: filepath.Clean(`_test/repo_file/delete_failWithoutDelete/file1/file`),
+				}
+				got, _ := r.Get(ctx, "file1")
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("After Delete(), Get() got: \n\t%+v\nwant: \n\t%+v", got, want)
+				}
+			},
+		},
+		{
+			name: "should partially fail if deletion fails part way through",
+			patch: func(t *testing.T) func() {
+				prev := repo.RemoveAll
+				var count int
+				repo.RemoveAll = func(path string) error {
+					if count == 0 {
+						count++
+						return nil
+					}
+					return fmt.Errorf("remove err")
+				}
+				return func() { repo.RemoveAll = prev }
+			},
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "delete_partialFailure")
+				fatalOnErr(t,
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:    "file1",
+							Owner: "user1",
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:    "file2",
+							Owner: "user1",
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+				)
+				return r
+			}(),
+			args: args{
+				owner:       "user1",
+				deleteFiles: []blinkfile.FileID{"file1", "file2"},
+			},
+			wantErr: fmt.Errorf(`successfully deleted the first %d file(s) but failed deleting file "file2": %w`, 1, fmt.Errorf("remove err")),
+			assert: func(t *testing.T, r *repo.FileRepo) {
+				want := []blinkfile.FileHeader{{
+					ID:       "file2",
+					Owner:    "user1",
+					Location: filepath.Clean(`_test/repo_file/delete_partialFailure/file2/file`),
+				}}
+				got, _ := r.ListByUser(ctx, "user1")
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("After Delete(), ListByUser() for user1 got: \n\t%+v\nwant: \n\t%+v", got, want)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.patch != nil {
+				defer tt.patch(t)()
+			}
+			if tt.r == nil {
+				tt.r = newTestFileRepo(t, "")
+			}
+			defer cleanDir(t, tt.r.Dir())
+			err := tt.r.Delete(ctx, tt.args.owner, tt.args.deleteFiles)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.assert != nil {
+				tt.assert(t, tt.r)
 			}
 		})
 	}

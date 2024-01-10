@@ -7,6 +7,7 @@ import (
 	"git.jfam.app/blinkfile/app"
 	"io/fs"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 )
@@ -26,11 +27,11 @@ type (
 	}
 
 	fileHeader struct {
-		ID       blinkfile.FileID
-		Name     string
-		Location string
-		Owner    blinkfile.UserID
-		Created  time.Time
+		ID           blinkfile.FileID
+		Name         string
+		Location     string
+		Owner        blinkfile.UserID
+		Created      time.Time
 		Expires      time.Time
 		Size         int64
 		PasswordHash string
@@ -101,7 +102,7 @@ func (r *FileRepo) addToIndices(header fileHeader) {
 	r.idIndex[header.ID] = header
 }
 
-func (r *FileRepo) removeFromIndices(header fileHeader) {
+func (r *FileRepo) removeFromIndices(header blinkfile.FileHeader) {
 	delete(r.ownerIndex[header.Owner], header.ID)
 	delete(r.idIndex, header.ID)
 }
@@ -115,8 +116,14 @@ func loadFileHeader(_ context.Context, path string) (header fileHeader, err erro
 }
 
 func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
+	if file.ID == "" {
+		return fmt.Errorf("file ID cannot be empty")
+	}
 	if file.Data == nil {
 		return fmt.Errorf("file data cannot be nil")
+	}
+	if file.Owner == "" {
+		return fmt.Errorf("file owner cannot be empty")
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -154,7 +161,7 @@ func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
 func (r *FileRepo) DeleteExpiredBefore(_ context.Context, t time.Time) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	var count int
+	var deleteList []blinkfile.FileHeader
 	for _, header := range r.idIndex {
 		if header.Expires.IsZero() {
 			continue
@@ -162,6 +169,10 @@ func (r *FileRepo) DeleteExpiredBefore(_ context.Context, t time.Time) (int, err
 		if header.Expires.After(t) {
 			continue
 		}
+		deleteList = append(deleteList, blinkfile.FileHeader(header))
+	}
+	var count int
+	for _, header := range sortFiles(deleteList) {
 		err := r.deleteFile(header)
 		if err != nil {
 			return count, err
@@ -169,6 +180,20 @@ func (r *FileRepo) DeleteExpiredBefore(_ context.Context, t time.Time) (int, err
 		count++
 	}
 	return count, nil
+}
+
+func sortFiles(files []blinkfile.FileHeader) []blinkfile.FileHeader {
+	sort.Slice(files, func(i, j int) bool {
+		x, y := files[i], files[j]
+		if !x.Created.Equal(y.Created) {
+			return x.Created.After(y.Created)
+		}
+		if x.Name != y.Name {
+			return x.Name < y.Name
+		}
+		return x.ID < y.ID
+	})
+	return files
 }
 
 func (r *FileRepo) ListByUser(_ context.Context, userID blinkfile.UserID) ([]blinkfile.FileHeader, error) {
@@ -179,10 +204,13 @@ func (r *FileRepo) ListByUser(_ context.Context, userID blinkfile.UserID) ([]bli
 	for _, header := range ownedFiles {
 		out = append(out, blinkfile.FileHeader(header))
 	}
-	return out, nil
+	return sortFiles(out), nil
 }
 
 func (r *FileRepo) Get(_ context.Context, fileID blinkfile.FileID) (blinkfile.FileHeader, error) {
+	if fileID == "" {
+		return blinkfile.FileHeader{}, fmt.Errorf("file ID cannot be empty")
+	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	header, found := r.idIndex[fileID]
@@ -196,29 +224,37 @@ func (r *FileRepo) Get(_ context.Context, fileID blinkfile.FileID) (blinkfile.Fi
 }
 
 func (r *FileRepo) Delete(_ context.Context, owner blinkfile.UserID, deleteFiles []blinkfile.FileID) error {
+	if owner == "" {
+		return fmt.Errorf("file owner ID cannot be empty")
+	}
+	if len(deleteFiles) == 0 {
+		return nil
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	ownedFiles := r.ownerIndex[owner]
 
-	toRemove := make([]fileHeader, 0, len(deleteFiles))
+	toRemove := make([]blinkfile.FileHeader, 0, len(deleteFiles))
 	for _, fileID := range deleteFiles {
 		header, exists := ownedFiles[fileID]
 		if !exists {
 			return fmt.Errorf("file %q not found to delete by user %q", fileID, owner)
 		}
-		toRemove = append(toRemove, header)
+		toRemove = append(toRemove, blinkfile.FileHeader(header))
 	}
 
+	var count int
 	for _, file := range toRemove {
 		err := r.deleteFile(file)
 		if err != nil {
-			return err
+			return fmt.Errorf("successfully deleted the first %d file(s) but failed deleting file %q: %w", count, file.ID, err)
 		}
+		count++
 	}
 	return nil
 }
 
-func (r *FileRepo) deleteFile(file fileHeader) error {
+func (r *FileRepo) deleteFile(file blinkfile.FileHeader) error {
 	dir, _, _ := filenames(r.dir, file.ID)
 	if err := RemoveAll(dir); err != nil {
 		return err
