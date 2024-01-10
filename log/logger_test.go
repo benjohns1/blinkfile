@@ -3,7 +3,7 @@ package log_test
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/blinkfile/log"
+	"github.com/benjohns1/blinkfile/log"
 	"reflect"
 	"testing"
 )

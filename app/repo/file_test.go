@@ -3,9 +3,9 @@ package repo_test
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/blinkfile"
-	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/app/repo"
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/app"
+	"github.com/benjohns1/blinkfile/app/repo"
 	"io"
 	"os"
 	"path/filepath"

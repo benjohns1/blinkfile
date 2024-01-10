@@ -2,7 +2,7 @@ package hash_test
 
 import (
 	"fmt"
-	"git.jfam.app/blinkfile/hash"
+	"github.com/benjohns1/blinkfile/hash"
 	"golang.org/x/crypto/argon2"
 	"reflect"
 	"testing"

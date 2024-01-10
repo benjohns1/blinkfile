@@ -3,7 +3,7 @@ package app
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"git.jfam.app/blinkfile"
+	"github.com/benjohns1/blinkfile"
 	"time"
 )
 

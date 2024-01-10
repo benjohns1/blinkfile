@@ -1,4 +1,4 @@
-module git.jfam.app/blinkfile
+module github.com/benjohns1/blinkfile
 
 go 1.21
 

@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/blinkfile"
+	"github.com/benjohns1/blinkfile"
 	"time"
 )
 

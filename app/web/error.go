@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/request"
+	"github.com/benjohns1/blinkfile/app"
+	"github.com/benjohns1/blinkfile/request"
 	"github.com/kataras/iris/v12"
 	"net/http"
 )

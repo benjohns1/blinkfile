@@ -2,7 +2,7 @@ package blinkfile_test
 
 import (
 	"fmt"
-	"git.jfam.app/blinkfile"
+	"github.com/benjohns1/blinkfile"
 	"io"
 	"reflect"
 	"strings"
@@ -185,9 +185,9 @@ func TestFile_Download(t *testing.T) {
 		nowFunc   blinkfile.NowFunc
 	}
 	tests := []struct {
-		name string
-		f    blinkfile.File
-		args args
+		name    string
+		f       blinkfile.File
+		args    args
 		wantErr error
 	}{
 		{

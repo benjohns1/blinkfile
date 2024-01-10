@@ -2,7 +2,7 @@ package blinkfile_test
 
 import (
 	"fmt"
-	"git.jfam.app/blinkfile"
+	"github.com/benjohns1/blinkfile"
 	"reflect"
 	"testing"
 	"time"

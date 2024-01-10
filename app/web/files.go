@@ -3,9 +3,9 @@ package web
 import (
 	"errors"
 	"fmt"
-	"git.jfam.app/blinkfile"
-	"git.jfam.app/blinkfile/app"
-	"git.jfam.app/blinkfile/longduration"
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/app"
+	"github.com/benjohns1/blinkfile/longduration"
 	"github.com/kataras/iris/v12"
 	"strings"
 	"time"

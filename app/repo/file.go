@@ -3,8 +3,8 @@ package repo
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/blinkfile"
-	"git.jfam.app/blinkfile/app"
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/app"
 	"io/fs"
 	"path/filepath"
 	"sort"

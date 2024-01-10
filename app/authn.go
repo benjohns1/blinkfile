@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
-	"git.jfam.app/blinkfile"
+	"github.com/benjohns1/blinkfile"
 )
 
 type Credentials struct {

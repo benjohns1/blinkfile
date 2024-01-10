@@ -3,7 +3,7 @@ package request_test
 import (
 	"context"
 	"fmt"
-	"git.jfam.app/blinkfile/request"
+	"github.com/benjohns1/blinkfile/request"
 	"reflect"
 	"testing"
 )
