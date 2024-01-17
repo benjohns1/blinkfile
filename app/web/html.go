@@ -64,7 +64,7 @@ func (c Config) parse(ctx context.Context) (Config, error) {
 		cfg.MaxFileByteSize = 2 * iris.GB
 	}
 	if cfg.Title == "" {
-		const defaultTitle = "BlinkFile"
+		const defaultTitle = "Blinkfile"
 		c.App.Printf(ctx, "Setting Title to default %q", defaultTitle)
 		cfg.Title = defaultTitle
 	}
