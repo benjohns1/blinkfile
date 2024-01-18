@@ -12,6 +12,56 @@ import (
 	"time"
 )
 
+func AppConfigDefaults(cfg app.Config) app.Config {
+	out := cfg
+	if cfg.SessionRepo == nil {
+		out.SessionRepo = &StubSessionRepo{}
+	}
+
+	if cfg.FileRepo == nil {
+		out.FileRepo = &StubFileRepo{}
+	}
+
+	if cfg.Log == nil {
+		out.Log = log.New(log.Config{})
+	}
+
+	if cfg.PasswordHasher == nil {
+		out.PasswordHasher = &hash.Argon2idDefault
+	}
+	return out
+}
+
+func NewTestApp(ctx context.Context, t *testing.T, cfg app.Config) *app.App {
+	application, err := app.New(ctx, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return application
+}
+
+type SpySessionRepo struct {
+	repo        app.SessionRepo
+	SaveCalls   []app.Session
+	DeleteCalls []app.Token
+	GetCalls    []app.Token
+}
+
+func (sr *SpySessionRepo) Save(ctx context.Context, session app.Session) error {
+	sr.SaveCalls = append(sr.SaveCalls, session)
+	return sr.repo.Save(ctx, session)
+}
+
+func (sr *SpySessionRepo) Delete(ctx context.Context, token app.Token) error {
+	sr.DeleteCalls = append(sr.DeleteCalls, token)
+	return sr.repo.Delete(ctx, token)
+}
+
+func (sr *SpySessionRepo) Get(ctx context.Context, token app.Token) (app.Session, bool, error) {
+	sr.GetCalls = append(sr.GetCalls, token)
+	return sr.repo.Get(ctx, token)
+}
+
 type StubSessionRepo struct {
 	SaveFunc   func(context.Context, app.Session) error
 	GetFunc    func(context.Context, app.Token) (app.Session, bool, error)

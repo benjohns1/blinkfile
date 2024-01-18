@@ -12,7 +12,7 @@ func (a *App) registerAdminUser(ctx context.Context, username blinkfile.Username
 	if username == "" {
 		return nil
 	}
-	creds, err := a.NewCredentials(AdminUserID, username, password)
+	creds, err := newPasswordCredentials(AdminUserID, username, password, a.cfg.PasswordHasher.Hash)
 	if err != nil {
 		return err
 	}

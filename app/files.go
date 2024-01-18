@@ -13,20 +13,19 @@ import (
 	"time"
 )
 
-func (a *App) DeleteExpiredFiles(ctx context.Context) error {
-	start := a.cfg.Now()
-	count, err := a.cfg.FileRepo.DeleteExpiredBefore(ctx, start)
-	if count > 0 {
-		a.Log.Printf(ctx, "Deleted %d expired files, took %v", count, time.Since(start))
-	}
-	return err
-}
-
 func (a *App) ListFiles(ctx context.Context, owner blinkfile.UserID) ([]blinkfile.FileHeader, error) {
+	if owner == "" {
+		return nil, Err(ErrBadRequest, fmt.Errorf("owner is required"))
+	}
 	files, err := a.cfg.FileRepo.ListByUser(ctx, owner)
 	if err != nil {
-		return nil, err
+		return nil, Err(ErrRepo, fmt.Errorf("retrieving file list: %w", err))
 	}
+	sortFilesByCreatedTimeDesc(files)
+	return files, nil
+}
+
+func sortFilesByCreatedTimeDesc(files []blinkfile.FileHeader) {
 	sort.Slice(files, func(i, j int) bool {
 		x, y := files[i], files[j]
 		if !x.Created.Equal(y.Created) {
@@ -37,7 +36,6 @@ func (a *App) ListFiles(ctx context.Context, owner blinkfile.UserID) ([]blinkfil
 		}
 		return x.ID < y.ID
 	})
-	return files, nil
 }
 
 type UploadFileArgs struct {
@@ -121,6 +119,15 @@ func (a *App) DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID 
 
 func (a *App) DeleteFiles(ctx context.Context, owner blinkfile.UserID, deleteFiles []blinkfile.FileID) error {
 	return a.cfg.FileRepo.Delete(ctx, owner, deleteFiles)
+}
+
+func (a *App) DeleteExpiredFiles(ctx context.Context) error {
+	start := a.cfg.Now()
+	count, err := a.cfg.FileRepo.DeleteExpiredBefore(ctx, start)
+	if count > 0 {
+		a.Log.Printf(ctx, "Deleted %d expired files, took %v", count, time.Since(start))
+	}
+	return err
 }
 
 func generateFileID() (blinkfile.FileID, error) {

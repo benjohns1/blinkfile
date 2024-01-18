@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app"
-	"github.com/benjohns1/blinkfile/hash"
-	"github.com/benjohns1/blinkfile/log"
 	"reflect"
 	"testing"
 	"time"
@@ -100,7 +98,7 @@ func TestApp_Login(t *testing.T) {
 				GenerateToken: func() (app.Token, error) {
 					return "token1", nil
 				},
-				SessionRepo: stubSessionRepo{
+				SessionRepo: &StubSessionRepo{
 					SaveFunc: func(context.Context, app.Session) error {
 						return fmt.Errorf("session save error")
 					},
@@ -158,29 +156,10 @@ func TestApp_Login(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sessionRepo := tt.cfg.SessionRepo
-			if sessionRepo == nil {
-				sessionRepo = stubSessionRepo{}
-			}
-			spy := &spySessionRepo{repo: sessionRepo}
-			tt.cfg.SessionRepo = spy
-
-			if tt.cfg.FileRepo == nil {
-				tt.cfg.FileRepo = stubFileRepo{}
-			}
-
-			if tt.cfg.PasswordHasher == nil {
-				tt.cfg.PasswordHasher = &hash.Argon2idDefault
-			}
-
-			if tt.cfg.Log == nil {
-				tt.cfg.Log = log.New(log.Config{})
-			}
-
-			application, err := app.New(ctx, tt.cfg)
-			if err != nil {
-				t.Fatal(err)
-			}
+			cfg := AppConfigDefaults(tt.cfg)
+			spy := &SpySessionRepo{repo: cfg.SessionRepo}
+			cfg.SessionRepo = spy
+			application := NewTestApp(ctx, t, cfg)
 			got, err := application.Login(ctx, tt.args.username, tt.args.password, tt.args.requestData)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
@@ -211,7 +190,7 @@ func TestApp_Logout(t *testing.T) {
 		{
 			name: "should fail with a repo error if deleting the session state fails",
 			cfg: app.Config{
-				SessionRepo: stubSessionRepo{
+				SessionRepo: &StubSessionRepo{
 					DeleteFunc: func(context.Context, app.Token) error {
 						return fmt.Errorf("session delete error")
 					},
@@ -235,29 +214,11 @@ func TestApp_Logout(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sessionRepo := tt.cfg.SessionRepo
-			if sessionRepo == nil {
-				sessionRepo = stubSessionRepo{}
-			}
-			spy := &spySessionRepo{repo: sessionRepo}
-			tt.cfg.SessionRepo = spy
-
-			if tt.cfg.FileRepo == nil {
-				tt.cfg.FileRepo = stubFileRepo{}
-			}
-
-			if tt.cfg.PasswordHasher == nil {
-				tt.cfg.PasswordHasher = &hash.Argon2idDefault
-			}
-			if tt.cfg.Log == nil {
-				tt.cfg.Log = log.New(log.Config{})
-			}
-
-			application, err := app.New(ctx, tt.cfg)
-			if err != nil {
-				t.Fatal(err)
-			}
-			err = application.Logout(ctx, tt.args.token)
+			cfg := AppConfigDefaults(tt.cfg)
+			spy := &SpySessionRepo{repo: cfg.SessionRepo}
+			cfg.SessionRepo = spy
+			application := NewTestApp(ctx, t, cfg)
+			err := application.Logout(ctx, tt.args.token)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Logout() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -293,7 +254,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 		{
 			name: "should fail with a repo error if getting the session state fails",
 			cfg: app.Config{
-				SessionRepo: stubSessionRepo{
+				SessionRepo: &StubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
 						return app.Session{}, false, fmt.Errorf("session get error")
 					},
@@ -307,7 +268,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 		{
 			name: "should return false if no session found for the given token",
 			cfg: app.Config{
-				SessionRepo: stubSessionRepo{
+				SessionRepo: &StubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
 						return app.Session{}, false, nil
 					},
@@ -321,7 +282,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 		{
 			name: "should return false if session is expired",
 			cfg: app.Config{
-				SessionRepo: stubSessionRepo{
+				SessionRepo: &StubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
 						return app.Session{
 							Expires: time.Unix(1, 0),
@@ -338,7 +299,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 		{
 			name: "should fail if user doesn't exist even though they have a valid session",
 			cfg: app.Config{
-				SessionRepo: stubSessionRepo{
+				SessionRepo: &StubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
 						return app.Session{
 							UserID:  "user1",
@@ -356,7 +317,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 		{
 			name: "should return userID if session is valid",
 			cfg: app.Config{
-				SessionRepo: stubSessionRepo{
+				SessionRepo: &StubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
 						return app.Session{
 							UserID:  app.AdminUserID,
@@ -377,28 +338,10 @@ func TestApp_IsAuthenticated(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sessionRepo := tt.cfg.SessionRepo
-			if sessionRepo == nil {
-				sessionRepo = stubSessionRepo{}
-			}
-			spy := &spySessionRepo{repo: sessionRepo}
-			tt.cfg.SessionRepo = spy
-
-			if tt.cfg.FileRepo == nil {
-				tt.cfg.FileRepo = stubFileRepo{}
-			}
-
-			if tt.cfg.PasswordHasher == nil {
-				tt.cfg.PasswordHasher = &hash.Argon2idDefault
-			}
-			if tt.cfg.Log == nil {
-				tt.cfg.Log = log.New(log.Config{})
-			}
-
-			application, err := app.New(ctx, tt.cfg)
-			if err != nil {
-				t.Fatal(err)
-			}
+			cfg := AppConfigDefaults(tt.cfg)
+			spy := &SpySessionRepo{repo: cfg.SessionRepo}
+			cfg.SessionRepo = spy
+			application := NewTestApp(ctx, t, cfg)
 			gotUserID, got, err := application.IsAuthenticated(ctx, tt.args.token)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("IsAuthenticated() error = %v, wantErr %v", err, tt.wantErr)
@@ -415,57 +358,4 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			}
 		})
 	}
-}
-
-type spySessionRepo struct {
-	repo        app.SessionRepo
-	SaveCalls   []app.Session
-	DeleteCalls []app.Token
-	GetCalls    []app.Token
-}
-
-func (r *spySessionRepo) Save(ctx context.Context, session app.Session) error {
-	r.SaveCalls = append(r.SaveCalls, session)
-	return r.repo.Save(ctx, session)
-}
-
-func (r *spySessionRepo) Delete(ctx context.Context, token app.Token) error {
-	r.DeleteCalls = append(r.DeleteCalls, token)
-	return r.repo.Delete(ctx, token)
-}
-
-func (r *spySessionRepo) Get(ctx context.Context, token app.Token) (app.Session, bool, error) {
-	r.GetCalls = append(r.GetCalls, token)
-	return r.repo.Get(ctx, token)
-}
-
-type stubSessionRepo struct {
-	SaveFunc   func(context.Context, app.Session) error
-	DeleteFunc func(context.Context, app.Token) error
-	GetFunc    func(context.Context, app.Token) (app.Session, bool, error)
-}
-
-func (r stubSessionRepo) Save(ctx context.Context, session app.Session) error {
-	if r.SaveFunc == nil {
-		return nil
-	}
-	return r.SaveFunc(ctx, session)
-}
-
-func (r stubSessionRepo) Delete(ctx context.Context, token app.Token) error {
-	if r.DeleteFunc == nil {
-		return nil
-	}
-	return r.DeleteFunc(ctx, token)
-}
-
-func (r stubSessionRepo) Get(ctx context.Context, token app.Token) (app.Session, bool, error) {
-	if r.GetFunc == nil {
-		return app.Session{}, false, nil
-	}
-	return r.GetFunc(ctx, token)
-}
-
-type stubFileRepo struct {
-	app.FileRepo
 }

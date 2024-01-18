@@ -15,7 +15,7 @@ type Credentials struct {
 
 const passwordMinLength = 16
 
-func (a *App) NewCredentials(userID blinkfile.UserID, user blinkfile.Username, pass string) (Credentials, error) {
+func newPasswordCredentials(userID blinkfile.UserID, user blinkfile.Username, pass string, hash func([]byte) string) (Credentials, error) {
 	if userID == "" {
 		return Credentials{}, fmt.Errorf("user ID cannot be empty")
 	}
@@ -25,19 +25,12 @@ func (a *App) NewCredentials(userID blinkfile.UserID, user blinkfile.Username, p
 	if len(pass) < passwordMinLength {
 		return Credentials{}, fmt.Errorf("password must be at least %d characters long", passwordMinLength)
 	}
-	encodedHash := a.cfg.PasswordHasher.Hash([]byte(pass))
+	encodedHash := hash([]byte(pass))
 	return Credentials{
 		UserID:              userID,
 		username:            user,
 		encodedPasswordHash: encodedHash,
 	}, nil
-}
-
-func (a *App) CredentialsMatch(c Credentials, username blinkfile.Username, password string) (bool, error) {
-	if !stringsAreEqual(string(c.username), string(username)) {
-		return false, nil
-	}
-	return a.cfg.PasswordHasher.Match(c.encodedPasswordHash, []byte(password))
 }
 
 func (a *App) IsAuthenticated(ctx context.Context, token Token) (blinkfile.UserID, bool, error) {
@@ -118,7 +111,7 @@ func (a *App) authenticate(username blinkfile.Username, password string) (blinkf
 	if !found {
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: no username %q found", username))
 	}
-	match, err := a.CredentialsMatch(credentials, username, password)
+	match, err := credentialsMatch(credentials, username, password, a.cfg.PasswordHasher.Match)
 	if err != nil {
 		return "", Err(ErrInternal, fmt.Errorf("error matching credentials: %w", err))
 	}
@@ -126,6 +119,13 @@ func (a *App) authenticate(username blinkfile.Username, password string) (blinkf
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: passwords do not match"))
 	}
 	return credentials.UserID, nil
+}
+
+func credentialsMatch(c Credentials, username blinkfile.Username, password string, passwordMatcher func(hash string, data []byte) (matched bool, err error)) (bool, error) {
+	if !stringsAreEqual(string(c.username), string(username)) {
+		return false, nil
+	}
+	return passwordMatcher(c.encodedPasswordHash, []byte(password))
 }
 
 func (a *App) getCredentials(username blinkfile.Username) (Credentials, bool, error) {
