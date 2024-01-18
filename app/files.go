@@ -96,13 +96,16 @@ func (a *App) mimicErr(ctx context.Context, password string, err error) error {
 }
 
 func (a *App) DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID blinkfile.FileID, password string) (blinkfile.FileHeader, error) {
+	if fileID == "" {
+		return blinkfile.FileHeader{}, Err(ErrBadRequest, fmt.Errorf("file ID is required"))
+	}
 	matchFunc := func(hashedPassword string, checkPassword string) (matched bool, err error) {
 		return a.cfg.PasswordHasher.Match(hashedPassword, []byte(checkPassword))
 	}
 	file, err := a.cfg.FileRepo.Get(ctx, fileID)
 	if err != nil {
 		// Mimic responses for files that don't exist
-		err = a.mimicErr(ctx, password, err)
+		err = a.mimicErr(ctx, password, Err(ErrRepo, err))
 		return blinkfile.FileHeader{}, err
 	}
 	err = file.Download(userID, password, matchFunc, a.cfg.Now)
@@ -111,7 +114,7 @@ func (a *App) DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID 
 			err = Err(ErrAuthzFailed, err)
 		}
 		err = a.mimicErr(ctx, password, err)
-		return file, err
+		return blinkfile.FileHeader{}, err
 	}
 	return file, nil
 }

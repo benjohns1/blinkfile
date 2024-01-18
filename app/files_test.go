@@ -245,3 +245,225 @@ func TestApp_UploadFile(t *testing.T) {
 		})
 	}
 }
+
+func TestApp_DownloadFile(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		userID   blinkfile.UserID
+		fileID   blinkfile.FileID
+		password string
+	}
+	tests := []struct {
+		name    string
+		cfg     app.Config
+		args    args
+		want    blinkfile.FileHeader
+		wantErr error
+	}{
+		{
+			name: "should fail if file ID is empty",
+			args: args{
+				fileID: "",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrBadRequest,
+				Err:  fmt.Errorf("file ID is required"),
+			},
+		},
+		{
+			name: "should fail if repo retrieval fails",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{}, fmt.Errorf("get err")
+				}},
+			},
+			args: args{
+				fileID: "file1",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("get err"),
+			},
+		},
+		{
+			name: "should fail with an authorization error if file is not found",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{}, app.ErrFileNotFound
+				}},
+			},
+			args: args{
+				fileID: "file1",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrAuthzFailed,
+				Err:  blinkfile.ErrFilePasswordRequired,
+			},
+		},
+		{
+			name: "should fail with an authorization error if file is not found but a password is supplied",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{}, app.ErrFileNotFound
+				}},
+			},
+			args: args{
+				fileID:   "file1",
+				password: "file-password",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrAuthzFailed,
+				Err:  blinkfile.ErrFilePasswordInvalid,
+			},
+		},
+		{
+			name: "should fail with an authorization error if file is expired",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{}, blinkfile.ErrFileExpired
+				}},
+			},
+			args: args{
+				fileID: "file1",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrAuthzFailed,
+				Err:  blinkfile.ErrFilePasswordRequired,
+			},
+		},
+		{
+			name: "should fail with an authorization error if password is invalid",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{
+						PasswordHash: "password-hash",
+					}, nil
+				}},
+				PasswordHasher: &StubPasswordHasher{
+					MatchFunc: func(string, []byte) (bool, error) {
+						return false, nil
+					},
+				},
+			},
+			args: args{
+				fileID:   "file1",
+				password: "invalid-password",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrAuthzFailed,
+				Err:  blinkfile.ErrFilePasswordInvalid,
+			},
+		},
+		{
+			name: "should download a public file with minimal fields",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{
+						ID: "file1",
+					}, nil
+				}},
+			},
+			args: args{
+				fileID: "file1",
+			},
+			want: blinkfile.FileHeader{
+				ID: "file1",
+			},
+		},
+		{
+			name: "should download a file with minimal fields that is password protected",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{
+						ID:           "file1",
+						PasswordHash: "password-hash",
+					}, nil
+				}},
+				PasswordHasher: &StubPasswordHasher{
+					MatchFunc: func(string, []byte) (bool, error) {
+						return true, nil
+					},
+				},
+			},
+			args: args{
+				fileID:   "file1",
+				password: "correct-password",
+			},
+			want: blinkfile.FileHeader{
+				ID:           "file1",
+				PasswordHash: "password-hash",
+			},
+		},
+		{
+			name: "should download a file with all available fields",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{GetFunc: func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error) {
+					return blinkfile.FileHeader{
+						ID:           "file1",
+						Name:         "filename",
+						Location:     "location",
+						Owner:        "user1",
+						Created:      time.Unix(1, 0).UTC(),
+						Expires:      time.Unix(2, 0).UTC(),
+						Size:         3,
+						PasswordHash: "password-hash",
+					}, nil
+				}},
+				PasswordHasher: &StubPasswordHasher{
+					MatchFunc: func(string, []byte) (bool, error) {
+						return true, nil
+					},
+				},
+				Now: func() time.Time { return time.Unix(1, 0).UTC() },
+			},
+			args: args{
+				fileID:   "file1",
+				password: "correct-password",
+			},
+			want: blinkfile.FileHeader{
+				ID:           "file1",
+				Name:         "filename",
+				Location:     "location",
+				Owner:        "user1",
+				Created:      time.Unix(1, 0).UTC(),
+				Expires:      time.Unix(2, 0).UTC(),
+				Size:         3,
+				PasswordHash: "password-hash",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := AppConfigDefaults(tt.cfg)
+			application := NewTestApp(ctx, t, cfg)
+			got, err := application.DownloadFile(ctx, tt.args.userID, tt.args.fileID, tt.args.password)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("DownloadFile() error = \n\t%v\n, wantErr \n\t%v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DownloadFile() got:\n\t%+v\nwant:\n\t%+v", got, tt.want)
+			}
+		})
+	}
+}
+
+type StubPasswordHasher struct {
+	HashFunc  func([]byte) string
+	MatchFunc func(string, []byte) (bool, error)
+}
+
+var _ app.PasswordHasher = &StubPasswordHasher{}
+
+func (ph *StubPasswordHasher) Hash(data []byte) (hash string) {
+	if ph.HashFunc != nil {
+		return ph.HashFunc(data)
+	}
+	return ""
+}
+func (ph *StubPasswordHasher) Match(hash string, data []byte) (matched bool, err error) {
+	if ph.MatchFunc != nil {
+		return ph.MatchFunc(hash, data)
+	}
+	return false, nil
+}
