@@ -136,5 +136,8 @@ func (a *App) DeleteExpiredFiles(ctx context.Context) error {
 	if count > 0 {
 		a.Log.Printf(ctx, "Deleted %d expired files, took %v", count, time.Since(start))
 	}
-	return err
+	if err != nil {
+		return Err(ErrRepo, err)
+	}
+	return nil
 }

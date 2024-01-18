@@ -471,7 +471,6 @@ func TestApp_DownloadFile(t *testing.T) {
 func TestApp_DeleteFiles(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
-		ctx         context.Context
 		owner       blinkfile.UserID
 		deleteFiles []blinkfile.FileID
 	}
@@ -519,9 +518,47 @@ func TestApp_DeleteFiles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := AppConfigDefaults(tt.cfg)
 			application := NewTestApp(ctx, t, cfg)
-			err := application.DeleteFiles(tt.args.ctx, tt.args.owner, tt.args.deleteFiles)
+			err := application.DeleteFiles(ctx, tt.args.owner, tt.args.deleteFiles)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("DeleteFiles() error = \n\t%v\n, wantErr \n\t%v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestApp_DeleteExpiredFiles(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name    string
+		cfg     app.Config
+		wantErr error
+	}{
+		{
+			name: "should fail if repo returns an error",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{
+					DeleteExpiredBeforeFunc: func(context.Context, time.Time) (int, error) {
+						return 0, fmt.Errorf("repo err")
+					},
+				},
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("repo err"),
+			},
+		},
+		{
+			name: "should successfully delete expired files",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := AppConfigDefaults(tt.cfg)
+			application := NewTestApp(ctx, t, cfg)
+			err := application.DeleteExpiredFiles(ctx)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("DeleteExpiredFiles() error = \n\t%v\n, wantErr \n\t%v", err, tt.wantErr)
 				return
 			}
 		})
