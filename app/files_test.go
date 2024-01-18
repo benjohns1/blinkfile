@@ -246,6 +246,26 @@ func TestApp_UploadFile(t *testing.T) {
 	}
 }
 
+type StubPasswordHasher struct {
+	HashFunc  func([]byte) string
+	MatchFunc func(string, []byte) (bool, error)
+}
+
+var _ app.PasswordHasher = &StubPasswordHasher{}
+
+func (ph *StubPasswordHasher) Hash(data []byte) (hash string) {
+	if ph.HashFunc != nil {
+		return ph.HashFunc(data)
+	}
+	return ""
+}
+func (ph *StubPasswordHasher) Match(hash string, data []byte) (matched bool, err error) {
+	if ph.MatchFunc != nil {
+		return ph.MatchFunc(hash, data)
+	}
+	return false, nil
+}
+
 func TestApp_DownloadFile(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
@@ -448,22 +468,62 @@ func TestApp_DownloadFile(t *testing.T) {
 	}
 }
 
-type StubPasswordHasher struct {
-	HashFunc  func([]byte) string
-	MatchFunc func(string, []byte) (bool, error)
-}
-
-var _ app.PasswordHasher = &StubPasswordHasher{}
-
-func (ph *StubPasswordHasher) Hash(data []byte) (hash string) {
-	if ph.HashFunc != nil {
-		return ph.HashFunc(data)
+func TestApp_DeleteFiles(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		ctx         context.Context
+		owner       blinkfile.UserID
+		deleteFiles []blinkfile.FileID
 	}
-	return ""
-}
-func (ph *StubPasswordHasher) Match(hash string, data []byte) (matched bool, err error) {
-	if ph.MatchFunc != nil {
-		return ph.MatchFunc(hash, data)
+	tests := []struct {
+		name    string
+		cfg     app.Config
+		args    args
+		wantErr error
+	}{
+		{
+			name: "should fail if owner ID is missing",
+			args: args{
+				owner: "",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("owner is required"),
+			},
+		},
+		{
+			name: "should fail if repo returns an error",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{
+					DeleteFunc: func(context.Context, blinkfile.UserID, []blinkfile.FileID) error {
+						return fmt.Errorf("delete err")
+					},
+				},
+			},
+			args: args{
+				owner: "user1",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("delete err"),
+			},
+		},
+		{
+			name: "should successfully delete files",
+			args: args{
+				owner: "user1",
+			},
+		},
 	}
-	return false, nil
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := AppConfigDefaults(tt.cfg)
+			application := NewTestApp(ctx, t, cfg)
+			err := application.DeleteFiles(tt.args.ctx, tt.args.owner, tt.args.deleteFiles)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("DeleteFiles() error = \n\t%v\n, wantErr \n\t%v", err, tt.wantErr)
+				return
+			}
+		})
+	}
 }

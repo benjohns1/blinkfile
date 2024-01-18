@@ -120,7 +120,14 @@ func (a *App) DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID 
 }
 
 func (a *App) DeleteFiles(ctx context.Context, owner blinkfile.UserID, deleteFiles []blinkfile.FileID) error {
-	return a.cfg.FileRepo.Delete(ctx, owner, deleteFiles)
+	if owner == "" {
+		return Err(ErrRepo, fmt.Errorf("owner is required"))
+	}
+	err := a.cfg.FileRepo.Delete(ctx, owner, deleteFiles)
+	if err != nil {
+		return Err(ErrRepo, err)
+	}
+	return nil
 }
 
 func (a *App) DeleteExpiredFiles(ctx context.Context) error {
