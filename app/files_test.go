@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app"
+	"io"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -76,13 +78,13 @@ func TestApp_ListFiles(t *testing.T) {
 								Created: time.Unix(3, 0),
 							},
 							{
-								ID:      "4",
-								Name:    "File4b",
+								ID:      "4b",
+								Name:    "File4",
 								Created: time.Unix(4, 0),
 							},
 							{
-								ID:      "4",
-								Name:    "File4a",
+								ID:      "4a",
+								Name:    "File4",
 								Created: time.Unix(4, 0),
 							},
 						}, nil
@@ -94,13 +96,13 @@ func TestApp_ListFiles(t *testing.T) {
 			},
 			want: []blinkfile.FileHeader{
 				{
-					ID:      "4",
-					Name:    "File4a",
+					ID:      "4a",
+					Name:    "File4",
 					Created: time.Unix(4, 0),
 				},
 				{
-					ID:      "4",
-					Name:    "File4b",
+					ID:      "4b",
+					Name:    "File4",
 					Created: time.Unix(4, 0),
 				},
 				{
@@ -137,6 +139,108 @@ func TestApp_ListFiles(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ListFiles() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestApp_UploadFile(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name    string
+		cfg     app.Config
+		args    app.UploadFileArgs
+		wantErr error
+	}{
+		{
+			name: "should fail generating a file ID",
+			cfg: app.Config{
+				GenerateFileID: func() (blinkfile.FileID, error) {
+					return "", fmt.Errorf("file ID err")
+				},
+			},
+			wantErr: &app.Error{
+				Type: app.ErrInternal,
+				Err:  fmt.Errorf("generating file ID: %w", fmt.Errorf("file ID err")),
+			},
+		},
+		{
+			name: "should fail if expires-in and expires fields are both set",
+			args: app.UploadFileArgs{
+				ExpiresIn: "1w",
+				Expires:   time.Unix(0, 0),
+			},
+			wantErr: &app.Error{
+				Type:   app.ErrBadRequest,
+				Title:  "Error validating file expiration",
+				Detail: "Can only set one of the expiration fields at a time.",
+			},
+		},
+		{
+			name: "should fail if adding expires-in to current time fails",
+			args: app.UploadFileArgs{
+				ExpiresIn: "invalid-duration",
+			},
+			wantErr: &app.Error{
+				Type:   app.ErrBadRequest,
+				Title:  "Error calculating file expiration",
+				Detail: "Expires In field is not in a valid format.",
+				Err:    fmt.Errorf(`time: invalid duration "invalid-duration"`),
+			},
+		},
+		{
+			name: "should fail if a file argument is not valid, such as an empty filename",
+			args: app.UploadFileArgs{
+				Filename: "",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrBadRequest,
+				Err:  fmt.Errorf("file name cannot be empty"),
+			},
+		},
+		{
+			name: "should fail if the repo fails to save the uploaded file",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{SaveFunc: func(context.Context, blinkfile.File) error {
+					return fmt.Errorf("repo save err")
+				}},
+			},
+			args: app.UploadFileArgs{
+				Filename: "file1",
+				Owner:    "user1",
+				Reader:   io.NopCloser(strings.NewReader("file-data")),
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("repo save err"),
+			},
+		},
+		{
+			name: "should successfully upload a file",
+			args: app.UploadFileArgs{
+				Filename: "file1",
+				Owner:    "user1",
+				Reader:   io.NopCloser(strings.NewReader("file-data")),
+			},
+		},
+		{
+			name: "should successfully upload a file with a password",
+			args: app.UploadFileArgs{
+				Filename: "file1",
+				Owner:    "user1",
+				Reader:   io.NopCloser(strings.NewReader("file-data")),
+				Password: "file-password",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := AppConfigDefaults(tt.cfg)
+			application := NewTestApp(ctx, t, cfg)
+			err := application.UploadFile(ctx, tt.args)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("UploadFile() error = \n\t%v\n, wantErr \n\t%v", err, tt.wantErr)
+				return
 			}
 		})
 	}

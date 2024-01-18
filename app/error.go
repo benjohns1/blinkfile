@@ -19,7 +19,7 @@ func (e *Error) Error() string {
 	if e.Status != 0 || e.Title != "" || e.Detail != "" {
 		moreDetail = fmt.Sprintf(" (%d %s: %s)", e.Status, e.Title, e.Detail)
 	}
-	return fmt.Sprintf("%s: %s%s", e.Type, e.Err.Error(), moreDetail)
+	return fmt.Sprintf("%s: %s%s", e.Type, e.Err, moreDetail)
 }
 
 func (e *Error) Unwrap() error {
@@ -34,9 +34,6 @@ func Err(t ErrorType, err error) *Error {
 }
 
 func ErrUser(title, detail string, err error) *Error {
-	if err == nil {
-		err = fmt.Errorf("%s: %s", title, detail)
-	}
 	return &Error{
 		Type:   ErrBadRequest,
 		Title:  title,

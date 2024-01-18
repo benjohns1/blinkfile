@@ -2,8 +2,6 @@ package app
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/benjohns1/blinkfile"
@@ -49,7 +47,7 @@ type UploadFileArgs struct {
 }
 
 func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
-	fileID, err := generateFileID()
+	fileID, err := a.cfg.GenerateFileID()
 	if err != nil {
 		return Err(ErrInternal, fmt.Errorf("generating file ID: %w", err))
 	}
@@ -58,11 +56,11 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	}
 	if args.ExpiresIn != "" {
 		if !args.Expires.IsZero() {
-			return ErrUser("Error validating file expiration.", "Can only set one of the expiration fields at a time.", nil)
+			return ErrUser("Error validating file expiration", "Can only set one of the expiration fields at a time.", nil)
 		}
 		args.Expires, err = args.ExpiresIn.AddTo(a.cfg.Now())
 		if err != nil {
-			return ErrUser("Error calculating file expiration.", "Expires In field is not in a valid format.", err)
+			return ErrUser("Error calculating file expiration", "Expires In field is not in a valid format.", err)
 		}
 	}
 	file, err := blinkfile.UploadFile(blinkfile.UploadFileArgs{
@@ -85,6 +83,7 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	}
 	return nil
 }
+
 func (a *App) mimicErr(ctx context.Context, password string, err error) error {
 	if errors.Is(err, ErrFileNotFound) || errors.Is(err, blinkfile.ErrFileExpired) {
 		a.Errorf(ctx, fmt.Sprintf("mimicking a valid response for security, but real error was: %s", err))
@@ -128,14 +127,4 @@ func (a *App) DeleteExpiredFiles(ctx context.Context) error {
 		a.Log.Printf(ctx, "Deleted %d expired files, took %v", count, time.Since(start))
 	}
 	return err
-}
-
-func generateFileID() (blinkfile.FileID, error) {
-	b := make([]byte, 64)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-	id := base64.URLEncoding.EncodeToString(b)
-	return blinkfile.FileID(id), nil
 }

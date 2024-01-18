@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"github.com/benjohns1/blinkfile"
 	"time"
@@ -18,6 +20,7 @@ type (
 		GenerateToken func() (Token, error)
 		Now           func() time.Time
 		PasswordHasher
+		GenerateFileID func() (blinkfile.FileID, error)
 	}
 
 	SessionRepo interface {
@@ -70,6 +73,9 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	if cfg.PasswordHasher == nil {
 		return nil, fmt.Errorf("password hasher is required")
 	}
+	if cfg.GenerateFileID == nil {
+		cfg.GenerateFileID = generateFileID
+	}
 
 	a := &App{cfg, make(map[blinkfile.Username]Credentials, 1), cfg.Log}
 
@@ -79,4 +85,14 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	}
 
 	return a, nil
+}
+
+func generateFileID() (blinkfile.FileID, error) {
+	b := make([]byte, 64)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	id := base64.URLEncoding.EncodeToString(b)
+	return blinkfile.FileID(id), nil
 }
