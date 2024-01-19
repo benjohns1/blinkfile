@@ -54,6 +54,8 @@ type (
 	}
 )
 
+var FeatureFlagIsOn = func(context.Context, string) bool { return false }
+
 func New(ctx context.Context, cfg Config) (*App, error) {
 	if cfg.Log == nil {
 		return nil, fmt.Errorf("log instance is required")

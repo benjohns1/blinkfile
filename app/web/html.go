@@ -144,6 +144,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 
 	tpl := iris.HTML(templateFS, ".html").RootDir("templates")
 	tpl.Layout("layouts/main.html")
+	tpl.AddFunc("featureFlagIsOn", app.FeatureFlagIsOn)
 	i.RegisterView(tpl)
 
 	sess := sessions.New(sessions.Config{
@@ -230,6 +231,7 @@ func setDefaultViewData(title string) func(iris.Context) {
 		sess := sessions.Get(ctx)
 		ctx.ViewData("session", sess)
 		ctx.ViewData("title", title)
+		ctx.ViewData("ctx", ctx)
 		ctx.Next()
 	}
 }

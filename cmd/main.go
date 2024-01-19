@@ -6,6 +6,7 @@ import (
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/app/repo"
 	"github.com/benjohns1/blinkfile/app/web"
+	"github.com/benjohns1/blinkfile/featureflag"
 	"github.com/benjohns1/blinkfile/hash"
 	"github.com/benjohns1/blinkfile/log"
 	"github.com/benjohns1/blinkfile/request"
@@ -40,8 +41,22 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 
+	l := log.New(log.Config{GetRequestID: request.GetID})
+
+	ff, err := featureflag.New(featureflag.WithFeaturesFromEnvironment("FEATURE_FLAG_"))
+	if err != nil {
+		return err
+	}
+	app.FeatureFlagIsOn = func(ctx context.Context, feature string) bool {
+		v, ffErr := ff.IsOn(ctx, feature)
+		if ffErr != nil {
+			l.Errorf(ctx, "checking feature flag %q: %v", feature, ffErr)
+		}
+		return v
+	}
+
 	application, appErr := app.New(ctx, app.Config{
-		Log:               log.New(log.Config{GetRequestID: request.GetID}),
+		Log:               l,
 		AdminUsername:     cfg.AdminUsername,
 		AdminPassword:     cfg.AdminPassword,
 		SessionExpiration: 7 * 24 * time.Hour,

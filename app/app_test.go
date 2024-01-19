@@ -173,9 +173,10 @@ func TestNew(t *testing.T) {
 			name: "should fail with a nil password hasher",
 			args: args{
 				cfg: app.Config{
-					Log:         log.New(log.Config{}),
-					SessionRepo: &StubSessionRepo{},
-					FileRepo:    &StubFileRepo{},
+					Log:            log.New(log.Config{}),
+					SessionRepo:    &StubSessionRepo{},
+					FileRepo:       &StubFileRepo{},
+					PasswordHasher: nil,
 				},
 			},
 			wantErr: fmt.Errorf("password hasher is required"),

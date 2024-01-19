@@ -34,6 +34,9 @@ func newPasswordCredentials(userID blinkfile.UserID, user blinkfile.Username, pa
 }
 
 func (a *App) IsAuthenticated(ctx context.Context, token Token) (blinkfile.UserID, bool, error) {
+	if FeatureFlagIsOn(ctx, "LogAllAuthnCalls") {
+		a.Printf(ctx, "LogAllAuthnCalls flag is ON and the IsAuthenticated() method was called")
+	}
 	if token == "" {
 		return "", false, Err(ErrBadRequest, fmt.Errorf("session token cannot be empty"))
 	}

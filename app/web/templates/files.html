@@ -1,3 +1,4 @@
+{{ if featureFlagIsOn .ctx "LogAllAuthnCalls" }}LogAllAuthnCalls feature flag is ON{{end}}
 <h3>Files</h3>
 <form action="/files" method="post" enctype="multipart/form-data">
     <h4 class="form_header">Upload File</h4>
