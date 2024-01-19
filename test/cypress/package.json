@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    "test:lint": "gherkin-lint -c .gherkin-lintrc.json",
+    "test": "npm run test:lint && npm run test:run",
+    "test:run": "cypress run",
+    "test:open": "cypress open"
+  },
+  "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^20.0.1",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
+    "cypress": "^13.6.3",
+    "gherkin-lint": "^4.2.4",
+    "typescript": "^5.3.3"
+  },
+  "cypress-cucumber-preprocessor": {
+    "stepDefinitions": [
+      "features/steps/**/*.ts"
+    ]
+  }
+}

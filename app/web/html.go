@@ -18,13 +18,15 @@ import (
 
 type (
 	Config struct {
-		Title                    string
-		App                      App
-		Port                     int
-		MaxFileByteSize          int64
-		BrowserSessionExpiration time.Duration
-		ReadTimeout              time.Duration
-		WriteTimeout             time.Duration
+		Title                         string
+		App                           App
+		Port                          int
+		MaxFileByteSize               int64
+		BrowserSessionExpiration      time.Duration
+		ReadTimeout                   time.Duration
+		WriteTimeout                  time.Duration
+		RateLimitUnauthenticated      float64
+		RateLimitBurstUnauthenticated int
 	}
 
 	HTML struct {
@@ -80,6 +82,12 @@ func (c Config) parse(ctx context.Context) (Config, error) {
 		const defaultTimeout = time.Hour
 		c.App.Printf(ctx, "Setting WriteTimeout to default %v", defaultTimeout)
 		cfg.WriteTimeout = defaultTimeout
+	}
+	if cfg.RateLimitUnauthenticated <= 0 {
+		cfg.RateLimitUnauthenticated = 2
+	}
+	if cfg.RateLimitBurstUnauthenticated <= 0 {
+		cfg.RateLimitBurstUnauthenticated = 5
 	}
 	return cfg, nil
 }
@@ -185,7 +193,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 
 	unauthenticated := i.Party("/")
 	{
-		limit := rate.Limit(1, 3, rate.PurgeEvery(time.Minute, 5*time.Minute))
+		limit := rate.Limit(cfg.RateLimitUnauthenticated, cfg.RateLimitBurstUnauthenticated, rate.PurgeEvery(time.Minute, 5*time.Minute))
 		unauthenticated.Use(limit)
 		unauthenticated.Get("/login", w.f(showLogin))
 		unauthenticated.Post("/login", w.f(login))

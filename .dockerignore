@@ -2,4 +2,6 @@
 .idea/
 coverage.*
 _test/
+test/
 data/
+node_modules/

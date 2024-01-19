@@ -69,8 +69,10 @@ func run(ctx context.Context) (err error) {
 	}
 
 	srv, err := web.New(ctx, web.Config{
-		App:  application,
-		Port: cfg.Port,
+		App:                           application,
+		Port:                          cfg.Port,
+		RateLimitUnauthenticated:      cfg.RateLimitUnauthenticated,
+		RateLimitBurstUnauthenticated: cfg.RateLimitBurstUnauthenticated,
 	})
 	if err != nil {
 		return err
@@ -102,18 +104,22 @@ func startExpiredFileCleanup(ctx context.Context, a *app.App) {
 }
 
 type config struct {
-	Port          int
-	AdminUsername string
-	AdminPassword string
-	DataDir       string
+	Port                          int
+	AdminUsername                 string
+	AdminPassword                 string
+	DataDir                       string
+	RateLimitUnauthenticated      float64
+	RateLimitBurstUnauthenticated int
 }
 
 func parseConfig() config {
 	return config{
-		Port:          envDefaultInt("PORT", 8000),
-		AdminUsername: os.Getenv("ADMIN_USERNAME"),
-		AdminPassword: os.Getenv("ADMIN_PASSWORD"),
-		DataDir:       envDefaultString("DATA_DIR", "./data"),
+		Port:                          envDefaultInt("PORT", 8000),
+		AdminUsername:                 os.Getenv("ADMIN_USERNAME"),
+		AdminPassword:                 os.Getenv("ADMIN_PASSWORD"),
+		DataDir:                       envDefaultString("DATA_DIR", "./data"),
+		RateLimitUnauthenticated:      envDefaultFloat("RATE_LIMIT_UNAUTHENTICATED", 0),
+		RateLimitBurstUnauthenticated: envDefaultInt("RATE_LIMIT_BURST_UNAUTHENTICATED", 0),
 	}
 }
 
@@ -135,4 +141,16 @@ func envDefaultInt(key string, def int) int {
 		return def
 	}
 	return int(i)
+}
+
+func envDefaultFloat(key string, def float64) float64 {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	f, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return def
+	}
+	return f
 }

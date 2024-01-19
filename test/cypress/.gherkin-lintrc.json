@@ -1,0 +1,23 @@
+{
+  "file-name": ["on", {"style": "camelCase"}],
+  "max-scenarios-per-file": ["on", {"maxScenarios": 999, "countOutlineExamples": false}],
+  "no-dupe-scenario-names": ["on", "in-feature"],
+  "no-unnamed-features": "on",
+  "indentation" : [
+    "on", {
+      "Feature": 0,
+      "Background": 0,
+      "Scenario": 0,
+      "Step": 2,
+      "Examples": 0,
+      "example": 2,
+      "given": 2,
+      "when": 2,
+      "then": 2,
+      "and": 2,
+      "but": 2,
+      "feature tag": 0,
+      "scenario tag": 0
+    }
+  ]
+}

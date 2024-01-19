@@ -2,8 +2,8 @@
 {{ render "partials/message.html" .content.MessageView }}
 <form action="/login" method="post">
     <label for="username" hidden>Username</label>
-    <input id="username" type="text" name="username" placeholder="Username" value="{{.session.Get `username`}}"/>
+    <input id="username" type="text" name="username" placeholder="Username" value="{{.session.Get `username`}}" data-test="username"/>
     <label for="password" hidden>Password</label>
-    <input id="password" type="password" name="password" placeholder="Password"/>
+    <input id="password" type="password" name="password" placeholder="Password" data-test="password"/>
     <input type="submit" value="Login"/>
 </form>

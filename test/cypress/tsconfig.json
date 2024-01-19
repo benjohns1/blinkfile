@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "baseUrl": "http://localhost:8000",
+    "esModuleInterop": true,
+    "module": "nodenext"
+  }
+}
