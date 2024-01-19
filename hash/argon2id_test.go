@@ -1,6 +1,7 @@
 package hash_test
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/benjohns1/blinkfile/hash"
 	"golang.org/x/crypto/argon2"
@@ -120,6 +121,57 @@ func TestArgon2id_Match(t *testing.T) {
 				encodedHash: "$$v=0$$$",
 			},
 			wantErr: fmt.Errorf("expected version %d, found version 0: %w", argon2.Version, hash.ErrIncompatibleVersion),
+		},
+		{
+			name: "should fail if the memory value is invalid",
+			args: args{
+				encodedHash: "$$v=19$m=abc$$",
+			},
+			wantErr: fmt.Errorf("expected integer"),
+		},
+		{
+			name: "should fail if the time value is invalid",
+			args: args{
+				encodedHash: "$$v=19$m=1024,t=abc$$",
+			},
+			wantErr: fmt.Errorf("expected integer"),
+		},
+		{
+			name: "should fail if the parallelism value is invalid",
+			args: args{
+				encodedHash: "$$v=19$m=1024,t=8,p=abc$$",
+			},
+			wantErr: fmt.Errorf("expected integer"),
+		},
+		{
+			name: "should fail if the salt value has invalid characters",
+			args: args{
+				encodedHash: "$$v=19$m=1024,t=8,p=4$non-base64-characters$hash",
+			},
+			wantErr: base64.CorruptInputError(3),
+		},
+		{
+			name: "should fail if the hash value has invalid characters",
+			args: args{
+				encodedHash: "$$v=19$m=1024,t=8,p=4$salt$non-base64-characters",
+			},
+			wantErr: base64.CorruptInputError(3),
+		},
+		{
+			name: "should return false if the hashed value doesn't match the given value",
+			args: args{
+				encodedHash: "$$v=19$m=1024,t=8,p=4$salt$hash",
+				data:        []byte("doesn't match"),
+			},
+			wantMatched: false,
+		},
+		{
+			name: "should return false if the hashed value doesn't match the given value",
+			args: args{
+				encodedHash: "$$v=19$m=1024,t=8,p=4$salt$17NlmtmpHcXp2qeGJnfSMS/CIsfX6Amyd67G44i2nvNA1zv4ZyLk7OHVcliqdrElhXSEZPCivWuG2EmjsCitiw",
+				data:        []byte("password"),
+			},
+			wantMatched: true,
 		},
 	}
 	for _, tt := range tests {
