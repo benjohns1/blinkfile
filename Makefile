@@ -7,9 +7,12 @@ build:
 	docker build --tag blinkfile .
 
 CONTAINER_REGISTRY = docker.io/benjohns1
-deploy: build
+deploy: build test-acceptance
 	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
 	docker push ${CONTAINER_REGISTRY}/blinkfile
+
+test-acceptance:
+	$(MAKE) -C test/ test
 
 # Host machine scripts
 test:

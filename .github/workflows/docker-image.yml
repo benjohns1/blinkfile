@@ -18,5 +18,5 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-    - name: Test, build & deploy
+    - name: Test, build, acceptance test & deploy
       run: make deploy
