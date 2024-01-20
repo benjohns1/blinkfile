@@ -22,6 +22,31 @@ func getSession(ctx iris.Context) (Session, error) {
 	return Session{sess}, nil
 }
 
+const flashMessageKey = "message"
+
+func setFlashSuccess(ctx iris.Context, msg string) {
+	sess := sessions.Get(ctx)
+	if sess == nil {
+		return
+	}
+	view := MessageView{SuccessMessage: msg}
+
+	sess.SetFlash(flashMessageKey, view)
+}
+
+func flashMessageView(ctx iris.Context) MessageView {
+	sess := sessions.Get(ctx)
+	if sess == nil {
+		return MessageView{}
+	}
+	data := sess.GetFlash(flashMessageKey)
+	if data == nil {
+		return MessageView{}
+	}
+	msg, _ := data.(MessageView)
+	return msg
+}
+
 func loggedInUser(ctx iris.Context) blinkfile.UserID {
 	session, err := getSession(ctx)
 	if err != nil {

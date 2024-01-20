@@ -8,7 +8,6 @@ Scenario: Cannot upload a file without choosing one
   When I go to the file upload page
   Then I should not be able to upload a file
 
-@implementing
 Scenario: Upload a small file
   Given I am on the file upload page
   And I have a file "files/small.txt"

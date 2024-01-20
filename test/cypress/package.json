@@ -17,7 +17,8 @@
   },
   "cypress-cucumber-preprocessor": {
     "stepDefinitions": [
-      "steps/**/*.ts"
+      "steps/[filepath].ts",
+      "steps/[filepath]/**/*.ts"
     ]
   }
 }

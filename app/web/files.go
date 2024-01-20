@@ -58,7 +58,8 @@ func showFiles(ctx iris.Context, a App) error {
 		})
 	}
 	ctx.ViewData("content", FilesView{
-		Files: fileList,
+		Files:       fileList,
+		MessageView: flashMessageView(ctx),
 	})
 	return ctx.View("files.html")
 }
@@ -111,6 +112,7 @@ func uploadFile(ctx iris.Context, a App) error {
 	if err != nil {
 		return err
 	}
+	setFlashSuccess(ctx, fmt.Sprintf("Successfully uploaded %s", header.Filename))
 	ctx.Redirect("/")
 	return nil
 }
