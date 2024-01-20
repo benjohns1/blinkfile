@@ -7,6 +7,16 @@ Given("I am on the login page", () => {
     cy.visit("/login")
 });
 
+Given("I am logged in", () => {
+    cy.visit("/login");
+    login(adminUsername, adminPassword);
+});
+
+const login = (username: string, password: string) => {
+    cy.get("[data-test=username]").type(username);
+    cy.get("[data-test=password]").type(`${password}{enter}`);
+}
+
 When("I login with username {string} and password {string}", (username: string, password: string) => {
     if (username === "{admin}") {
         username = adminUsername;
@@ -14,8 +24,7 @@ When("I login with username {string} and password {string}", (username: string, 
     if (password === "{admin}") {
         password = adminPassword;
     }
-    cy.get("[data-test=username]").type(username);
-    cy.get("[data-test=password]").type(`${password}{enter}`);
+    login(username, password);
 });
 
 Then("I should see a generic authentication failed message", () => {

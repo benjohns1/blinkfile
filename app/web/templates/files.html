@@ -4,7 +4,7 @@
     <h4 class="form_header">Upload File</h4>
     <div>
         <label for="file" hidden>File</label>
-        <input id="file" type="file" name="file" placeholder="File"/>
+        <input id="file" type="file" name="file" placeholder="File" data-test="file"/>
     </div>
     <div>
         <label for="password" hidden>Password</label>
@@ -32,7 +32,7 @@
     </div>
     <input type="hidden" id="expiration_time" name="expiration_time"/>
     <div style="clear: both"></div>
-    <input id="submit_file_upload" type="submit" value="Upload"/>
+    <input id="submit_file_upload" type="submit" value="Upload" data-test="upload"/>
 </form>
 {{ render "partials/message.html" .content.MessageView }}
 {{- if (len .content.Files)}}

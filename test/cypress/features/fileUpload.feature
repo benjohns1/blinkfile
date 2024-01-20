@@ -3,23 +3,24 @@ Feature: File Upload
 
 Background:
   Given I am logged in
-  And I am on the file upload page
 
-@pending @selected
 Scenario: Cannot upload a file without choosing one
-  When I browse for a file to upload
-  And I cancel the browse file dialog
+  When I go to the file upload page
   Then I should not be able to upload a file
 
-@pending
+@implementing
 Scenario: Upload a small file
+  Given I am on the file upload page
+  And I have a file "files/small.txt"
   When I browse for a file to upload
-  And I select "small-file.txt" from the browse file dialog
+  And I select it from the browse file dialog
   And I upload the file
   Then I should see a file upload success message
 
 @pending
 Scenario: Download a small file
-  When I upload the file "small-file.txt"
+  Given I am on the file upload page
+  And I have a file "files/small.txt"
+  When I upload the file
   And I select the top file from the list
-  Then I should download the file "small-file.txt"
+  Then I should download the file

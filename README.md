@@ -41,9 +41,13 @@ make install
 ```
 make test
 ```
-### Open Cypress to run acceptance tests
+### Run acceptance tests in a headless browser
 ```
 make test-acceptance
+```
+### Open Cypress to run acceptance tests
+```
+make test-acceptance-open
 ```
 #### Run
 Required environment variables:

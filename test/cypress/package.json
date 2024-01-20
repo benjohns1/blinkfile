@@ -2,11 +2,11 @@
   "scripts": {
     "test:lint": "gherkin-lint -c .gherkin-lintrc.json",
     "test": "npm run test:lint && npm run test:run",
-    "test:run": "cypress run --env tags=\"not @pending\"",
+    "test:run": "cypress run --env tags=\"not @pending and not @implementing\"",
     "test:run:all": "cypress run",
-    "test:run:selected": "cypress run --env tags=\"@selected\"",
-    "test:run:pending": "cypress run --env tags=\"@pending\"",
-    "test:open": "cypress open"
+    "test:run:implementing": "cypress run --env tags=\"@implementing\"",
+    "test:run:pending": "cypress run --env tags=\"@pending or @implementing\"",
+    "test:open": "cypress open --env tags=\"not @pending\""
   },
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^20.0.1",
@@ -17,7 +17,7 @@
   },
   "cypress-cucumber-preprocessor": {
     "stepDefinitions": [
-      "features/steps/**/*.ts"
+      "steps/**/*.ts"
     ]
   }
 }
