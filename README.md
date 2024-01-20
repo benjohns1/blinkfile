@@ -37,9 +37,13 @@ Prerequisites: Go, NPM, Make
 ```
 make install
 ```
-#### Test with unit coverage
+#### Unit test with coverage
 ```
 make test
+```
+### Open Cypress to run acceptance tests
+```
+make test-acceptance
 ```
 #### Run
 Required environment variables:
