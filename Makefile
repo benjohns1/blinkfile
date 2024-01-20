@@ -9,11 +9,14 @@ build:
 .PHONY: build
 
 CONTAINER_REGISTRY = docker.io/benjohns1
-deploy: build
-	$(MAKE) -C test/ ci-test
+deploy: ci
 	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
 	docker push ${CONTAINER_REGISTRY}/blinkfile
 .PHONY: deploy
+
+ci: build
+	$(MAKE) -C test/ ci
+.PHONY: ci
 
 # Host machine scripts
 test:
@@ -27,9 +30,9 @@ test-acceptance:
 
 test-acceptance-open:
 	$(MAKE) -C test/ open
-.PHONY: test-acceptance
+.PHONY: test-acceptance-open
 
 install:
 	go mod download
-	cd app/web && npm ci
+	cd app/web && npm i
 .PHONY: install

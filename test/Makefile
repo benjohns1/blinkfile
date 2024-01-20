@@ -1,9 +1,8 @@
 # Container scripts
-ci-test:
-	$(MAKE) -C ../ build
+ci:
 	cd cypress && docker compose build
 	cd cypress && docker compose up --exit-code-from blinkfile-cypress
-.PHONY: test
+.PHONY: ci
 
 # Host machine scripts
 install:

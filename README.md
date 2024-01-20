@@ -22,14 +22,20 @@ docker pull benjohns1/blinkfile
 ## Run locally
 ### With Docker
 Prerequisites: Docker, Make
-#### Test, build & run
+
+#### Build & run
 ```
 make
 ```
-#### Test & build
+#### Run unit tests & build
 ```
 make build
 ```
+#### Run unit tests, build, & run acceptance tests
+```
+make ci
+```
+
 ### On host machine
 Prerequisites: Go, NPM, Make
 
@@ -41,11 +47,11 @@ make install
 ```
 make test
 ```
-### Run acceptance tests in a headless browser
+#### Run acceptance tests in a headless browser
 ```
 make test-acceptance
 ```
-### Open Cypress to run acceptance tests
+#### Open Cypress to run acceptance tests
 ```
 make test-acceptance-open
 ```
