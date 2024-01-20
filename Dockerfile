@@ -12,11 +12,11 @@ WORKDIR /src
 COPY --from=setup /src /src
 RUN golangci-lint run
 
-FROM setup AS tester
+FROM setup AS unit-tester
 COPY --from=linter /src /src
 RUN go test ./...
 
-FROM tester AS builder
+FROM unit-tester AS builder
 RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o /app ./cmd/main.go
 RUN chmod +x /app
 
