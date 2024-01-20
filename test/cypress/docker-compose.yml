@@ -1,4 +1,3 @@
-version: "3.7"
 services:
   blinkfile:
     image: blinkfile
@@ -13,6 +12,10 @@ services:
     build:
       context: ..
       dockerfile: cypress/Dockerfile
+      cache_to:
+      - type=gha
+      cache_from:
+      - type=gha
 
 volumes:
   blinkfile-data:

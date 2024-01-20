@@ -5,7 +5,7 @@ run: build
 .PHONY: run
 
 build:
-	docker build --tag blinkfile .
+	docker buildx build --tag blinkfile --cache-to type=gha --cache-from type-gha .
 .PHONY: build
 
 CONTAINER_REGISTRY = docker.io/benjohns1
