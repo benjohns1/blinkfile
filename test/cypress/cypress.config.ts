@@ -27,5 +27,9 @@ export default defineConfig({
     baseUrl: "http://localhost:8000",
     supportFile: false,
     setupNodeEvents,
+    env: {
+      omitFiltered: true,
+      filterSpecs: true,
+    },
   },
 });

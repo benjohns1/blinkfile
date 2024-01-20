@@ -10,7 +10,7 @@ build:
 
 CONTAINER_REGISTRY = docker.io/benjohns1
 deploy: build
-	$(MAKE) -C test/ test
+	$(MAKE) -C test/ ci-test
 	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
 	docker push ${CONTAINER_REGISTRY}/blinkfile
 .PHONY: deploy
@@ -22,6 +22,10 @@ test:
 .PHONY: test
 
 test-acceptance:
+	$(MAKE) -C test/ test
+.PHONY: test-acceptance
+
+test-acceptance-open:
 	$(MAKE) -C test/ open
 .PHONY: test-acceptance
 

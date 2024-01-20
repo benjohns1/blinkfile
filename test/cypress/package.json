@@ -2,7 +2,10 @@
   "scripts": {
     "test:lint": "gherkin-lint -c .gherkin-lintrc.json",
     "test": "npm run test:lint && npm run test:run",
-    "test:run": "cypress run",
+    "test:run": "cypress run --env tags=\"not @pending\"",
+    "test:run:all": "cypress run",
+    "test:run:selected": "cypress run --env tags=\"@selected\"",
+    "test:run:pending": "cypress run --env tags=\"@pending\"",
     "test:open": "cypress open"
   },
   "devDependencies": {
