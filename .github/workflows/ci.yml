@@ -97,26 +97,13 @@ jobs:
         with:
           name: acceptance-test-source
       - uses: docker/setup-buildx-action@v3
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build acceptance-test runner image
         uses: docker/build-push-action@v5
         with:
           context: ./cypress
-          outputs: type=docker,dest=/tmp/acceptance-test-runner-image.tar
           tags: acceptance-test-runner
           cache-from: type=gha
           cache-to: type=gha
-      - name: Upload acceptance-test runner image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: acceptance-test-runner-image
-          path: /tmp/acceptance-test-runner-image.tar
-          compression-level: 0
-          if-no-files-found: error
   acceptance-test:
     runs-on: ubuntu-22.04
     needs: [build,acceptance-test-runner-build]
@@ -125,17 +112,19 @@ jobs:
         with:
           name: app-candidate-image
           path: /tmp
-      - uses: actions/download-artifact@v4
-        with:
-          name: acceptance-test-runner-image
-          path: /tmp
-      - name: Load images
-        run: |
-          docker load --input /tmp/app-candidate-image.tar
-          docker load --input /tmp/acceptance-test-runner-image.tar
+      - name: Load app image candidate
+        run: docker load --input /tmp/app-candidate-image.tar
       - uses: actions/download-artifact@v4
         with:
           name: acceptance-test-source
+      - uses: docker/setup-buildx-action@v3
+      - name: Build acceptance-test runner image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./cypress
+          tags: acceptance-test-runner
+          cache-from: type=gha
+          cache-to: type=gha
       - name: Run acceptance tests
         run: docker compose up --exit-code-from acceptance-test-runner
   deploy:
@@ -144,10 +133,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: image
+          name: app-candidate-image
           path: /tmp
-      - name: Load release image candidate
-        run: docker load --input /tmp/image.tar
+      - name: Load app image candidate
+        run: docker load --input /tmp/app-candidate-image.tar
       - name: Docker login
         uses: docker/login-action@v3
         with:
