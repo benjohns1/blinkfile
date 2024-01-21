@@ -83,7 +83,7 @@ jobs:
         run: cd test && make ci
   deploy:
     runs-on: ubuntu-22.04
-    needs: [lint,test,build,acceptance-test]
+    needs: [lint,unit-test,build,acceptance-test]
     steps:
       - uses: actions/download-artifact@v4
         with:
