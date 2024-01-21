@@ -7,8 +7,10 @@ on:
 jobs:
   lint:
     uses: ./.github/workflows/lint.yml
+  unit-test:
+    uses: ./.github/workflows/unit-test.yml
   buildx:
-    needs: [lint]
+    needs: [lint, unit-test]
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout

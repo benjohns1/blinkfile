@@ -1,4 +1,4 @@
-name: Lint
+name: Unit test
 on: [workflow_call]
 jobs:
   lint:
@@ -12,7 +12,5 @@ jobs:
         with:
           node-version-file: 'app/web/package.json'
       - run: cd app/web && npm ci
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.55
+      - name: Run unit tests
+        run: go test ./...
