@@ -102,7 +102,7 @@ jobs:
       - name: Build acceptance-test runner image
         uses: docker/build-push-action@v5
         with:
-          context: ./test/cypress
+          context: ./cypress
           push: true
           tags: benjohns1/acceptance-test-runner:latest
           cache-from: type=gha
@@ -121,7 +121,7 @@ jobs:
         with:
           name: acceptance-test-source
       - name: Run acceptance tests
-        run: cd test && docker compose up --exit-code-from acceptance-test-runner
+        run: docker compose up --exit-code-from acceptance-test-runner
   deploy:
     runs-on: ubuntu-22.04
     needs: [lint,unit-test,build,acceptance-test]
