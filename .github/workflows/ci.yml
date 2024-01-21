@@ -118,7 +118,7 @@ jobs:
         with:
           name: acceptance-test-source
       - uses: docker/setup-buildx-action@v3
-      - name: Build acceptance-test runner image, uses cache from acceptance-test-runner-build job
+      - name: Build acceptance-test runner image & use cache from acceptance-test-runner-build job
         uses: docker/build-push-action@v5
         with:
           context: ./cypress
@@ -146,5 +146,4 @@ jobs:
       - name: Tag & push image
         run: |
           docker tag app-candidate benjohns1/blinkfile:latest
-          docker rmi app-candidate
-          docker push -a
+          docker push -a benjohns1/blinkfile
