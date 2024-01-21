@@ -17,6 +17,8 @@ jobs:
           node-version-file: 'app/web/package.json'
       - name: Install front-end javascript utilities
         run: cd app/web && npm ci # some directories in node_modules are embedded in Go binary
+      - name: Install go dependencies
+        run: go mod download
       - name: Upload source and installed dependencies
         uses: actions/upload-artifact@v4
         with:
@@ -30,6 +32,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: source
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
@@ -41,6 +46,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: source
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
       - name: Run unit tests
         run: go test ./...
   build:
@@ -50,6 +58,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: source
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
       - name: Build go binary
         run: CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./binary ./cmd/main.go
       - uses: docker/setup-buildx-action@v3
