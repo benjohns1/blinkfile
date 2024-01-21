@@ -1,6 +1,6 @@
 services:
   blinkfile:
-    image: blinkfile
+    image: app-candidate
     volumes:
       - blinkfile-data:/data
     environment:

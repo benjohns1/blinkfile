@@ -69,13 +69,13 @@ jobs:
         with:
           context: .
           file: ./.github/workflows/Dockerfile
-          outputs: type=docker,dest=/tmp/image.tar
-          tags: blinkfile
-      - name: Upload release image candidate artifact
+          outputs: type=docker,dest=/tmp/app-candidate-image.tar
+          tags: app-candidate
+      - name: Upload app image candidate artifact
         uses: actions/upload-artifact@v4
         with:
-          name: image
-          path: /tmp/image.tar
+          name: app-candidate-image
+          path: /tmp/app-candidate-image.tar
           compression-level: 0
   acceptance-test-runner-build:
     runs-on: ubuntu-22.04
@@ -96,14 +96,14 @@ jobs:
           cache-to: type=gha
   acceptance-test:
     runs-on: ubuntu-22.04
-    needs: [build,acceptance-test-build]
+    needs: [build,acceptance-test-runner-build]
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: image
+          name: app-candidate-image
           path: /tmp
-      - name: Load release image candidate
-        run: docker load --input /tmp/image.tar
+      - name: Load app image candidate
+        run: docker load --input /tmp/app-candidate-image.tar
       - uses: actions/download-artifact@v4
         with:
           name: source
@@ -126,5 +126,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push image
         run: |
-          docker tag blinkfile benjohns1/blinkfile:latest
-          docker push benjohns1/blinkfile:latest
+          docker tag app-candidate benjohns1/blinkfile:latest
+          docker rmi app-candidate
+          docker push -a
