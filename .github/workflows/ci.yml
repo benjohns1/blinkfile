@@ -26,6 +26,7 @@ jobs:
           path: |
             ./
             !test/
+          if-no-files-found: error
   lint:
     runs-on: ubuntu-22.04
     needs: source
@@ -77,6 +78,7 @@ jobs:
           name: app-candidate-image
           path: /tmp/app-candidate-image.tar
           compression-level: 0
+          if-no-files-found: error
   acceptance-test-source:
     runs-on: ubuntu-22.04
     steps:
@@ -86,6 +88,7 @@ jobs:
         with:
           name: acceptance-test-source
           path: test/
+          if-no-files-found: error
   acceptance-test-runner-build:
     runs-on: ubuntu-22.04
     needs: acceptance-test-source
@@ -103,7 +106,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./cypress
-          output: type=docker,dest=/tmp/acceptance-test-runner-image.tar
+          outputs: type=docker,dest=/tmp/acceptance-test-runner-image.tar
           tags: acceptance-test-runner
           cache-from: type=gha
           cache-to: type=gha
@@ -113,6 +116,7 @@ jobs:
           name: acceptance-test-runner-image
           path: /tmp/acceptance-test-runner-image.tar
           compression-level: 0
+          if-no-files-found: error
   acceptance-test:
     runs-on: ubuntu-22.04
     needs: [build,acceptance-test-runner-build]
