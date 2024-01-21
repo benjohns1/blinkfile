@@ -8,14 +8,13 @@ services:
       - ADMIN_PASSWORD=1234123412341234
       - DATA_DIR=/data
       - RATE_LIMIT_UNAUTHENTICATED=100
-  blinkfile-cypress:
-    build:
-      context: ..
-      dockerfile: cypress/Dockerfile
-      cache_to:
-      - type=gha
-      cache_from:
-      - type=gha
+  acceptance-test-runner:
+    image: acceptance-test-runner
+    volumes:
+      - ./cypress/features:/cypress/features
+      - ./cypress/steps:/cypress/steps
+    environment:
+      - CYPRESS_BASE_URL=http://blinkfile:8000
 
 volumes:
   blinkfile-data:
