@@ -9,7 +9,7 @@ services:
       - DATA_DIR=/data
       - RATE_LIMIT_UNAUTHENTICATED=100
   acceptance-test-runner:
-    image: acceptance-test-runner
+    image: benjohns1/acceptance-test-runner
     volumes:
       - ./cypress/features:/cypress/features
       - ./cypress/steps:/cypress/steps
