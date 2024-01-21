@@ -103,10 +103,16 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./cypress
-          push: true
-          tags: benjohns1/acceptance-test-runner:latest
+          output: type=docker,dest=/tmp/acceptance-test-runner-image.tar
+          tags: acceptance-test-runner
           cache-from: type=gha
           cache-to: type=gha
+      - name: Upload acceptance-test runner image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-runner-image
+          path: /tmp/acceptance-test-runner-image.tar
+          compression-level: 0
   acceptance-test:
     runs-on: ubuntu-22.04
     needs: [build,acceptance-test-runner-build]
@@ -115,8 +121,14 @@ jobs:
         with:
           name: app-candidate-image
           path: /tmp
-      - name: Load app image candidate
-        run: docker load --input /tmp/app-candidate-image.tar
+      - uses: actions/download-artifact@v4
+        with:
+          name: acceptance-test-runner-image
+          path: /tmp
+      - name: Load images
+        run: |
+          docker load --input /tmp/app-candidate-image.tar
+          docker load --input /tmp/acceptance-test-runner-image.tar
       - uses: actions/download-artifact@v4
         with:
           name: acceptance-test-source
