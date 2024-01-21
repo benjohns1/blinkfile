@@ -118,10 +118,11 @@ jobs:
         with:
           name: acceptance-test-source
       - uses: docker/setup-buildx-action@v3
-      - name: Build acceptance-test runner image
+      - name: Build acceptance-test runner image, uses cache from acceptance-test-runner-build job
         uses: docker/build-push-action@v5
         with:
           context: ./cypress
+          load: true
           tags: acceptance-test-runner
           cache-from: type=gha
           cache-to: type=gha
