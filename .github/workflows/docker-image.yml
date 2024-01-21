@@ -5,7 +5,10 @@ on:
     branches: [ "main" ]
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
   buildx:
+    needs: [lint]
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout
