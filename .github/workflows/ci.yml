@@ -23,8 +23,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: source
-          path: ./
-          compression-level: 6
+          path: |
+            ./
+            !test/
   lint:
     runs-on: ubuntu-22.04
     needs: source
@@ -68,7 +69,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./.github/workflows/Dockerfile
           outputs: type=docker,dest=/tmp/app-candidate-image.tar
           tags: app-candidate
       - name: Upload app image candidate artifact
@@ -77,14 +77,28 @@ jobs:
           name: app-candidate-image
           path: /tmp/app-candidate-image.tar
           compression-level: 0
+  acceptance-test-source:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Upload source and installed dependencies
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-source
+          path: test/
   acceptance-test-runner-build:
     runs-on: ubuntu-22.04
-    needs: source
+    needs: acceptance-test-source
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: source
+          name: acceptance-test-source
       - uses: docker/setup-buildx-action@v3
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build acceptance-test runner image
         uses: docker/build-push-action@v5
         with:
@@ -105,7 +119,7 @@ jobs:
         run: docker load --input /tmp/app-candidate-image.tar
       - uses: actions/download-artifact@v4
         with:
-          name: source
+          name: acceptance-test-source
       - name: Run acceptance tests
         run: cd test && docker compose up --exit-code-from acceptance-test-runner
   deploy:
@@ -123,7 +137,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Push image
+      - name: Tag & push image
         run: |
           docker tag app-candidate benjohns1/blinkfile:latest
           docker rmi app-candidate
