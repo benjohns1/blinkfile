@@ -112,7 +112,7 @@ func uploadFile(ctx iris.Context, a App) error {
 	if err != nil {
 		return err
 	}
-	setFlashSuccess(ctx, fmt.Sprintf("%s uploaded", header.Filename))
+	setFlashSuccess(ctx, fmt.Sprintf("Successfully uploaded %s", header.Filename))
 	ctx.Redirect("/")
 	return nil
 }

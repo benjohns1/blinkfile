@@ -1,5 +1,5 @@
 FROM scratch
 WORKDIR /
-COPY ./app /app
+COPY ./binary /binary
 EXPOSE 8000
-CMD ["/app"]
+CMD ["/binary"]
