@@ -16,30 +16,40 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
+        cache-from: type=gha
+        cache-to: type=gha
         load: true
         target: setup
     - name: Build stage lint
       uses: docker/build-push-action@v5
       with:
         context: .
+        cache-from: type=gha
+        cache-to: type=gha
         load: true
         target: linter
     - name: Build stage unit test
       uses: docker/build-push-action@v5
       with:
         context: .
+        cache-from: type=gha
+        cache-to: type=gha
         load: true
         target: unit-tester
     - name: Build stage build
       uses: docker/build-push-action@v5
       with:
         context: .
+        cache-from: type=gha
+        cache-to: type=gha
         load: true
         target: builder
     - name: Build stage release
       uses: docker/build-push-action@v5
       with:
         context: .
+        cache-from: type=gha
+        cache-to: type=gha
         load: true
         tags: blinkfile
     - name: Acceptance test
