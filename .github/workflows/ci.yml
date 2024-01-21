@@ -90,7 +90,6 @@ jobs:
         with:
           context: ./test/cypress
           push: true
-          outputs: type=docker,dest=/tmp/acceptance-test-runner-image.tar
           tags: benjohns1/acceptance-test-runner:latest
           cache-from: type=gha
           cache-to: type=gha
