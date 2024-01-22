@@ -40,7 +40,7 @@
 <form action="/files/delete" method="post">
     <label for="search" hidden>search</label>
     <input id="search" type="text" name="search" placeholder="Search" hidden class="standard"/>
-    <table id="file_table">
+    <table id="file_table" data-test="file_table">
         <thead>
             <tr>
                 <th data-sort="string">File</th>
@@ -54,7 +54,7 @@
         <tbody>
         {{range $file := .content.Files}}
             <tr>
-                <td data-search><a href="/file/{{$file.ID}}" target="_blank">{{$file.Name}}</a></td>
+                <td data-search><a href="/file/{{$file.ID}}" target="_blank" data-test="file_link">{{$file.Name}}</a></td>
                 <td data-sort-value="{{$file.ByteSize}}">{{$file.Size}}</td>
                 <td class="datetime" data-sort-value="{{$file.Uploaded}}">{{$file.Uploaded}}</td>
                 <td class="datetime" data-sort-value="{{$file.Expires}}">{{$file.Expires}}</td>

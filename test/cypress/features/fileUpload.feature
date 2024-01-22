@@ -16,7 +16,6 @@ Scenario: Upload a small file
   And I upload the file
   Then I should see a file upload success message
 
-@pending
 Scenario: Download a small file
   Given I am on the file upload page
   And I have a file "files/small.txt"
