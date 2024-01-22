@@ -20,12 +20,10 @@ var (
 	Marshal    = json.Marshal
 )
 
-const (
-	ModeDir  = os.ModeDir
-)
+const ModeDir = os.ModeDir
 
 func mkdirValidate(dir string) error {
-	err := MkdirAll(dir, ModeDir | os.ModePerm)
+	err := MkdirAll(dir, ModeDir|os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("making directory %q: %w", dir, err)
 	}

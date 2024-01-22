@@ -3,11 +3,12 @@ package featureflag_test
 import (
 	"context"
 	"fmt"
-	"github.com/benjohns1/blinkfile/featureflag"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/benjohns1/blinkfile/featureflag"
 )
 
 func newTestFeatureFlags(t *testing.T, opts ...featureflag.ConfigOption) *featureflag.FeatureFlags {

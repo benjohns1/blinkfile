@@ -2,10 +2,11 @@ package blinkfile_test
 
 import (
 	"fmt"
-	"github.com/benjohns1/blinkfile"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
 )
 
 func TestCreateUser(t *testing.T) {

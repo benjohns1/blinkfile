@@ -3,13 +3,14 @@ package app_test
 import (
 	"context"
 	"fmt"
-	"github.com/benjohns1/blinkfile"
-	"github.com/benjohns1/blinkfile/app"
 	"io"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/app"
 )
 
 func TestApp_ListFiles(t *testing.T) {

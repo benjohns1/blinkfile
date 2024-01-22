@@ -3,13 +3,14 @@ package app_test
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/hash"
 	"github.com/benjohns1/blinkfile/log"
-	"reflect"
-	"testing"
-	"time"
 )
 
 func AppConfigDefaults(cfg app.Config) app.Config {
@@ -223,13 +224,14 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := app.New(ctx, tt.args.cfg)
+			cfg := tt.args.cfg
+			got, err := app.New(ctx, cfg)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.assert != nil {
-				tt.assert(t, &tt.args.cfg, got)
+				tt.assert(t, &cfg, got)
 			}
 		})
 	}

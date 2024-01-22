@@ -8,16 +8,6 @@ build:
 	docker buildx build --tag blinkfile --cache-to type=gha --cache-from type-gha .
 .PHONY: build
 
-CONTAINER_REGISTRY = docker.io/benjohns1
-deploy: ci
-	docker tag blinkfile ${CONTAINER_REGISTRY}/blinkfile
-	docker push ${CONTAINER_REGISTRY}/blinkfile
-.PHONY: deploy
-
-ci: build
-	$(MAKE) -C test/ ci
-.PHONY: ci
-
 # Host machine scripts
 test:
 	go test -coverprofile coverage.out ./...
@@ -36,3 +26,16 @@ install:
 	go mod download
 	cd app/web && npm i
 .PHONY: install
+
+# Run checks
+lint: src-load
+	docker run -t --rm -v blinkfile-src:/app -v blinkfile-lint-cache:/root/.cache -w /app golangci/golangci-lint:v1.55.2 golangci-lint run -v
+.PHONY: lint
+
+src-load:
+	$(MAKE) -C .local/load load
+.PHONY: src-load
+
+src-rm:
+	$(MAKE) -C .local/load rm
+.PHONY: src-rm

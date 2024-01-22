@@ -5,8 +5,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"github.com/benjohns1/blinkfile"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
 )
 
 type (
@@ -89,8 +90,10 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	return a, nil
 }
 
+const fileIDLength = 64
+
 func generateFileID() (blinkfile.FileID, error) {
-	b := make([]byte, 64)
+	b := make([]byte, fileIDLength)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err

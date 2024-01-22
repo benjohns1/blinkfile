@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/benjohns1/blinkfile"
-	"github.com/benjohns1/blinkfile/longduration"
 	"io"
 	"sort"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/longduration"
 )
 
 func (a *App) ListFiles(ctx context.Context, owner blinkfile.UserID) ([]blinkfile.FileHeader, error) {

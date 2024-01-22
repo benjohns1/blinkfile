@@ -3,11 +3,12 @@ package app_test
 import (
 	"context"
 	"fmt"
-	"github.com/benjohns1/blinkfile"
-	"github.com/benjohns1/blinkfile/app"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/app"
 )
 
 func TestApp_Login(t *testing.T) {

@@ -2,12 +2,13 @@ package blinkfile_test
 
 import (
 	"fmt"
-	"github.com/benjohns1/blinkfile"
 	"io"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
 )
 
 func TestUploadFile(t *testing.T) {

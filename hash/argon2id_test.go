@@ -3,10 +3,11 @@ package hash_test
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/benjohns1/blinkfile/hash"
-	"golang.org/x/crypto/argon2"
 	"reflect"
 	"testing"
+
+	"github.com/benjohns1/blinkfile/hash"
+	"golang.org/x/crypto/argon2"
 )
 
 func TestArgon2id_Hash(t *testing.T) {

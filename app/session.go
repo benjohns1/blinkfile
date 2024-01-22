@@ -3,8 +3,9 @@ package app
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"github.com/benjohns1/blinkfile"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
 )
 
 type (

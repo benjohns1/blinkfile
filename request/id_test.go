@@ -3,9 +3,10 @@ package request_test
 import (
 	"context"
 	"fmt"
-	"github.com/benjohns1/blinkfile/request"
 	"reflect"
 	"testing"
+
+	"github.com/benjohns1/blinkfile/request"
 )
 
 func TestNewID(t *testing.T) {

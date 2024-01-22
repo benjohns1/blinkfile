@@ -3,14 +3,15 @@ package repo_test
 import (
 	"context"
 	"fmt"
-	"github.com/benjohns1/blinkfile/app"
-	"github.com/benjohns1/blinkfile/app/repo"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/benjohns1/blinkfile/app"
+	"github.com/benjohns1/blinkfile/app/repo"
 )
 
 var (

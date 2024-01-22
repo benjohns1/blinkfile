@@ -3,9 +3,10 @@ package log_test
 import (
 	"context"
 	"fmt"
-	"github.com/benjohns1/blinkfile/log"
 	"reflect"
 	"testing"
+
+	"github.com/benjohns1/blinkfile/log"
 )
 
 type spy struct {

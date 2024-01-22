@@ -6,14 +6,15 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/request"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/rate"
 	"github.com/kataras/iris/v12/sessions"
-	"os"
-	"time"
 )
 
 type (
@@ -63,7 +64,8 @@ type (
 func (c Config) parse(ctx context.Context) (Config, error) {
 	cfg := c
 	if cfg.MaxFileByteSize <= 0 {
-		cfg.MaxFileByteSize = 2 * iris.GB
+		const defaultMaxFilesize = 2 * iris.GB
+		cfg.MaxFileByteSize = defaultMaxFilesize
 	}
 	if cfg.Title == "" {
 		const defaultTitle = "Blinkfile"
@@ -155,12 +157,13 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	tpl.AddFunc("featureFlagIsOn", app.FeatureFlagIsOn)
 	i.RegisterView(tpl)
 
+	const sessionIDLength = 64
 	sess := sessions.New(sessions.Config{
 		AllowReclaim: true,
 		Cookie:       "session",
 		Expires:      cfg.BrowserSessionExpiration,
 		SessionIDGenerator: func(ctx iris.Context) string {
-			return randomBase64String(64)
+			return randomBase64String(sessionIDLength)
 		},
 	})
 	i.Use(iris.Compression)
@@ -193,7 +196,11 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 
 	unauthenticated := i.Party("/")
 	{
-		limit := rate.Limit(cfg.RateLimitUnauthenticated, cfg.RateLimitBurstUnauthenticated, rate.PurgeEvery(time.Minute, 5*time.Minute))
+		const (
+			purgeEvery       = time.Minute
+			purgeMaxLifetime = 5 * time.Minute
+		)
+		limit := rate.Limit(cfg.RateLimitUnauthenticated, cfg.RateLimitBurstUnauthenticated, rate.PurgeEvery(purgeEvery, purgeMaxLifetime))
 		unauthenticated.Use(limit)
 		unauthenticated.Get("/login", w.f(showLogin))
 		unauthenticated.Post("/login", w.f(login))

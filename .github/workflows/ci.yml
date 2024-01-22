@@ -40,7 +40,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.55
+          version: v1.55.2
   unit-test:
     runs-on: ubuntu-22.04
     needs: source
@@ -70,6 +70,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./.github/workflows/Dockerfile
           outputs: type=docker,dest=/tmp/app-candidate-image.tar
           tags: app-candidate
       - name: Upload app image candidate artifact

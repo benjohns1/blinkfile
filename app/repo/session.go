@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/benjohns1/blinkfile"
-	"github.com/benjohns1/blinkfile/app"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/app"
 )
 
 type (

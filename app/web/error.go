@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/request"
 	"github.com/kataras/iris/v12"
-	"net/http"
 )
 
 type ErrorView struct {

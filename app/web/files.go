@@ -3,12 +3,13 @@ package web
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/longduration"
 	"github.com/kataras/iris/v12"
-	"strings"
-	"time"
 )
 
 type (

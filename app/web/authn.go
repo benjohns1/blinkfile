@@ -2,10 +2,11 @@ package web
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/kataras/iris/v12"
-	"net/http"
 )
 
 type LoginView struct {

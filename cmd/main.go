@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/app/repo"
 	"github.com/benjohns1/blinkfile/app/web"
@@ -10,9 +14,6 @@ import (
 	"github.com/benjohns1/blinkfile/hash"
 	"github.com/benjohns1/blinkfile/log"
 	"github.com/benjohns1/blinkfile/request"
-	"os"
-	"strconv"
-	"time"
 )
 
 func main() {

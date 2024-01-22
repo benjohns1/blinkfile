@@ -3,13 +3,14 @@ package repo
 import (
 	"context"
 	"fmt"
-	"github.com/benjohns1/blinkfile"
-	"github.com/benjohns1/blinkfile/app"
 	"io/fs"
 	"path/filepath"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/app"
 )
 
 type (

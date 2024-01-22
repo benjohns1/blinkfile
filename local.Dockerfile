@@ -13,10 +13,11 @@ COPY --from=setup /src /src
 RUN golangci-lint run
 
 FROM setup AS unit-tester
-COPY --from=linter /src /src
+COPY --from=setup /src /src
 RUN go test ./...
 
-FROM unit-tester AS builder
+FROM setup AS builder
+COPY --from=setup /src /src
 RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o /app ./cmd/main.go
 RUN chmod +x /app
 
