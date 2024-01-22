@@ -51,6 +51,7 @@ type (
 
 	Log interface {
 		Printf(ctx context.Context, format string, v ...any)
+		// test1
 		Errorf(ctx context.Context, format string, v ...any)
 	}
 )

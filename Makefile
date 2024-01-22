@@ -1,41 +1,38 @@
-# Container scripts
-run: build
+# Build and run the app image locally
+run:
+	$(MAKE) -C .local build
 	docker volume create blinkfile-data
-	docker run --name blinkfile -p 8000:8000 -e FEATURE_FLAG_LogAllAuthnCalls=1 -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD=1234123412341234 -e DATA_DIR=/data -v blinkfile-data:/data --rm blinkfile
+	docker run --name blinkfile -p 8000:8000 -e FEATURE_FLAG_LogAllAuthnCalls=1 -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD=1234123412341234 -e DATA_DIR=/data -v blinkfile-data:/data --rm blinkfile-candidate
 .PHONY: run
 
-build:
-	docker buildx build --tag blinkfile --cache-to type=gha --cache-from type-gha .
-.PHONY: build
-
-# Host machine scripts
+# Run full test suite, similar to what is run in CI pipeline
 test:
-	go test -coverprofile coverage.out ./...
-	go tool cover -html=coverage.out -o=coverage.html
+	$(MAKE) -C .local all
 .PHONY: test
 
-test-acceptance:
-	$(MAKE) -C test/ test
-.PHONY: test-acceptance
-
-test-acceptance-open:
-	$(MAKE) -C test/ open
-.PHONY: test-acceptance-open
-
+# Install dependencies on host machine
 install:
 	go mod download
 	cd app/web && npm i
 .PHONY: install
 
-# Run checks
-lint: src-load
-	docker run -t --rm -v blinkfile-src:/app -v blinkfile-lint-cache:/root/.cache -w /app golangci/golangci-lint:v1.55.2 golangci-lint run -v
+# Run unit tests on the host machine
+unit-test:
+	go test -coverprofile coverage.out ./...
+	go tool cover -html=coverage.out -o=coverage.html
+.PHONY: unit-test
+
+# Run linter
+lint:
+	$(MAKE) -C .local lint
 .PHONY: lint
 
-src-load:
-	$(MAKE) -C .local/load load
-.PHONY: src-load
+# Run acceptance tests
+acceptance-test:
+	$(MAKE) -C .local acceptance-test
+.PHONY: acceptance-tests-runner
 
-src-rm:
-	$(MAKE) -C .local/load rm
-.PHONY: src-rm
+# Open acceptance test runner, requires a running app on http://localhost:8000
+acceptance-test-runner:
+	$(MAKE) -C test/ open
+.PHONY: acceptance-test-runner

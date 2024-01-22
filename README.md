@@ -20,45 +20,58 @@ docker pull benjohns1/blinkfile
 ```
 
 ## Run locally
-### With Docker
 Prerequisites: Docker, Make
 
-#### Build & run
+### Build & run
 ```
-make
+make run
 ```
-#### Run unit tests & build
-```
-make build
-```
-#### Run unit tests, build, & run acceptance tests
-```
-make ci
-```
-
-### On host machine
-Prerequisites: Go, NPM, Make
-
-#### Install
-```
-make install
-```
-#### Unit test with coverage
+### Run full test suite
 ```
 make test
 ```
-#### Run acceptance tests in a headless browser
+
+## Development
+Prerequisites: Go, NPM, Docker, Make
+
+### Install dependencies
 ```
-make test-acceptance
+make install
 ```
-#### Open Cypress to run acceptance tests
+### Run unit tests with coverage 
 ```
-make test-acceptance-open
+make unit-test
 ```
-#### Run
+### Run linter
+```
+make lint
+```
+### Run acceptance tests
+```
+make acceptance-test
+```
+### Open Cypress UI to run and develop acceptance tests
+```
+make acceptance-test-runner
+```
+Gherkin-style features are defined in `test/cypress/features`. Any scenarios tagged with `@pending` or `@implementing` 
+will _not_ be run in the CI pipeline. Scenarios tagged with `@implementing` will show up in the test runner locally.
+
+Cypress implementation steps are defined in `test/cypress/steps`. See 
+[badeball's cypress-cucumber-preprocessor docs](https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/readme.md) 
+for more details.
+### Run on host
 Required environment variables:
 - ADMIN_USERNAME
 - ADMIN_PASSWORD
 ```
 go run ./...
 ```
+### CI/CD
+Pipeline runs in github actions
+#### Run full test suite
+This will run a flow similar to what runs in the pipeline as a final check before push:
+```
+make test
+```
+You can also run individual steps in `.local/Makefile`.

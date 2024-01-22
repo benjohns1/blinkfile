@@ -1,20 +1,17 @@
 services:
   blinkfile:
-    image: app-candidate
+    image: blinkfile-candidate
     volumes:
-      - blinkfile-data:/data
+      - blinkfile-acceptance-test-data:/data
     environment:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=1234123412341234
       - DATA_DIR=/data
       - RATE_LIMIT_UNAUTHENTICATED=100
   acceptance-test-runner:
-    image: acceptance-test-runner
-    volumes:
-      - ./cypress/features:/cypress/features
-      - ./cypress/steps:/cypress/steps
+    image: blinkfile-acceptance-test-runner
     environment:
       - CYPRESS_BASE_URL=http://blinkfile:8000
 
 volumes:
-  blinkfile-data:
+  blinkfile-acceptance-test-data:

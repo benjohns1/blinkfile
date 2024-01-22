@@ -6,3 +6,4 @@ _test/
 test/
 data/
 node_modules/
+.local/
