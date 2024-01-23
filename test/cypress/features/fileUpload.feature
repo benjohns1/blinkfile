@@ -11,8 +11,6 @@ Scenario: Cannot upload a file without choosing one
 Scenario: Upload a small file
   Given I am on the file upload page
   And I have a file "files/small.txt"
-  When I browse for a file to upload
-  And I select it from the browse file dialog
   And I upload the file
   Then I should see a file upload success message
 

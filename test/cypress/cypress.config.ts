@@ -2,7 +2,7 @@ import { defineConfig } from "cypress";
 import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
 import { addCucumberPreprocessorPlugin } from "@badeball/cypress-cucumber-preprocessor";
 import { createEsbuildPlugin } from "@badeball/cypress-cucumber-preprocessor/esbuild";
-import {rmdir} from "fs";
+import fs from "fs";
 
 async function setupNodeEvents(
     on: Cypress.PluginEvents,
@@ -21,8 +21,12 @@ async function setupNodeEvents(
   on('task', {
     deleteFolder (folderName) {
       return new Promise((resolve, reject) => {
-        rmdir(folderName, { maxRetries: 10, recursive: true }, (err) => {
+        if (!fs.existsSync(folderName)) {
+          return resolve(null);
+        }
+        fs.rm(folderName, { maxRetries: 10, recursive: true }, (err) => {
           if (err) {
+            console.error(err);
             return reject(err)
           }
 
