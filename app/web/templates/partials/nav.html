@@ -1,6 +1,6 @@
     <ul>
         <li><a href="/">Home</a></li>
         {{- if (.session.Get `authenticated`) }}
-        <li><a href="/logout">Logout</a></li>
+        <li><a href="/logout" data-test="logout">Logout</a></li>
         {{- end}}
     </ul>

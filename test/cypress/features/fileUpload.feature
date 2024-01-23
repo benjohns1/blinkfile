@@ -18,5 +18,5 @@ Scenario: Download a small file
   Given I am on the file upload page
   And I have a file "files/small.txt"
   When I upload the file
-  And I select the top file from the list
+  And I download the top file from the list
   Then I should download the file

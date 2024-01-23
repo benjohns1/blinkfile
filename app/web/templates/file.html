@@ -2,8 +2,8 @@
 <div id="download_form">{{ render "partials/message.html" .content.MessageView }}
     <form action="/file/{{.content.ID}}" method="post">
         <label for="password" hidden>Password</label>
-        <input id="password" type="password" name="password" placeholder="Password"/>
-        <input type="submit" value="Download" onclick="javascript:document.getElementById('download_form').setAttribute('hidden', '');document.getElementById('download_msg').innerText = 'Starting download!'"/>
+        <input id="password" type="password" name="password" placeholder="Password" data-test="password"/>
+        <input type="submit" value="Download" onclick="javascript:document.getElementById('download_form').setAttribute('hidden', '');document.getElementById('download_msg').innerText = 'Starting download!'" data-test="download"/>
     </form>
 </div>
 <p id="download_msg"></p>

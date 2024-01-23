@@ -58,7 +58,7 @@
                 <td data-sort-value="{{$file.ByteSize}}">{{$file.Size}}</td>
                 <td class="datetime" data-sort-value="{{$file.Uploaded}}">{{$file.Uploaded}}</td>
                 <td class="datetime" data-sort-value="{{$file.Expires}}">{{$file.Expires}}</td>
-                <td>{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
+                <td data-test="access">{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>
         {{end}}

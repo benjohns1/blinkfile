@@ -1,10 +1,16 @@
-import { Before, Given, When, Then } from "@badeball/cypress-cucumber-preprocessor";
+import { Given, When, Then } from "@badeball/cypress-cucumber-preprocessor";
 import { login } from "./shared/login";
-import { deleteDownloadsFolder, getUploadButton, getFileBrowser, filepathBase, verifyDownloadedFile } from "./shared/files";
+import {
+    deleteDownloadsFolder,
+    getUploadButton,
+    getFileBrowser,
+    filepathBase,
+    verifyDownloadedFile,
+    getFileLinks, getMessage
+} from "./shared/files";
 
 const state: {
     fileToUpload?: any,
-    fileLink?: any,
 } = {};
 
 Given("I am logged in", () => {
@@ -37,14 +43,13 @@ When("I upload the file", () => {
 
 When("I should see a file upload success message", () => {
     const filename = filepathBase(state.fileToUpload);
-    cy.get("[data-test=message]").should("contain", `Successfully uploaded ${filename}`);
+    getMessage().should("contain", `Successfully uploaded ${filename}`);
 });
 
-When("I select the top file from the list", () => {
-    state.fileLink = cy.get("[data-test=file_table] tbody tr [data-test=file_link]").first();
+When("I download the top file from the list", () => {
+    getFileLinks().first().click();
 });
 
 Then("I should download the file", () => {
-    state.fileLink.click();
     verifyDownloadedFile(state.fileToUpload);
 });

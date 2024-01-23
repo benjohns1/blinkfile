@@ -1,6 +1,14 @@
-import {Given, When} from "@badeball/cypress-cucumber-preprocessor";
-import {deleteDownloadsFolder, filepathBase, getFileBrowser, getUploadButton} from "./shared/files";
-import {login} from "./shared/login";
+import {Given, When, Then} from "@badeball/cypress-cucumber-preprocessor";
+import {
+    filepathBase,
+    getFileAccess,
+    getFileBrowser,
+    getFileLinks,
+    getPasswordField,
+    getUploadButton,
+    getMessage, visitFileUploadPage, visitFileListPage, verifyDownloadedFile, deleteDownloadsFolder
+} from "./shared/files";
+import {login, logout} from "./shared/login";
 
 const state: {
     fileToUpload?: any,
@@ -12,7 +20,7 @@ Given("I am logged in", () => {
 });
 
 Given("I am on the file upload page", () => {
-    cy.visit("/");
+    visitFileUploadPage();
 });
 
 Given("I have a file {string}", (name: string) => {
@@ -26,14 +34,67 @@ When("I browse for the file to upload", () => {
 });
 
 When("I enter the password {string}", (password: string) => {
-    cy.get("[data-test=password]").type(password);
+    getPasswordField().type(password);
 });
 
 When("I upload the file", () => {
     getUploadButton().click();
 });
 
-When("I should see a file upload success message", () => {
+Then("I should see a file upload success message", () => {
     const filename = filepathBase(state.fileToUpload);
-    cy.get("[data-test=message]").should("contain", `Successfully uploaded ${filename}`);
+    getMessage().should("contain", `Successfully uploaded ${filename}`);
+});
+
+Then("I should see the file at the top of the list", () => {
+    const filename = filepathBase(state.fileToUpload);
+    getFileLinks().first().should('contain.text', filename);
+});
+
+Then("it should look like it is password protected", () => {
+    getFileAccess().first().should('contain.text', "Password");
+});
+
+Given("I have uploaded a file {string} with the password {string}", (name: string, password: string) => {
+    cy.visit("/");
+    state.fileToUpload = `features/${name}`;
+    deleteDownloadsFolder();
+    getFileBrowser().selectFile(state.fileToUpload);
+    getPasswordField().type(password);
+    getUploadButton().click();
+    getFileLinks().first().invoke("attr", "href").then(href => {
+        state.fileLink = href;
+    });
+});
+
+Given("I am on the file list page", () => {
+    visitFileListPage();
+});
+
+When("I download the top file from the list", () => {
+    getFileLinks().first().click();
+});
+
+Then("I should download the file without needing a password", () => {
+    verifyDownloadedFile(state.fileToUpload);
+});
+
+When("I log out", () => {
+    logout();
+});
+
+When("I download the file with the password {string}", (password: string) => {
+    cy.visit(state.fileLink);
+    cy.get("[data-test=password]").type(password);
+    cy.get("[data-test=download]").click();
+});
+
+Then("I should see an invalid password message", () => {
+    getMessage()
+        .should("contain", "Authorization failed")
+        .should("contain", "Invalid password");
+});
+
+Then("I should download the file", () => {
+    verifyDownloadedFile(state.fileToUpload);
 });
