@@ -9,7 +9,7 @@ import {
     verifyDownloadedFile,
     deleteDownloadsFolder,
     filepathBase,
-    getFileAccess, shouldSeeUploadSuccessMessage, getFileExpirations
+    getFileAccess, shouldSeeUploadSuccessMessage, getFileExpirations, getExpiresInField, getExpiresInUnitField
 } from "./shared/files";
 import {login, logout} from "./shared/login";
 import dayjs from "dayjs";
@@ -17,6 +17,8 @@ import dayjs from "dayjs";
 const state: {
     fileToUpload?: any,
     fileLink?: any,
+    startUpload?: Date,
+    endUpload?: Date,
 } = {};
 
 Given("I am logged in", () => {
@@ -40,8 +42,24 @@ When("I enter {string} for the expiration date", (date: string) => {
     getExpirationDateField().type(expirationDate.format("MM/DD/YYYY"));
 });
 
+When("I set it to expire in {string}", (expiresIn: string) => {
+    let expiresInAmount: string;
+    let expiresInUnit: string;
+    if (expiresIn === "3 days") {
+        expiresInAmount = "3";
+        expiresInUnit = "d";
+    } else {
+        throw `expiresIn string ${expiresIn} not implemented`;
+    }
+    getExpiresInField().type(expiresInAmount);
+    getExpiresInUnitField().select(expiresInUnit);
+});
+
 When("I upload the file", () => {
-    getUploadButton().click();
+    state.startUpload = new Date();
+    getUploadButton().click().then(() => {
+        state.endUpload = new Date();
+    });
     getFileLinks().first().invoke("attr", "href").then(href => {
         state.fileLink = href;
     });
@@ -53,12 +71,25 @@ Then("it should upload successfully", () => {
     getFileLinks().first().should('contain.text', filename);
 });
 
+const allowedClockDriftMinutes = 1;
+
 Then("it should look like it is set to expire {string}", (expiration: string) => {
-    let format: string;
+    getFileExpirations().first().invoke('text').as('expires');
     if (expiration === "tomorrow at midnight") {
-        format = dayjs().add(1, "day").format("MM/DD/YYYY") + " 12:00 AM";
-    } else {
-        throw `expiration string ${expiration} not implemented`;
+        const format = dayjs().add(1, "day").format("MM/DD/YYYY") + " 12:00 AM";
+        cy.get('@expires').should('contain', format);
+        return;
     }
-    getFileExpirations().first().should('contain.text', format);
+    if (expiration === "3 days from now") {
+        const earliest = dayjs(state.startUpload).add(3, "day").subtract(allowedClockDriftMinutes, "minute").toDate();
+        const latest = dayjs(state.endUpload).add(3, "day").add(allowedClockDriftMinutes, "minute").toDate();
+        cy.get('@expires').then($expires => {
+            const actual = dayjs($expires.toString(), "MM/DD/YYYY HH:mm A").toDate();
+            const cyDate = cy.wrap(actual);
+            cyDate.should("be.at.least", earliest);
+            cyDate.should("be.at.most", latest);
+        });
+        return;
+    }
+    throw `expiration string ${expiration} not implemented`;
 });

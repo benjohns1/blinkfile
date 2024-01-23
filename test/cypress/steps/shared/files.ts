@@ -26,6 +26,14 @@ export const getExpirationDateField = () => {
     return cy.get("[data-test=expiration_date]");
 }
 
+export const getExpiresInField = () => {
+    return cy.get("[data-test=expire_in]");
+}
+
+export const getExpiresInUnitField = () => {
+    return cy.get("[data-test=expire_in_unit]");
+}
+
 export const getMessage = () => {
     return cy.get("[data-test=message]");
 }
