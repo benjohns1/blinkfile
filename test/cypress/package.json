@@ -12,6 +12,7 @@
     "@badeball/cypress-cucumber-preprocessor": "^20.0.1",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
     "cypress": "^13.6.3",
+    "dayjs": "^1.11.10",
     "gherkin-lint": "^4.2.4",
     "typescript": "^5.3.3"
   },

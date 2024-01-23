@@ -14,8 +14,16 @@ export const getFileAccess = () => {
     return cy.get("[data-test=file_table] tbody tr [data-test=access]");
 }
 
+export const getFileExpirations = () => {
+    return cy.get("[data-test=file_table] tbody tr [data-test=expires]");
+}
+
 export const getPasswordField = () => {
     return cy.get("[data-test=password]");
+}
+
+export const getExpirationDateField = () => {
+    return cy.get("[data-test=expiration_date]");
 }
 
 export const getMessage = () => {
@@ -46,3 +54,8 @@ export const verifyDownloadedFile = (file: string) => {
         cy.readFile(`${downloadsFolder}/${filename}`).should('eq', contents);
     })
 };
+
+export const shouldSeeUploadSuccessMessage = (filepath: string) => {
+    const filename = filepathBase(filepath);
+    getMessage().should("contain", `Successfully uploaded ${filename}`);
+}

@@ -6,7 +6,12 @@ import {
     getFileLinks,
     getPasswordField,
     getUploadButton,
-    getMessage, visitFileUploadPage, visitFileListPage, verifyDownloadedFile, deleteDownloadsFolder
+    getMessage,
+    visitFileUploadPage,
+    visitFileListPage,
+    verifyDownloadedFile,
+    deleteDownloadsFolder,
+    shouldSeeUploadSuccessMessage
 } from "./shared/files";
 import {login, logout} from "./shared/login";
 
@@ -42,8 +47,7 @@ When("I upload the file", () => {
 });
 
 Then("I should see a file upload success message", () => {
-    const filename = filepathBase(state.fileToUpload);
-    getMessage().should("contain", `Successfully uploaded ${filename}`);
+    shouldSeeUploadSuccessMessage(state.fileToUpload);
 });
 
 Then("I should see the file at the top of the list", () => {
@@ -56,7 +60,7 @@ Then("it should look like it is password protected", () => {
 });
 
 Given("I have uploaded a file {string} with the password {string}", (name: string, password: string) => {
-    cy.visit("/");
+    visitFileUploadPage();
     state.fileToUpload = `features/${name}`;
     deleteDownloadsFolder();
     getFileBrowser().selectFile(state.fileToUpload);

@@ -16,7 +16,7 @@
     </div>
     <div style="float: left">
         <label for="expire_future_unit" hidden>Expiration Unit</label>
-        <select id="expire_future_unit" name="expire_future_unit">
+        <select id="expire_future_unit" name="expire_future_unit" data-test="expires_in">
             <option value="m">Minutes</option>
             <option value="h">Hours</option>
             <option value="d" selected="">Days</option>
@@ -27,7 +27,7 @@
         <span style="text-align: center; float: left">&nbsp;- or -&nbsp;</span>
         <span style="float: left">
             <label for="expiration_date_display" hidden>Expires On</label>
-            <input style="float: left" type="text" id="expiration_date_display" placeholder="Expires On Date"/>
+            <input style="float: left" type="text" id="expiration_date_display" placeholder="Expires On Date" data-test="expiration_date"/>
         </span>
     </div>
     <input type="hidden" id="expiration_time" name="expiration_time"/>
@@ -57,7 +57,7 @@
                 <td data-search><a href="/file/{{$file.ID}}" target="_blank" data-test="file_link">{{$file.Name}}</a></td>
                 <td data-sort-value="{{$file.ByteSize}}">{{$file.Size}}</td>
                 <td class="datetime" data-sort-value="{{$file.Uploaded}}">{{$file.Uploaded}}</td>
-                <td class="datetime" data-sort-value="{{$file.Expires}}">{{$file.Expires}}</td>
+                <td class="datetime" data-sort-value="{{$file.Expires}}" data-test="expires">{{$file.Expires}}</td>
                 <td data-test="access">{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>

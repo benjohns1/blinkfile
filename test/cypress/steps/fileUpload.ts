@@ -6,7 +6,7 @@ import {
     getFileBrowser,
     filepathBase,
     verifyDownloadedFile,
-    getFileLinks, getMessage
+    getFileLinks, getMessage, shouldSeeUploadSuccessMessage
 } from "./shared/files";
 
 const state: {
@@ -42,8 +42,7 @@ When("I upload the file", () => {
 });
 
 When("I should see a file upload success message", () => {
-    const filename = filepathBase(state.fileToUpload);
-    getMessage().should("contain", `Successfully uploaded ${filename}`);
+    shouldSeeUploadSuccessMessage(state.fileToUpload);
 });
 
 When("I download the top file from the list", () => {
