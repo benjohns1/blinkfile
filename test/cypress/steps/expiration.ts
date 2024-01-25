@@ -1,4 +1,4 @@
-import {After, Given, When, Then} from "@badeball/cypress-cucumber-preprocessor";
+import {Before, Given, When, Then} from "@badeball/cypress-cucumber-preprocessor";
 import {
     getFileBrowser,
     getFileLinks,
@@ -11,7 +11,7 @@ import {
     getFileExpirations,
     getExpiresInField,
     getExpiresInUnitField,
-    verifyFileResponse, visitFileListPage
+    verifyFileResponse, visitFileListPage, fileRowsSelector
 } from "./shared/files";
 import {login, logout} from "./shared/login";
 import dayjs from "dayjs";
@@ -23,20 +23,22 @@ const state: {
     endUpload?: Date,
 } = {};
 
-After(() => {
+Given("I am logged in", () => {
+    login("{admin}", "{admin}");
+});
+
+Given("there are no uploaded files", () => {
     cy.request({
         method: "POST",
         url: "/test-automation",
         form: true,
         body: {
-            delete_all_files: true,
+            delete_user_files: true,
             time_offset: "0",
         },
-    });
-});
-
-Given("I am logged in", () => {
-    login("{admin}", "{admin}");
+    }).then(response => {
+        cy.log(JSON.stringify(response.headers));
+    })
 });
 
 const selectFile = (name: string) => {
@@ -150,7 +152,7 @@ When("{string} has passed", (timeframe: string) => {
             duration = "3d";
             break;
         default:
-            throw `duration string ${duration} not implemented`;
+            throw `duration string "${duration}" not implemented`;
     }
     setTimeOffset(duration);
 });
@@ -164,7 +166,5 @@ Then("I can no longer download the file", () => {
 
 Then("it no longer shows up in the file list", () => {
     visitFileListPage();
-    getFileLinks().each($el => {
-        cy.wrap($el).should("not.have.attr", "href", state.fileLink);
-    });
+    cy.get(`${fileRowsSelector} [href=\"${state.fileLink}]\"`).should("not.exist");
 });

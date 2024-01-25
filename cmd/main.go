@@ -73,8 +73,9 @@ func run(ctx context.Context) (err error) {
 		l.Printf(ctx, "WARNING: Server running with test automation enabled! DO NOT RUN THESE IN PRODUCTION!")
 		testClock := &testautomation.TestClock{}
 		automator = &testautomation.Automator{
-			Log:   l,
-			Clock: testClock,
+			Log:      l,
+			Clock:    testClock,
+			FileRepo: fileRepo,
 		}
 		appConfig.Clock = testClock
 	}
@@ -82,10 +83,6 @@ func run(ctx context.Context) (err error) {
 	application, appErr := app.New(ctx, appConfig)
 	if appErr != nil {
 		return appErr
-	}
-
-	if cfg.EnableTestAutomation {
-		automator.App = application
 	}
 
 	srv, err := web.New(ctx, web.Config{

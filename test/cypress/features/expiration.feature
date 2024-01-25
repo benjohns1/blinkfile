@@ -3,6 +3,7 @@ Feature: Expiration
 
 Background:
   Given I am logged in
+  And there are no uploaded files
 
 Scenario: Upload a file with a future expiration date
   Given I have selected the file "files/expiration.txt" to upload
@@ -10,7 +11,6 @@ Scenario: Upload a file with a future expiration date
   And I upload the file
   Then it should upload successfully
   And it should look like it is set to expire "tomorrow at midnight"
-
 
 Scenario: Upload a file that expires in a timeframe
   Given I have selected the file "files/expiration.txt" to upload

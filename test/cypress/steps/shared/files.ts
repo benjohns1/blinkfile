@@ -6,16 +6,18 @@ export const getFileBrowser = () => {
     return cy.get("input[type=file][data-test=file]");
 };
 
+export const fileRowsSelector = "[data-test=file_table] tbody tr";
+
 export const getFileLinks = () => {
-    return cy.get("[data-test=file_table] tbody tr [data-test=file_link]");
+    return cy.get(`${fileRowsSelector} [data-test=file_link]`);
 }
 
 export const getFileAccess = () => {
-    return cy.get("[data-test=file_table] tbody tr [data-test=access]");
+    return cy.get(`${fileRowsSelector} [data-test=access]`);
 }
 
 export const getFileExpirations = () => {
-    return cy.get("[data-test=file_table] tbody tr [data-test=expires]");
+    return cy.get(`${fileRowsSelector} [data-test=expires]`);
 }
 
 export const getPasswordField = () => {

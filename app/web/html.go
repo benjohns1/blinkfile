@@ -53,7 +53,7 @@ type (
 	}
 
 	TestAutomator interface {
-		TestAutomation(ctx context.Context, args testautomation.Args)
+		TestAutomation(ctx context.Context, args testautomation.Args) error
 	}
 
 	wrapper struct {
@@ -203,11 +203,17 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		authenticated.Post("/files/delete", w.f(deleteFiles))
 		if cfg.TestAutomator != nil {
 			authenticated.Post("/test-automation", func(ctx iris.Context) {
-				deleteAllFiles, _ := strconv.ParseBool(ctx.FormValue("delete_all_files"))
-				cfg.TestAutomator.TestAutomation(ctx, testautomation.Args{
-					DeleteAllFiles: deleteAllFiles,
-					TimeOffset:     longduration.LongDuration(ctx.FormValue("time_offset")),
-				})
+				var deleteUserFiles blinkfile.UserID
+				doDelete, _ := strconv.ParseBool(ctx.FormValue("delete_user_files"))
+				if doDelete {
+					deleteUserFiles = loggedInUser(ctx)
+				}
+				if aErr := cfg.TestAutomator.TestAutomation(ctx, testautomation.Args{
+					DeleteUserFiles: deleteUserFiles,
+					TimeOffset:      longduration.LongDuration(ctx.FormValue("time_offset")),
+				}); aErr != nil {
+					panic(aErr)
+				}
 			})
 		}
 	}

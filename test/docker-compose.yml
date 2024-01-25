@@ -1,8 +1,6 @@
 services:
   blinkfile:
     image: blinkfile-candidate
-    volumes:
-      - blinkfile-acceptance-test-data:/data
     environment:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=1234123412341234
@@ -13,6 +11,3 @@ services:
     image: blinkfile-acceptance-test-runner
     environment:
       - CYPRESS_BASE_URL=http://blinkfile:8000
-
-volumes:
-  blinkfile-acceptance-test-data:

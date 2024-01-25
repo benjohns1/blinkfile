@@ -159,15 +159,12 @@ func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
 	return nil
 }
 
-func (r *FileRepo) DeleteExpiredBefore(_ context.Context, t time.Time) (int, error) {
+func (r *FileRepo) delete(_ context.Context, filter func(fileHeader) bool) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	var deleteList []blinkfile.FileHeader
 	for _, header := range r.idIndex {
-		if header.Expires.IsZero() {
-			continue
-		}
-		if header.Expires.After(t) {
+		if !filter(header) {
 			continue
 		}
 		deleteList = append(deleteList, blinkfile.FileHeader(header))
@@ -181,6 +178,12 @@ func (r *FileRepo) DeleteExpiredBefore(_ context.Context, t time.Time) (int, err
 		count++
 	}
 	return count, nil
+}
+
+func (r *FileRepo) DeleteExpiredBefore(ctx context.Context, t time.Time) (int, error) {
+	return r.delete(ctx, func(header fileHeader) bool {
+		return !(header.Expires.IsZero() || header.Expires.After(t))
+	})
 }
 
 func sortFiles(files []blinkfile.FileHeader) []blinkfile.FileHeader {
