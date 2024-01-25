@@ -90,21 +90,6 @@ jobs:
           name: acceptance-test-source
           path: test/
           if-no-files-found: error
-  acceptance-test-runner-build:
-    runs-on: ubuntu-22.04
-    needs: acceptance-test-source
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: acceptance-test-source
-      - uses: docker/setup-buildx-action@v3
-      - name: Build acceptance-test runner image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./cypress
-          tags: blinkfile-acceptance-test-runner
-          cache-from: type=gha
-          cache-to: type=gha
   acceptance-test:
     runs-on: ubuntu-22.04
     needs: [build,acceptance-test-runner-build]

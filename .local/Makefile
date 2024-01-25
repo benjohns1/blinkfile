@@ -3,7 +3,7 @@
 #####################
 
 # Run all validation checks locally
-all: _source _lint _unit-test _build _acceptance-test-runner-build _acceptance-test
+all: _source _lint _unit-test _build _acceptance-test
 .PHONY: all
 
 # Run linter
@@ -22,7 +22,7 @@ build: _source
 .PHONY: build
 
 # Build and run acceptance tests
-acceptance-test: _source _build _acceptance-test-runner-build
+acceptance-test: _source _build
 	$(MAKE) _acceptance-test
 .PHONY: acceptance-test
 
@@ -61,13 +61,9 @@ _build:
 	docker build --tag blinkfile-candidate -f build.Dockerfile --progress=plain ..
 .PHONY: _build
 
-# Build the image for running acceptance tests
-_acceptance-test-runner-build:
-	docker build --tag blinkfile-acceptance-test-runner ../test/cypress
-.PHONY: _acceptance-test-runner-build
-
 # Run acceptance tests on a build image
 _acceptance-test:
+	docker build --tag blinkfile-acceptance-test-runner ../test/cypress
 	docker compose -f ../test/docker-compose.yml up --exit-code-from acceptance-test-runner
 	docker compose -f ../test/docker-compose.yml down
 .PHONY: _acceptance-test
