@@ -1,3 +1,5 @@
+[![Docker Image CI](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml)
+
 # Blinkfile
 Send files quickly and securely.
 
