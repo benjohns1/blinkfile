@@ -20,8 +20,20 @@ func (a *App) ListFiles(ctx context.Context, owner blinkfile.UserID) ([]blinkfil
 	if err != nil {
 		return nil, Err(ErrRepo, fmt.Errorf("retrieving file list: %w", err))
 	}
+	files = a.filterExpired(files)
 	sortFilesByCreatedTimeDesc(files)
 	return files, nil
+}
+
+func (a *App) filterExpired(files []blinkfile.FileHeader) []blinkfile.FileHeader {
+	out := make([]blinkfile.FileHeader, 0, len(files))
+	for _, file := range files {
+		if !file.Expires.IsZero() && !a.cfg.Now().Before(file.Expires) {
+			continue
+		}
+		out = append(out, file)
+	}
+	return out
 }
 
 func sortFilesByCreatedTimeDesc(files []blinkfile.FileHeader) {

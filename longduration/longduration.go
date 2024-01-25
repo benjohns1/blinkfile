@@ -20,44 +20,49 @@ func (ld LongDuration) ErrInvalid(detail string) error {
 	return fmt.Errorf("%w %q: %s", ErrInvalidLongDuration, ld, detail)
 }
 
-func (ld LongDuration) AddTo(t time.Time) (time.Time, error) {
+func (ld LongDuration) Duration() (time.Duration, error) {
 	s := string(ld)
 	if s == "" {
-		return t, nil
+		return 0, nil
 	}
 	unit := s[len(s)-1:]
 	multiplier, ok := units[unit]
 	if !ok {
 		d, err := time.ParseDuration(s)
 		if err != nil {
-			return t, err
+			return 0, err
 		}
-		return t.Add(d), nil
+		return d, nil
 	}
 	parts := strings.Split(s[:len(s)-1], ".")
 	length := len(parts)
 	if length == 0 {
-		return t, nil
+		return 0, nil
 	}
 	if length > 2 {
-		return t, ld.ErrInvalid("too many decimal parts")
+		return 0, ld.ErrInvalid("too many decimal parts")
 	}
 	ones, neg, onesErr := ld.parseInt(parts[0])
 	if onesErr != nil {
-		return t, ld.ErrInvalid(onesErr.Error())
+		return 0, ld.ErrInvalid(onesErr.Error())
 	}
 	d := ones * multiplier
 	if length == 2 {
 		decimal, decimalErr := strconv.ParseFloat("0."+parts[1], 64)
 		if decimalErr != nil {
-			return t, ld.ErrInvalid(decimalErr.Error())
+			return 0, ld.ErrInvalid(decimalErr.Error())
 		}
 		d += int64(decimal * float64(multiplier))
 	}
 	if neg {
 		d *= -1
 	}
-	return t.Add(time.Duration(d)), nil
+	return time.Duration(d), nil
+}
+
+func (ld LongDuration) AddTo(t time.Time) (time.Time, error) {
+	d, err := ld.Duration()
+	return t.Add(d), err
 }
 
 func (ld LongDuration) parseInt(s string) (amount int64, neg bool, err error) {

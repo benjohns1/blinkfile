@@ -56,11 +56,17 @@ export const deleteDownloadsFolder = () => {
     cy.task('deleteFolder', downloadsFolder);
 };
 
+export const verifyFileResponse = (file: string, response: any) => {
+    cy.readFile(file).then((contents) => {
+        expect(response.body).to.equal(contents);
+    });
+}
+
 export const verifyDownloadedFile = (file: string) => {
     const filename = filepathBase(file);
     cy.readFile(file).then((contents) => {
         cy.readFile(`${downloadsFolder}/${filename}`).should('eq', contents);
-    })
+    });
 };
 
 export const shouldSeeUploadSuccessMessage = (filepath: string) => {

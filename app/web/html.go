@@ -7,7 +7,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
+
+	"github.com/benjohns1/blinkfile/app/testautomation"
+	"github.com/benjohns1/blinkfile/longduration"
 
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app"
@@ -28,6 +32,7 @@ type (
 		WriteTimeout                  time.Duration
 		RateLimitUnauthenticated      float64
 		RateLimitBurstUnauthenticated int
+		TestAutomator                 TestAutomator
 	}
 
 	HTML struct {
@@ -45,6 +50,10 @@ type (
 		DeleteFiles(context.Context, blinkfile.UserID, []blinkfile.FileID) error
 
 		app.Log
+	}
+
+	TestAutomator interface {
+		TestAutomation(ctx context.Context, args testautomation.Args)
 	}
 
 	wrapper struct {
@@ -192,6 +201,15 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		upload := authenticated.Post("/files", w.f(uploadFile))
 		upload.Use(maxSize(cfg.MaxFileByteSize))
 		authenticated.Post("/files/delete", w.f(deleteFiles))
+		if cfg.TestAutomator != nil {
+			authenticated.Post("/test-automation", func(ctx iris.Context) {
+				deleteAllFiles, _ := strconv.ParseBool(ctx.FormValue("delete_all_files"))
+				cfg.TestAutomator.TestAutomation(ctx, testautomation.Args{
+					DeleteAllFiles: deleteAllFiles,
+					TimeOffset:     longduration.LongDuration(ctx.FormValue("time_offset")),
+				})
+			})
+		}
 	}
 
 	unauthenticated := i.Party("/")

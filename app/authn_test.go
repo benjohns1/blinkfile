@@ -122,7 +122,7 @@ func TestApp_Login(t *testing.T) {
 				GenerateToken: func() (app.Token, error) {
 					return "token1", nil
 				},
-				Now:               func() time.Time { return time.Unix(1, 1) },
+				Clock:             &StaticClock{T: time.Unix(1, 1)},
 				SessionExpiration: 2*time.Second + 2*time.Nanosecond,
 			},
 			args: args{
@@ -290,7 +290,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 						}, true, nil
 					},
 				},
-				Now: func() time.Time { return time.Unix(1, 0) },
+				Clock: &StaticClock{T: time.Unix(1, 0)},
 			},
 			args: args{
 				token: "token1",
@@ -308,7 +308,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 						}, true, nil
 					},
 				},
-				Now: func() time.Time { return time.Unix(1, 0) },
+				Clock: &StaticClock{T: time.Unix(1, 0)},
 			},
 			args: args{
 				token: "token1",
@@ -326,7 +326,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 						}, true, nil
 					},
 				},
-				Now:           func() time.Time { return time.Unix(1, 0) },
+				Clock:         &StaticClock{T: time.Unix(1, 0)},
 				AdminUsername: "my-admin-user",
 				AdminPassword: "super-secure-admin-password",
 			},

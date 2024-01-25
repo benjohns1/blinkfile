@@ -19,7 +19,7 @@ type (
 		SessionRepo
 		FileRepo
 		GenerateToken func() (Token, error)
-		Now           func() time.Time
+		Clock
 		PasswordHasher
 		GenerateFileID func() (blinkfile.FileID, error)
 	}
@@ -51,19 +51,28 @@ type (
 
 	Log interface {
 		Printf(ctx context.Context, format string, v ...any)
-		// test1
 		Errorf(ctx context.Context, format string, v ...any)
+	}
+
+	Clock interface {
+		Now() time.Time
 	}
 )
 
 var FeatureFlagIsOn = func(context.Context, string) bool { return false }
 
+type DefaultClock struct{}
+
+func (c *DefaultClock) Now() time.Time {
+	return time.Now().UTC()
+}
+
 func New(ctx context.Context, cfg Config) (*App, error) {
 	if cfg.Log == nil {
 		return nil, fmt.Errorf("log instance is required")
 	}
-	if cfg.Now == nil {
-		cfg.Now = func() time.Time { return time.Now().UTC() }
+	if cfg.Clock == nil {
+		cfg.Clock = &DefaultClock{}
 	}
 	if cfg.GenerateToken == nil {
 		cfg.GenerateToken = generateDefaultToken

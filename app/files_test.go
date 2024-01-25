@@ -128,6 +128,43 @@ func TestApp_ListFiles(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should not return expired files",
+			cfg: app.Config{
+				Clock: &StaticClock{T: time.Unix(2, 0)},
+				FileRepo: &StubFileRepo{
+					ListByUserFunc: func(context.Context, blinkfile.UserID) ([]blinkfile.FileHeader, error) {
+						return []blinkfile.FileHeader{
+							{
+								ID:      "1",
+								Name:    "File1",
+								Expires: time.Unix(1, 0),
+							},
+							{
+								ID:      "2",
+								Name:    "File2",
+								Expires: time.Unix(2, 0),
+							},
+							{
+								ID:      "3",
+								Name:    "File3",
+								Expires: time.Unix(3, 0),
+							},
+						}, nil
+					},
+				},
+			},
+			args: args{
+				"user1",
+			},
+			want: []blinkfile.FileHeader{
+				{
+					ID:      "3",
+					Name:    "File3",
+					Expires: time.Unix(3, 0),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -435,7 +472,7 @@ func TestApp_DownloadFile(t *testing.T) {
 						return true, nil
 					},
 				},
-				Now: func() time.Time { return time.Unix(1, 0).UTC() },
+				Clock: &StaticClock{T: time.Unix(1, 0).UTC()},
 			},
 			args: args{
 				fileID:   "file1",

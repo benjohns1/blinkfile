@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/benjohns1/blinkfile/app/testautomation"
+
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/app/repo"
 	"github.com/benjohns1/blinkfile/app/web"
@@ -56,7 +58,7 @@ func run(ctx context.Context) (err error) {
 		return v
 	}
 
-	application, appErr := app.New(ctx, app.Config{
+	appConfig := app.Config{
 		Log:               l,
 		AdminUsername:     cfg.AdminUsername,
 		AdminPassword:     cfg.AdminPassword,
@@ -64,9 +66,26 @@ func run(ctx context.Context) (err error) {
 		SessionRepo:       sessionRepo,
 		FileRepo:          fileRepo,
 		PasswordHasher:    &hash.Argon2idDefault,
-	})
+	}
+
+	var automator *testautomation.Automator
+	if cfg.EnableTestAutomation {
+		l.Printf(ctx, "WARNING: Server running with test automation enabled! DO NOT RUN THESE IN PRODUCTION!")
+		testClock := &testautomation.TestClock{}
+		automator = &testautomation.Automator{
+			Log:   l,
+			Clock: testClock,
+		}
+		appConfig.Clock = testClock
+	}
+
+	application, appErr := app.New(ctx, appConfig)
 	if appErr != nil {
 		return appErr
+	}
+
+	if cfg.EnableTestAutomation {
+		automator.App = application
 	}
 
 	srv, err := web.New(ctx, web.Config{
@@ -74,6 +93,7 @@ func run(ctx context.Context) (err error) {
 		Port:                          cfg.Port,
 		RateLimitUnauthenticated:      cfg.RateLimitUnauthenticated,
 		RateLimitBurstUnauthenticated: cfg.RateLimitBurstUnauthenticated,
+		TestAutomator:                 automator,
 	})
 	if err != nil {
 		return err
@@ -111,6 +131,7 @@ type config struct {
 	DataDir                       string
 	RateLimitUnauthenticated      float64
 	RateLimitBurstUnauthenticated int
+	EnableTestAutomation          bool
 }
 
 func parseConfig() config {
@@ -121,6 +142,7 @@ func parseConfig() config {
 		DataDir:                       envDefaultString("DATA_DIR", "./data"),
 		RateLimitUnauthenticated:      envDefaultFloat("RATE_LIMIT_UNAUTHENTICATED", 0),
 		RateLimitBurstUnauthenticated: envDefaultInt("RATE_LIMIT_BURST_UNAUTHENTICATED", 0),
+		EnableTestAutomation:          envDefaultBool("ENABLE_TEST_AUTOMATION", false),
 	}
 }
 
@@ -154,4 +176,16 @@ func envDefaultFloat(key string, def float64) float64 {
 		return def
 	}
 	return f
+}
+
+func envDefaultBool(key string, def bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return def
+	}
+	return b
 }

@@ -41,6 +41,12 @@ func NewTestApp(ctx context.Context, t *testing.T, cfg app.Config) *app.App {
 	return application
 }
 
+type StaticClock struct {
+	T time.Time
+}
+
+func (c *StaticClock) Now() time.Time { return c.T }
+
 type SpySessionRepo struct {
 	repo        app.SessionRepo
 	SaveCalls   []app.Session

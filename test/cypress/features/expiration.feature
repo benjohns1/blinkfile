@@ -18,3 +18,10 @@ Scenario: Upload a file that expires in a timeframe
   And I upload the file
   Then it should upload successfully
   And it should look like it is set to expire "3 days from now"
+
+Scenario: A file is removed after it expires
+  Given I have uploaded a file "files/expiration.txt" set to expire in "3 days"
+  And I can successfully download the file
+  When "3 days" has passed
+  Then I can no longer download the file
+  And it no longer shows up in the file list
