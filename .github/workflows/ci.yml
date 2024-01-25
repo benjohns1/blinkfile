@@ -92,7 +92,7 @@ jobs:
           if-no-files-found: error
   acceptance-test:
     runs-on: ubuntu-22.04
-    needs: [build,acceptance-test-runner-build]
+    needs: [build,acceptance-test-source]
     steps:
       - uses: actions/download-artifact@v4
         with:
