@@ -99,14 +99,12 @@ func run(ctx context.Context) (err error) {
 	done := srv.Start(ctx)
 	log.Printf("Started server on port %d", cfg.Port)
 
-	go startExpiredFileCleanup(ctx, application)
+	go startExpiredFileCleanup(ctx, application, cfg.ExpireCheckCycleTime)
 
 	return <-done
 }
 
-const expireCheckCycleTime = 15 * time.Minute
-
-func startExpiredFileCleanup(ctx context.Context, a *app.App) {
+func startExpiredFileCleanup(ctx context.Context, a *app.App, expireCheckCycleTime time.Duration) {
 	log.Printf("Starting expired file deletion process, running every %v", expireCheckCycleTime)
 	for {
 		if err := ctx.Err(); err != nil {
@@ -129,6 +127,7 @@ type config struct {
 	RateLimitUnauthenticated      float64
 	RateLimitBurstUnauthenticated int
 	EnableTestAutomation          bool
+	ExpireCheckCycleTime          time.Duration
 }
 
 func parseConfig() config {
@@ -137,9 +136,10 @@ func parseConfig() config {
 		AdminUsername:                 os.Getenv("ADMIN_USERNAME"),
 		AdminPassword:                 os.Getenv("ADMIN_PASSWORD"),
 		DataDir:                       envDefaultString("DATA_DIR", "./data"),
-		RateLimitUnauthenticated:      envDefaultFloat("RATE_LIMIT_UNAUTHENTICATED", 0),
-		RateLimitBurstUnauthenticated: envDefaultInt("RATE_LIMIT_BURST_UNAUTHENTICATED", 0),
+		RateLimitUnauthenticated:      envDefaultFloat("RATE_LIMIT_UNAUTHENTICATED", 2),
+		RateLimitBurstUnauthenticated: envDefaultInt("RATE_LIMIT_BURST_UNAUTHENTICATED", 5),
 		EnableTestAutomation:          envDefaultBool("ENABLE_TEST_AUTOMATION", false),
+		ExpireCheckCycleTime:          envDefaultDuration("EXPIRE_CHECK_CYCLE_TIME", 15*time.Minute),
 	}
 }
 
@@ -185,4 +185,16 @@ func envDefaultBool(key string, def bool) bool {
 		return def
 	}
 	return b
+}
+
+func envDefaultDuration(key string, def time.Duration) time.Duration {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return def
+	}
+	return d
 }
