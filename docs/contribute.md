@@ -11,7 +11,7 @@ Here's how to get started.
 2. Use the issue comments to discuss what approach you want to take
 3. Fork the [repo](https://github.com/benjohns1/blinkfile)
 4. Get it running locally (see below)
-5. Make your changes, including unit tests and acceptance tests
+5. Make your changes, including unit and acceptance tests
 6. Submit a PR
 
 ## Run locally
@@ -73,8 +73,8 @@ go run ./...
 ### CI/CD
 Pipeline runs in github actions
 
-#### Run full test suite
-This will run a flow similar to what runs in the pipeline as a final check before push:
+#### Run the full test suite
+This will run a workflow similar to what runs in the pipeline as a final check before push:
 ```
 make test
 ```

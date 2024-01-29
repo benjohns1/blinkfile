@@ -11,7 +11,7 @@ Blinkfile is a simple solution for sending files without requiring the recipient
 
 Built for self-hosters and home-labbers, Blinkfile aims to be a lightweight solution focusing on data privacy and simplicity.
 
-[Get started now](./getting-started)
+[Get started now](./getting-started.html)
 
 ## Features
 - Upload a file and generate sharable links

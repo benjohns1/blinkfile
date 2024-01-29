@@ -33,4 +33,4 @@ volumes:
   bf-data:
 ```
 ## Configuration
-See [Environment Variables](./environment-variables) for a list of available configuration options.
+See [Environment Variables](./environment-variables.html) for a list of available configuration options.
