@@ -29,7 +29,6 @@ logo: "/images/logo-dark-240x100.png"
 color_scheme: dark
 
 # Build settings
-#theme: just-the-docs
 remote_theme: archetypal/just-the-docs@v0.5.2
 plugins:
   - jekyll-default-layout
