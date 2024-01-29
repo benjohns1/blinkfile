@@ -4,6 +4,16 @@ layout: home
 nav_order: 4
 ---
 # Contribute
+## PRs welcome!
+
+Here's how to get started.
+1. Find an [existing issue](https://github.com/benjohns1/blinkfile/issues) to work on or create a new one (please label as 'bug' or 'enhancement' as appropriate)
+2. Use the issue comments to discuss what approach you want to take
+3. Fork the [repo](https://github.com/benjohns1/blinkfile)
+4. Get it running locally (see below)
+5. Make your changes, including unit tests and acceptance tests
+6. Submit a PR
+
 ## Run locally
 Prerequisites: Docker, Make
 
@@ -11,6 +21,7 @@ Prerequisites: Docker, Make
 ```
 make run
 ```
+
 ### Run full test suite
 ```
 make test
@@ -23,18 +34,22 @@ Prerequisites: Go, NPM, Docker, Make
 ```
 make install
 ```
+
 ### Run unit tests with coverage
 ```
 make unit-test
 ```
+
 ### Run linter
 ```
 make lint
 ```
+
 ### Run acceptance tests
 ```
 make acceptance-test
 ```
+
 ### Open Cypress UI to run and develop acceptance tests
 ```
 make acceptance-test-runner
@@ -45,15 +60,19 @@ will _not_ be run in the CI pipeline. Scenarios tagged with `@implementing` will
 Cypress implementation steps are defined in `test/cypress/steps`. See
 [badeball's cypress-cucumber-preprocessor docs](https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/readme.md)
 for more details.
+
 ### Run on host
 Required environment variables:
 - ADMIN_USERNAME
 - ADMIN_PASSWORD
+
 ```
 go run ./...
 ```
+
 ### CI/CD
 Pipeline runs in github actions
+
 #### Run full test suite
 This will run a flow similar to what runs in the pipeline as a final check before push:
 ```

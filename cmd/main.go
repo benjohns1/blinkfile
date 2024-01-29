@@ -70,7 +70,7 @@ func run(ctx context.Context) (err error) {
 
 	var automator *testautomation.Automator
 	if cfg.EnableTestAutomation {
-		l.Printf(ctx, "WARNING: Server running with test automation enabled! DO NOT RUN THESE IN PRODUCTION!")
+		l.Printf(ctx, "WARNING: Server running with test automation enabled! DO NOT RUN IN PRODUCTION!")
 		testClock := &testautomation.TestClock{}
 		automator = &testautomation.Automator{
 			Log:      l,
