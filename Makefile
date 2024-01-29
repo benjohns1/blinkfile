@@ -44,5 +44,5 @@ build-docs:
 
 # Run the github pages docs locally
 run-docs:
-	cd docs && bundle exe jekyll serve
+	cd docs && bundle exec jekyll serve
 .PHONY: run-docs

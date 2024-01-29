@@ -278,7 +278,6 @@ DEPENDENCIES
   github-pages (~> 228)
   http_parser.rb (~> 0.6.0)
   jekyll-default-layout
-  minima (~> 2.5)
   tzinfo (>= 1, < 3)
   tzinfo-data
   wdm (~> 0.1.1)
