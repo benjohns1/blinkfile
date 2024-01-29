@@ -24,12 +24,13 @@ description: >- # this means to ignore newlines until "baseurl:"
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 aux_links:
-  Github Repo: https://github.com/benjohns1/blinkfile
+  GitHub: https://github.com/benjohns1/blinkfile
 logo: "/images/logo-dark-240x100.png"
 color_scheme: dark
 
 # Build settings
-theme: just-the-docs
+#theme: just-the-docs
+remote_theme: archetypal/just-the-docs@v0.5.2
 plugins:
   - jekyll-default-layout
 #  - jekyll-feed
