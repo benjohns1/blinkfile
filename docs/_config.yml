@@ -22,8 +22,8 @@ title: Blinkfile
 description: >- # this means to ignore newlines until "baseurl:"
   Send files easily and securely
 repository: "benjohns1/blinkfile"
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "https://benjohns1.github.io/blinkfile" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "/blinkfile" # the subpath of your site, e.g. /blog
+url: "https://benjohns1.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 aux_links:
   GitHub: https://github.com/benjohns1/blinkfile
 logo: "/images/logo-dark-240x100.png"
