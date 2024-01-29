@@ -77,3 +77,10 @@ This will run a flow similar to what runs in the pipeline as a final check befor
 make test
 ```
 You can also run individual steps in `.local/Makefile`.
+
+### Docs
+Prerequisites: Ruby, [Setup steps for Jekyll](https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/testing-your-github-pages-site-locally-with-jekyll)
+```
+make build-docs
+make run-docs
+```

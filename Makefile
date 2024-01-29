@@ -36,3 +36,13 @@ acceptance-test:
 acceptance-test-runner:
 	$(MAKE) -C test/ open
 .PHONY: acceptance-test-runner
+
+# Build github pages docs locally
+build-docs:
+	cd docs && bundle install
+.PHONY: build-docs
+
+# Run the github pages docs locally
+run-docs:
+	cd docs && bundle exe jekyll serve
+.PHONY: run-docs
