@@ -30,7 +30,7 @@ logo: "/images/logo-dark-240x100.png"
 color_scheme: dark
 
 # Build settings
-remote_theme: archetypal/just-the-docs@v0.5.2
+remote_theme: just-the-docs/just-the-docs@v0.7.0
 plugins:
   - jekyll-default-layout
 #  - jekyll-feed
