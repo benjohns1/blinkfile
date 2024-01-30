@@ -1,0 +1,6 @@
+services:
+  commitlint:
+    image: blinkfile-commitlint
+    volumes:
+      - ../../.git:/app/.git
+      - ../../.commitlintrc.yml:/app/.commitlintrc.yml

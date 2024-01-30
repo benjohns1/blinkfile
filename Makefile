@@ -46,3 +46,7 @@ build-docs:
 run-docs:
 	cd docs && bundle exec jekyll serve
 .PHONY: run-docs
+
+commitlint:
+	$(MAKE) -C .local commitlint
+.PHONY: commitlint
