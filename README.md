@@ -3,7 +3,7 @@
 # Blinkfile
 Send files quickly and securely.
 
-![Blinkfile](docs/images/logo-light-bg-240x100.png)
+![Blinkfile](docs_bk/images/logo-light-bg-240x100.png)
 
 ## Features
 - Upload a file and generate sharable links

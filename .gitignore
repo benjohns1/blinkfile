@@ -4,4 +4,5 @@ bin/
 coverage.*
 _test/
 data/
+!*/data/
 node_modules/

@@ -1,0 +1,29 @@
+baseURL: https://benjohns1.github.io/
+languageCode: en-us
+title: Blinkfile Documentation
+description: Documentation for Blinkfile, a simple solution to send files quickly and securely
+images:
+  - /images/logo.png
+outputs:
+  home: ["HTML", "RSS", "SEARCH"]
+module:
+  imports:
+    - path: github.com/McShelby/hugo-theme-relearn
+      disable: false
+menu:
+  shortcuts:
+    - name: <i class='fab fa-fw fa-github'></i> GitHub
+      identifier: "ds"
+      url: https://github.com/benjohns1/blinkfile
+      weight: 10
+params:
+  disableLandingPageButton: true
+  disableShortcutsTitle: true
+  themeVariant:
+    - identifier: "zen-auto"
+      name: "Theme: Auto"
+      auto: []
+    - identifier: "zen-light"
+      name: "Light Mode"
+    - identifier: "zen-dark"
+      name: "Dark Mode"

@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "hugo": "cross-env docker compose run --service-ports --rm hugo",
+    "docs:serve": "npm run hugo -- server --bind=0.0.0.0 -D --poll 700ms",
+    "docs:build": "cross-env docker compose build hugo"
+  }
+}
