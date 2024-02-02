@@ -6,12 +6,12 @@
     "concurrently": "^8.2.2"
   },
   "engines": {
-    "npm": "^9.7.1",
-    "node": "^20.0.0"
+    "npm": "^10.2.4",
+    "node": "^20.11.0"
   },
   "scripts": {
     "start": "concurrently \"npm run serve\" \"npm run docs\"",
-    "source": "docker compose -f=.local/docker-compose.yml run --build --rm blinkfile-source",
+    "source": "docker compose -f=.local/docker-compose.yml build blinkfile-source && docker compose -f=.local/docker-compose.yml run --rm blinkfile-source",
     "host:install": "go mod download && cd app/web && npm i && cd ../..",
     "host:run": "go run ./...",
     "lint": "npm run lint:git && npm run lint:app && npm run lint:acceptance-tests",
@@ -22,14 +22,14 @@
     "test:unit": "npm run source && npm run go:test",
     "test:acceptance": "npm run build && npm run acceptance-test:build && npm run acceptance-test:up && npm run acceptance-test:down",
     "build": "docker build --tag blinkfile-candidate -f .local/build.Dockerfile .",
-    "serve": "docker compose -f=.local/docker-compose.yml run -p=8020:8020 -e=PORT=8020 --build --rm blinkfile",
+    "serve": "docker compose -f=.local/docker-compose.yml build blinkfile && docker compose -f=.local/docker-compose.yml run -p=8020:8020 -e=PORT=8020 --rm blinkfile",
     "docs": "npm run hugo:serve",
-    "hugo": "docker compose -f=.local/docker-compose.yml run -p=8021:8021 --build --rm blinkfile-hugo",
+    "hugo": "docker compose -f=.local/docker-compose.yml build blinkfile-hugo && docker compose -f=.local/docker-compose.yml run -p=8021:8021 --rm blinkfile-hugo",
     "hugo:serve": "npm run hugo -- server -p=8021 --bind=0.0.0.0 -D --poll 700ms",
     "commitlint": "commitlint",
     "commit": "commit",
     "golangci-lint": "docker compose -f=.local/docker-compose.yml run --rm blinkfile-golangci-lint",
-    "go:test": "docker compose -f=.local/docker-compose.yml run --build --rm blinkfile-unit-test",
+    "go:test": "docker compose -f=.local/docker-compose.yml build blinkfile-unit-test && docker compose -f=.local/docker-compose.yml run --rm blinkfile-unit-test",
     "acceptance-test:build": "docker build --tag blinkfile-acceptance-test-runner test/cypress",
     "acceptance-test:up": "docker compose -f test/docker-compose.yml up --exit-code-from acceptance-test-runner",
     "acceptance-test:down": "docker compose -f test/docker-compose.yml down",
