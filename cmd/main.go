@@ -132,7 +132,7 @@ type config struct {
 
 func parseConfig() config {
 	return config{
-		Port:                          envDefaultInt("PORT", 8000),
+		Port:                          envDefaultInt("PORT", 8020),
 		AdminUsername:                 os.Getenv("ADMIN_USERNAME"),
 		AdminPassword:                 os.Getenv("ADMIN_PASSWORD"),
 		DataDir:                       envDefaultString("DATA_DIR", "./data"),

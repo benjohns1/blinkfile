@@ -12,46 +12,54 @@ Here's how to get started.
 5. Make your changes, including unit and acceptance tests
 6. Submit a PR
 
-## Run locally
-Prerequisites: Docker, Make
+## Build & run in containers
+Prerequisites: Docker, Node, NPM
+```
+npm i
+npm start
+```
+Starts the Blinkfile app at [http://localhost:8020](http://localhost:8020) and the documentation at [http://localhost:8021](http://localhost:8021)  
 
-### Build & run
+## Install & run on host
+Requires Go  
+Required environment variables:
+- ADMIN_USERNAME
+- ADMIN_PASSWORD
 ```
-make run
+npm run host:install
+go run ./...
 ```
 
-### Run full test suite
+## Lint
+### Run linters
 ```
-make test
+npm run lint
 ```
 
-## Development
-Prerequisites: Go, NPM, Docker, Make
-
-### Install dependencies
+## Test
+### Run the full test suite
 ```
-make install
+npm test
 ```
 
 ### Run unit tests with coverage
 ```
-make unit-test
+npm run test:unit
 ```
-
-### Run linter
-```
-make lint
-```
+Open `coverage.html` in a browser to view the coverage report.
 
 ### Run acceptance tests
+This also builds & runs the app in a containerized environment
 ```
-make acceptance-test
+npm run test:acceptance
 ```
 
 ### Open Cypress UI to run and develop acceptance tests
 ```
-make acceptance-test-runner
+npm run cypress:open
 ```
+This requires the app to be running locally on port 8020. The Cypress UI will open and you can select the feature file you want to run.
+
 Gherkin-style features are defined in `test/cypress/features`. Any scenarios tagged with `@pending` or `@implementing`
 will _not_ be run in the CI pipeline. Scenarios tagged with `@implementing` will show up in the test runner locally.
 
@@ -59,21 +67,22 @@ Cypress implementation steps are defined in `test/cypress/steps`. See
 [badeball's cypress-cucumber-preprocessor docs](https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/readme.md)
 for more details.
 
-### Run on host
-Required environment variables:
-- ADMIN_USERNAME
-- ADMIN_PASSWORD
+All new features should have a minimal set of acceptance tests to cover the happy path and any edge cases.
 
+## Documentation
+Built with [Hugo](https://gohugo.io/) in the /docs directory using McShelby's [relearn theme](https://github.com/McShelby/hugo-theme-relearn).
+
+### Run Hugo dev server
 ```
-go run ./...
+npm run docs
+```
+Starts the server on [http://localhost:8021](http://localhost:8021) and watches for any changes. You can pass arguments to the [Hugo CLI](https://gohugo.io/commands/hugo/) through NPM after the `--` without needing to install it locally, like so:
+```
+npm run hugo -- version
+npm run hugo -- --help
 ```
 
-### CI/CD
-Pipeline runs in github actions
+## Conventional Commits
+This project uses [Conventional Commits](https://www.conventionalcommits.org) with the [commitlint conventional presets](https://github.com/conventional-changelog/commitlint).
 
-#### Run the full test suite
-This will run a workflow similar to what runs in the pipeline as a final check before push:
-```
-make test
-```
-You can also run individual steps in `.local/Makefile`.
+After staging your changes in Git, you can use `npm run commit`. This will prompt you to fill in the commit message fields and then generate the commit message for you.

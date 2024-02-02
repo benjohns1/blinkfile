@@ -28,5 +28,5 @@ RUN CGO_ENABLED=${CGO_ENABLED} GOARCH=${GOARCH} GOOS=${GOOS} go build -o /bin/bi
 FROM scratch
 WORKDIR /
 COPY --from=build /bin/binary .
-EXPOSE 8000
+EXPOSE 8020
 CMD ["/binary"]

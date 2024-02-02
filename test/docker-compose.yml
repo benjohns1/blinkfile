@@ -7,8 +7,8 @@ services:
       - DATA_DIR=/data
       - RATE_LIMIT_UNAUTHENTICATED=100
       - ENABLE_TEST_AUTOMATION=true
-      - PORT=8000
+      - PORT=8020
   acceptance-test-runner:
     image: blinkfile-acceptance-test-runner
     environment:
-      - CYPRESS_BASE_URL=http://blinkfile:8000
+      - CYPRESS_BASE_URL=http://blinkfile:8020

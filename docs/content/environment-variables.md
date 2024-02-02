@@ -8,7 +8,7 @@ Blinkfile uses the following environment variables for configuration:
 |----------------------------------|-----------------------------------------------------------------|---------|
 | ADMIN_USERNAME                   | The username for the admin user (leave blank for no admin user) |         |
 | ADMIN_PASSWORD                   | The password for the admin user                                 |         |
-| PORT                             | The port to listen on                                           | 8000    |
+| PORT                             | The port to listen on                                           | 8020    |
 | DATA_DIR                         | The directory to store persistent data like file uploads        | /data   |
 | RATE_LIMIT_UNAUTHENTICATED       | The rate limit per second for unauthenticated requests          | 2       |
 | RATE_LIMIT_BURST_UNAUTHENTICATED | The burst rate limit per second for unauthenticated requests    | 5       |

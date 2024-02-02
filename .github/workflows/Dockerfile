@@ -1,5 +1,5 @@
 FROM scratch
 WORKDIR /
 COPY ./binary /binary
-EXPOSE 8000
+EXPOSE 8020
 CMD ["/binary"]
