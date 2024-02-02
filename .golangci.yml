@@ -2,7 +2,6 @@ linters:
   disable-all: true
   enable: # https://golangci-lint.run/usage/linters
     - errcheck
-    - gofmt
     - goimports
     - gosec
     - gosimple
