@@ -1,0 +1,9 @@
+services:
+  hugo:
+    build:
+      dockerfile: ../.local/hugo.Dockerfile
+      context: ../docs
+    volumes:
+      - ../docs:/src
+    ports:
+      - "1313:1313"

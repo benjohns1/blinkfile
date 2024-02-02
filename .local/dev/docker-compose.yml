@@ -1,9 +1,0 @@
-services:
-  hugo:
-    build:
-      dockerfile: ../.local/dev/docs.Dockerfile
-      context: ../../docs
-    volumes:
-      - ../../docs:/src
-    ports:
-      - "1313:1313"

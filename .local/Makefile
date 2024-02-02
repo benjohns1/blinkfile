@@ -26,10 +26,6 @@ acceptance-test: _source _build
 	$(MAKE) _acceptance-test
 .PHONY: acceptance-test
 
-commitlint:
-	$(MAKE) _commitlint
-.PHONY: commitlint
-
 # Clean up and remove any created volumes
 clean:
 	docker volume rm blinkfile-src
@@ -71,8 +67,3 @@ _acceptance-test:
 	docker compose -f ../test/docker-compose.yml up --exit-code-from acceptance-test-runner
 	docker compose -f ../test/docker-compose.yml down
 .PHONY: _acceptance-test
-
-_commitlint:
-	docker build --tag blinkfile-commitlint ./commitlint
-	docker compose -f ./commitlint/docker-compose.yml run --rm commitlint
-.PHONY: _commitlint
