@@ -7,6 +7,7 @@ services:
       - DATA_DIR=/data
       - RATE_LIMIT_UNAUTHENTICATED=100
       - ENABLE_TEST_AUTOMATION=true
+      - PORT=8000
   acceptance-test-runner:
     image: blinkfile-acceptance-test-runner
     environment:

@@ -3,25 +3,39 @@
     "@commitlint/cli": "^18.6.0",
     "@commitlint/config-conventional": "^18.6.0",
     "@commitlint/prompt-cli": "^18.6.0",
-    "cross-env": "^7.0.3"
+    "concurrently": "^8.2.2"
   },
   "engines": {
     "npm": "^9.7.1",
     "node": "^20.0.0"
   },
   "scripts": {
-    "source": "cross-env docker compose -f=.local/docker-compose.yml run source",
-    "lint": "cross-env npm run lint:go && npm run lint:git",
-    "lint:go": "npm run golangci-lint -- run -v",
+    "start": "concurrently \"npm run serve\" \"npm run docs\"",
+    "source": "docker compose -f=.local/docker-compose.yml run --build --rm blinkfile-source",
+    "host:install": "go mod download && cd app/web && npm i && cd ../..",
+    "host:run": "go run ./...",
+    "lint": "npm run lint:git && npm run lint:app && npm run lint:acceptance-tests",
+    "lint:app": "npm run source && npm run golangci-lint -- run -v",
     "lint:git": "npm run commitlint -- --edit",
+    "lint:acceptance-tests": "npm run cypress:lint",
+    "test": "npm run test:unit && npm run test:acceptance",
+    "test:unit": "npm run source && npm run go:test",
+    "test:acceptance": "npm run build && npm run acceptance-test:build && npm run acceptance-test:up && npm run acceptance-test:down",
+    "build": "docker build --tag blinkfile-candidate -f .local/build.Dockerfile .",
+    "serve": "docker compose -f=.local/docker-compose.yml run -p=8020:8020 -e=PORT=8020 --build --rm blinkfile",
     "docs": "npm run hugo:serve",
-
-    "hugo": "cross-env docker compose -f=.local/docker-compose.yml run --service-ports --rm hugo",
-    "hugo:build": "cross-env docker compose -f=.local/docker-compose.yml build hugo",
-    "hugo:serve": "npm run hugo -- server --bind=0.0.0.0 -D --poll 700ms",
-
+    "hugo": "docker compose -f=.local/docker-compose.yml run -p=8021:8021 --build --rm blinkfile-hugo",
+    "hugo:serve": "npm run hugo -- server -p=8021 --bind=0.0.0.0 -D --poll 700ms",
     "commitlint": "commitlint",
     "commit": "commit",
-    "golangci-lint": "cross-env docker compose -f=.local/docker-compose.yml run golangci-lint"
+    "golangci-lint": "docker compose -f=.local/docker-compose.yml run --rm blinkfile-golangci-lint",
+    "go:test": "docker compose -f=.local/docker-compose.yml run --build --rm blinkfile-unit-test",
+    "acceptance-test:build": "docker build --tag blinkfile-acceptance-test-runner test/cypress",
+    "acceptance-test:up": "docker compose -f test/docker-compose.yml up --exit-code-from acceptance-test-runner",
+    "acceptance-test:down": "docker compose -f test/docker-compose.yml down",
+    "cypress:install": "cd test/cypress && npm i && cd ../..",
+    "cypress:lint": "cd test/cypress && npm run test:lint && cd ../..",
+    "cypress:run": "cd test/cypress && npm run test && cd ../..",
+    "cypress:open": "cd test/cypress && npm run test:open && cd ../.."
   }
 }
