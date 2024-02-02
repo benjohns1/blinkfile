@@ -58,7 +58,7 @@ npm run test:acceptance
 ```
 npm run cypress:open
 ```
-This requires the app to be running locally on port 8020. The Cypress UI will open and you can select the feature file you want to run.
+This requires the app to be running locally on port 8020 with ENABLE_TEST_AUTOMATION=true, ADMIN_USERNAME=admin, ADMIN_PASSWORD=1234123412341234 which is what is run by default with `npm start`. The Cypress UI will open and you can select the feature file you want to run. 
 
 Gherkin-style features are defined in `test/cypress/features`. Any scenarios tagged with `@pending` or `@implementing`
 will _not_ be run in the CI pipeline. Scenarios tagged with `@implementing` will show up in the test runner locally.

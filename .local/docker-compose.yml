@@ -7,6 +7,7 @@ services:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=1234123412341234
       - FEATURE_FLAG_LogAllAuthnCalls=1
+      - ENABLE_TEST_AUTOMATION=true
     volumes:
       - blinkfile-data:/data
   blinkfile-hugo:
