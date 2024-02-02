@@ -3,7 +3,8 @@
     "@commitlint/cli": "^18.6.0",
     "@commitlint/config-conventional": "^18.6.0",
     "@commitlint/prompt-cli": "^18.6.0",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "husky": "^9.0.10"
   },
   "engines": {
     "npm": "^10.2.4",
@@ -36,6 +37,7 @@
     "cypress:install": "cd test/cypress && npm i && cd ../..",
     "cypress:lint": "cd test/cypress && npm run test:lint && cd ../..",
     "cypress:run": "cd test/cypress && npm run test && cd ../..",
-    "cypress:open": "cd test/cypress && npm run test:open && cd ../.."
+    "cypress:open": "cd test/cypress && npm run test:open && cd ../..",
+    "prepare": "husky"
   }
 }
