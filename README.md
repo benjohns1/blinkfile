@@ -1,4 +1,4 @@
-[![Docker Image CI](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml)
+[![Docker Image CI](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml) [![Hugo Docs CI](https://github.com/benjohns1/blinkfile/actions/workflows/docs.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/docs.yml)
 
 # Blinkfile
 Send files quickly and securely.
