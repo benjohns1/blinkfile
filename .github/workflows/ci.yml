@@ -3,7 +3,7 @@ name: Docker Image CI
 on:
   push:
     branches: [ "main" ]
-    paths: ["**", "!docs/**", "!README.md", "!LICENSE", "!.local/**"]
+    paths: ["**", "!docs/**", "!README.md", "!LICENSE", "!.local/**", "!.github/workflows/docs.yml"]
   workflow_dispatch:
 
 # Allow one concurrent deployment
