@@ -3,7 +3,7 @@
 # Blinkfile
 Send files quickly and securely.
 
-![Blinkfile](docs/static/images/logo.png)
+[![Blinkfile](docs/static/images/logo.png)](https://benjohns1.github.io/blinkfile)
 
 ## Features
 - Upload a file and generate sharable links

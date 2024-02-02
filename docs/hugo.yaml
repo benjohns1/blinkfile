@@ -1,3 +1,4 @@
+baseUrl: http://localhost:1313/
 languageCode: en-us
 title: Blinkfile Documentation
 description: Documentation for Blinkfile, a simple solution to send files quickly and securely
@@ -22,6 +23,7 @@ menu:
 params:
   disableLandingPageButton: true
   disableShortcutsTitle: true
+  titleSeparator: "|"
   themeVariant:
     - identifier: "zen-auto"
       name: "Theme: Auto"
