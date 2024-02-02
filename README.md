@@ -3,7 +3,7 @@
 # Blinkfile
 Send files quickly and securely.
 
-![Blinkfile](docs_bk/images/logo-light-bg-240x100.png)
+![Blinkfile](docs/static/images/logo.png)
 
 ## Features
 - Upload a file and generate sharable links
@@ -12,7 +12,7 @@ Send files quickly and securely.
 - Password-protect file access
 
 ## Self-host
-Easy [docker compose setup](https://benjohns1.github.io/blinkfile/getting-started.html#docker-compose) for your home lab
+Easy [docker compose setup](https://benjohns1.github.io/blinkfile/getting-started/#docker-compose) for your home lab
 
 ## Documentation
 [Read the docs](https://benjohns1.github.io/blinkfile) for setup instructions, to learn about the project and how to contribute.
