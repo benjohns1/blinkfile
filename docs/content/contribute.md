@@ -67,7 +67,7 @@ Cypress implementation steps are defined in `test/cypress/steps`. See
 [badeball's cypress-cucumber-preprocessor docs](https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/readme.md)
 for more details.
 
-All new features should have a minimal set of acceptance tests to cover the happy path and any edge cases.
+All new features should have a minimal set of acceptance tests to cover the happy path and important edge cases.
 
 ## Documentation
 Built with [Hugo](https://gohugo.io/) in the /docs directory using McShelby's [relearn theme](https://github.com/McShelby/hugo-theme-relearn).
