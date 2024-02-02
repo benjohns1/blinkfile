@@ -42,6 +42,7 @@ jobs:
         run: |
           cd docs && \
           hugo \
+            --noChmod \
             --gc \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
