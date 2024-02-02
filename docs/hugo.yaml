@@ -1,4 +1,3 @@
-baseURL: https://benjohns1.github.io/
 languageCode: en-us
 title: Blinkfile Documentation
 description: Documentation for Blinkfile, a simple solution to send files quickly and securely
@@ -13,9 +12,13 @@ module:
 menu:
   shortcuts:
     - name: <i class='fab fa-fw fa-github'></i> GitHub
-      identifier: "ds"
+      identifier: "source"
       url: https://github.com/benjohns1/blinkfile
       weight: 10
+    - name: MIT License
+      identifier: "license"
+      url: https://github.com/benjohns1/blinkfile/tree/main/LICENSE
+      weight: 20
 params:
   disableLandingPageButton: true
   disableShortcutsTitle: true
@@ -24,6 +27,6 @@ params:
       name: "Theme: Auto"
       auto: []
     - identifier: "zen-light"
-      name: "Light Mode"
+      name: "Theme: Light"
     - identifier: "zen-dark"
-      name: "Dark Mode"
+      name: "Theme: Dark"
