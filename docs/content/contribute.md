@@ -86,3 +86,28 @@ npm run hugo -- --help
 This project uses [Conventional Commits](https://www.conventionalcommits.org) with the [commitlint conventional presets](https://github.com/conventional-changelog/commitlint).
 
 After staging your changes in Git, you can use `npm run commit`. This will prompt you to fill in the commit message fields and then generate the commit message for you.
+
+## Git Hooks
+This project uses [Husky](https://typicode.github.io/husky/) to run Git hooks. The hooks are defined in the `.husky/` directory and will run unit tests and linters before allowing each commit, and run the acceptance tests before each push. This is recommended to reduce the chance of pipeline failures.
+
+To install the hooks, run:
+```
+npm i
+npm run prepare
+```
+To skip the hooks for a specific git command, use the `-n/--no-verify` flag, for instance:
+```
+git commit -m "..." -n
+```
+Or for multiple commands set the env var HUSKY=0:
+```
+export HUSKY=0 # Disables all Git hooks
+git ...
+git ...
+unset HUSKY # Re-enables hooks
+```
+
+To remove them, run:
+```
+git config --unset core.hooksPath
+```
