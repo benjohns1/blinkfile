@@ -7,3 +7,21 @@ services:
       - ../docs:/src
     ports:
       - "1313:1313"
+  source:
+    build:
+      dockerfile: .local/source.Dockerfile
+      context: ..
+    volumes:
+      - blinkfile-src:/out_src
+      - blinkfile-cache:/out_cache
+  golangci-lint:
+    image: golangci/golangci-lint:v1.55.2
+    entrypoint: ["golangci-lint"]
+    volumes:
+      - blinkfile-src:/app
+      - blinkfile-cache:/root/.cache
+    working_dir: /app
+
+volumes:
+  blinkfile-src:
+  blinkfile-cache:

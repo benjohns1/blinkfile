@@ -10,11 +10,18 @@
     "node": "^20.0.0"
   },
   "scripts": {
+    "source": "cross-env docker compose -f=.local/docker-compose.yml run source",
+    "lint": "cross-env npm run lint:go && npm run lint:git",
+    "lint:go": "npm run golangci-lint -- run -v",
+    "lint:git": "npm run commitlint -- --edit",
     "docs": "npm run hugo:serve",
+
     "hugo": "cross-env docker compose -f=.local/docker-compose.yml run --service-ports --rm hugo",
     "hugo:build": "cross-env docker compose -f=.local/docker-compose.yml build hugo",
     "hugo:serve": "npm run hugo -- server --bind=0.0.0.0 -D --poll 700ms",
+
     "commitlint": "commitlint",
-    "commit": "commit"
+    "commit": "commit",
+    "golangci-lint": "cross-env docker compose -f=.local/docker-compose.yml run golangci-lint"
   }
 }
