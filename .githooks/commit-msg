@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-npm run commitlint -- --edit --verbose
+npm run git:hook:commit-msg

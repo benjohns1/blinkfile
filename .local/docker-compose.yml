@@ -16,24 +16,9 @@ services:
       context: ../docs
     volumes:
       - ../docs:/src
-  blinkfile-source:
-    build:
-      dockerfile: .local/build.Dockerfile
-      target: source
-      context: ..
-    volumes:
-      - blinkfile-src:/out_src
-      - blinkfile-cache:/out_cache
-  blinkfile-golangci-lint:
-    image: golangci/golangci-lint:v1.55.2
-    entrypoint: ["golangci-lint"]
-    volumes:
-      - blinkfile-src:/app
-      - blinkfile-cache:/root/.cache
-    working_dir: /app
   blinkfile-unit-test:
     build:
-      dockerfile: .local/app.Dockerfile
+      dockerfile: .local/unit-test.Dockerfile
       context: ..
     command: ["sh", "-c", "go test -coverprofile coverage.out ./... && go tool cover -html=coverage.out -o=coverage.html && cp coverage.* /out/"]
     volumes:
