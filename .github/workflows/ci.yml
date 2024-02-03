@@ -134,6 +134,25 @@ jobs:
           cache-to: type=gha
       - name: Run acceptance tests
         run: docker compose up --exit-code-from acceptance-test-runner
+  version:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write # to be able to publish a GitHub release
+      issues: write # to be able to comment on released issues
+      pull-requests: write # to be able to comment on released pull requests
+      id-token: write # to enable use of OIDC for npm provenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+      - run: npm ci && npm audit signatures
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release --dry-run
   deploy:
     runs-on: ubuntu-22.04
     needs: [commitlint,lint,unit-test,build,acceptance-test]
