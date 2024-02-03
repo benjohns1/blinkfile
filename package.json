@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "concurrently \"npm run serve\" \"npm run docs\"",
-    "source": "docker compose -f=.local/docker-compose.yml build blinkfile-source && docker compose -f=.local/docker-compose.yml run --rm blinkfile-source",
+    "source": "docker compose -f=.local/docker-compose.yml build blinkfile-source && docker compose -f=.local/docker-compose.yml up blinkfile-source && docker compose -f=.local/docker-compose.yml down blinkfile-source",
     "host:install": "go mod download && cd app/web && npm i && cd ../..",
     "host:run": "go run ./...",
     "lint": "npm run lint:git && npm run lint:app && npm run lint:acceptance-tests",
@@ -30,7 +30,7 @@
     "commitlint": "commitlint",
     "commit": "commit",
     "golangci-lint": "docker compose -f=.local/docker-compose.yml run --rm blinkfile-golangci-lint",
-    "go:test": "docker compose -f=.local/docker-compose.yml build blinkfile-unit-test && docker compose -f=.local/docker-compose.yml run --rm blinkfile-unit-test",
+    "go:test": "docker compose -f=.local/docker-compose.yml build blinkfile-unit-test && docker compose -f=.local/docker-compose.yml up blinkfile-unit-test && docker compose -f=.local/docker-compose.yml down blinkfile-unit-test",
     "acceptance-test:build": "docker build --tag blinkfile-acceptance-test-runner test/cypress",
     "acceptance-test:up": "docker compose -f test/docker-compose.yml up --exit-code-from acceptance-test-runner",
     "acceptance-test:down": "docker compose -f test/docker-compose.yml down",
