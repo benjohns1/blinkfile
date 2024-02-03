@@ -1,3 +1,2 @@
 #!/usr/bin/env bash
 npm run git:hook:pre-push
-exit 1
