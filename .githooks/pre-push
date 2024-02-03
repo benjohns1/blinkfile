@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+npm run lint:git
+npm run lint:acceptance-tests
+npm run test:unit
+exit 1

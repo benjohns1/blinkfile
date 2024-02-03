@@ -88,7 +88,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org) wi
 After staging your changes in Git, you can use `npm run commit`. This will prompt you to fill in the commit message fields and then generate the commit message for you.
 
 ## Git Hooks
-This project uses [Husky](https://typicode.github.io/husky/) to run Git hooks, defined in the `.husky/` directory. This is recommended to reduce the chance of pipeline failures.
+This project uses git hooks defined in the `.githooks/` directory, to help with the local workflow. This is recommended to reduce the chance of pipeline failures.
 
 To install the hooks, run:
 ```
@@ -98,13 +98,6 @@ npm run prepare
 To skip the hooks for a specific git command, use the `-n/--no-verify` flag, for instance:
 ```
 git commit -m "..." -n
-```
-Or for multiple commands set the env var HUSKY=0:
-```
-export HUSKY=0 # Disables all Git hooks
-git ...
-git ...
-unset HUSKY # Re-enables hooks
 ```
 
 To remove them, run:
