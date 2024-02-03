@@ -44,7 +44,7 @@ npm test
 
 ### Run unit tests with coverage
 ```
-npm run test:unit
+npm run test:unit:cover
 ```
 Open `coverage.html` in a browser to view the coverage report.
 

@@ -28,5 +28,8 @@ services:
 
 volumes:
   blinkfile-src:
+    external: true
   blinkfile-cache:
+    external: true
   blinkfile-data:
+    external: false
