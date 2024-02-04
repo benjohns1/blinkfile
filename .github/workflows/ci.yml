@@ -99,7 +99,7 @@ jobs:
           COMMIT: ${{needs.commitlint-version.outputs.commit}}
         run: |
           echo "Building app version $VERSION candidate with git commit $COMMIT"
-          CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-s -w -X main.version=$VERSION -X main.commit=$COMMIT" -o ./binary ./cmd/main.go
+          CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-s -w -X main.build=v$VERSION-$COMMIT" -o ./binary ./cmd/main.go
       - uses: docker/setup-buildx-action@v3
       - name: Build release image candidate
         uses: docker/build-push-action@v5

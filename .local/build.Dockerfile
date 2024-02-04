@@ -23,8 +23,7 @@ WORKDIR $SRC_DIR
 ARG CGO_ENABLED=0
 ARG GOARCH=amd64
 ARG GOOS=linux
-ARG VERSION=dev
-RUN CGO_ENABLED=${CGO_ENABLED} GOARCH=${GOARCH} GOOS=${GOOS} go build -ldflags="-X main.version=$VERSION -X main.commit=$(git rev-parse --short HEAD)" -o /bin/binary ./cmd/main.go
+RUN CGO_ENABLED=${CGO_ENABLED} GOARCH=${GOARCH} GOOS=${GOOS} go build -ldflags="-X main.build=dev-$(git rev-parse --short HEAD)" -o /bin/binary ./cmd/main.go
 
 FROM scratch
 WORKDIR /
