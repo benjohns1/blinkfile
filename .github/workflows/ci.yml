@@ -26,8 +26,6 @@ jobs:
         run: cd app/web && npm ci && npm audit signatures # some directories in node_modules are embedded in Go binary
       - name: Install go dependencies
         run: go mod download
-      - name: Create version file
-        run: npm install commit-and-tag-version@12 && npx commit-and-tag-version
       - name: Upload source and installed dependencies
         uses: actions/upload-artifact@v4
         with:
@@ -36,7 +34,7 @@ jobs:
             ./
             !test/
           if-no-files-found: error
-  commitlint:
+  commitlint-version:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -46,9 +44,14 @@ jobs:
         with:
           node-version-file: 'package.json'
       - name: Install tooling
-        run: npm ci
+        run: npm ci && npm audit signatures
       - name: Verify last commit
         run: npm run commitlint -- --from=HEAD~1 --to HEAD --verbose
+      - name: Calculate & output version
+        id: versioning
+        run: npx commit-and-tag-version && echo ::set-output name=version::$(cat VERSION)
+    outputs:
+      version: ${{ steps.versioning.outputs.version}}
   lint:
     runs-on: ubuntu-22.04
     needs: source
@@ -77,7 +80,7 @@ jobs:
         run: go test ./...
   build:
     runs-on: ubuntu-22.04
-    needs: source
+    needs: [source,commitlint-version]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -87,7 +90,7 @@ jobs:
           go-version-file: 'go.mod'
       - name: Build go binary
         run: |
-          echo Building app version $(cat VERSION) candidate
+          echo Building app version ${{needs.commitlint-version.outputs.version}} candidate
           CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./binary ./cmd/main.go
       - uses: docker/setup-buildx-action@v3
       - name: Build release image candidate
@@ -140,7 +143,7 @@ jobs:
         run: docker compose up --exit-code-from acceptance-test-runner
   deploy:
     runs-on: ubuntu-22.04
-    needs: [commitlint,lint,unit-test,build,acceptance-test]
+    needs: [lint,unit-test,build,acceptance-test]
     steps:
       - uses: actions/download-artifact@v4
         with:

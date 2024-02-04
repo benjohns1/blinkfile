@@ -3,6 +3,7 @@
     "@commitlint/cli": "^18.6.0",
     "@commitlint/config-conventional": "^18.6.0",
     "@commitlint/prompt-cli": "^18.6.0",
+    "commit-and-tag-version": "^12.2.0",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3"
   },
