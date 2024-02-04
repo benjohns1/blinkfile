@@ -16,12 +16,20 @@ export const getFileAccess = () => {
     return cy.get(`${fileRowsSelector} [data-test=access]`);
 }
 
+export const getFileDownloads = () => {
+    return cy.get(`${fileRowsSelector} [data-test=downloads]`);
+}
+
 export const getFileExpirations = () => {
     return cy.get(`${fileRowsSelector} [data-test=expires]`);
 }
 
 export const getPasswordField = () => {
     return cy.get("[data-test=password]");
+}
+
+export const getDownloadLimitField = () => {
+    return cy.get("[data-test=download-limit]");
 }
 
 export const getExpirationDateField = () => {
