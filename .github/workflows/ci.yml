@@ -23,9 +23,11 @@ jobs:
         with:
           node-version-file: 'app/web/package.json'
       - name: Install front-end javascript utilities
-        run: cd app/web && npm ci # some directories in node_modules are embedded in Go binary
+        run: cd app/web && npm ci && npm audit signatures # some directories in node_modules are embedded in Go binary
       - name: Install go dependencies
         run: go mod download
+      - name: Create version file
+        run: npm install commit-and-tag-version@12 && npx commit-and-tag-version
       - name: Upload source and installed dependencies
         uses: actions/upload-artifact@v4
         with:
@@ -84,7 +86,9 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - name: Build go binary
-        run: CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./binary ./cmd/main.go
+        run: |
+          echo Building app version $(cat VERSION) candidate
+          CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./binary ./cmd/main.go
       - uses: docker/setup-buildx-action@v3
       - name: Build release image candidate
         uses: docker/build-push-action@v5
@@ -134,25 +138,6 @@ jobs:
           cache-to: type=gha
       - name: Run acceptance tests
         run: docker compose up --exit-code-from acceptance-test-runner
-  version:
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write # to be able to publish a GitHub release
-      issues: write # to be able to comment on released issues
-      pull-requests: write # to be able to comment on released pull requests
-      id-token: write # to enable use of OIDC for npm provenance
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: 'package.json'
-      - run: npm ci && npm audit signatures
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release --dry-run
   deploy:
     runs-on: ubuntu-22.04
     needs: [commitlint,lint,unit-test,build,acceptance-test]
