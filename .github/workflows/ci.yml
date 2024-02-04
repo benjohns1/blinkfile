@@ -169,7 +169,7 @@ jobs:
       - name: Tag image
         env:
           VERSION: ${{needs.commitlint-version.outputs.version}}
-          HASH: ${{needs.commitlint-version.outputs.hash}}
+          COMMIT: ${{needs.commitlint-version.outputs.commit}}
         run: |
           MAJOR=$(echo $VERSION | cut -d. -f1)
           MINOR=$(echo $VERSION | cut -d. -f2)
@@ -177,7 +177,7 @@ jobs:
           docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION
           docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR
           docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR.$MINOR
-          docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION-$HASH
+          docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION-$COMMIT
       - uses: actions/checkout@v4
       - name: Push git tag
         env:
