@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
       - uses: actions/setup-node@v4
@@ -151,6 +151,8 @@ jobs:
         run: docker compose up --exit-code-from acceptance-test-runner
   deploy:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     needs: [commitlint-version,lint,unit-test,build,acceptance-test]
     steps:
       - uses: actions/download-artifact@v4
@@ -164,7 +166,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Tag & push image
+      - name: Tag image
         env:
           VERSION: ${{needs.commitlint-version.outputs.version}}
           HASH: ${{needs.commitlint-version.outputs.hash}}
@@ -176,11 +178,6 @@ jobs:
           docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR
           docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR.$MINOR
           docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION-$HASH
-          docker push -a benjohns1/blinkfile
-  release:
-    runs-on: ubuntu-22.04
-    needs: [commitlint-version,deploy]
-    steps:
       - uses: actions/checkout@v4
       - name: Push git tag
         env:
@@ -190,3 +187,5 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           git tag -a v$VERSION -m "Release version $VERSION"
           git push origin v$VERSION
+      - name: Push image
+        run: docker push -a benjohns1/blinkfile
