@@ -169,7 +169,11 @@ jobs:
           VERSION: ${{needs.commitlint-version.outputs.version}}
           HASH: ${{needs.commitlint-version.outputs.hash}}
         run: |
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
           docker tag blinkfile-candidate benjohns1/blinkfile:latest
           docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION
-          docker tag blinkfile-candidate benjohns1/blinkfile:$HASH
+          docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR
+          docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR.$MINOR
+          docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION-$HASH
           docker push -a benjohns1/blinkfile
