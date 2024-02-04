@@ -47,11 +47,13 @@ jobs:
         run: npm ci && npm audit signatures
       - name: Verify last commit
         run: npm run commitlint -- --from=HEAD~1 --to HEAD --verbose
-      - name: Calculate & output version
-        id: versioning
-        run: npx commit-and-tag-version && echo ::set-output name=version::$(cat VERSION)
+      - name: Calculate & set version file
+        run: npx commit-and-tag-version
+      - name: Output version
+        id: out
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
     outputs:
-      version: ${{ steps.versioning.outputs.version}}
+      version: ${{ steps.out.outputs.version}}
   lint:
     runs-on: ubuntu-22.04
     needs: source
@@ -89,8 +91,10 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - name: Build go binary
+        env:
+          VERSION: ${{needs.commitlint-version.outputs.version}}
         run: |
-          echo Building app version ${{needs.commitlint-version.outputs.version}} candidate
+          echo "Building app version $VERSION candidate"
           CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./binary ./cmd/main.go
       - uses: docker/setup-buildx-action@v3
       - name: Build release image candidate
