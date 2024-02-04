@@ -176,4 +176,6 @@ jobs:
           docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR
           docker tag blinkfile-candidate benjohns1/blinkfile:$MAJOR.$MINOR
           docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION-$HASH
+          git tag -a $VERSION -m "Release $VERSION"
+          git push origin $VERSION
           docker push -a benjohns1/blinkfile
