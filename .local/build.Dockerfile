@@ -1,5 +1,5 @@
 FROM golang:1.21-alpine as source
-RUN apk add --update npm rsync
+RUN apk add --update npm rsync git
 ARG GOCACHE=/cache/go-build
 ENV GOCACHE=${GOCACHE}
 RUN mkdir -p ${GOCACHE}
@@ -23,7 +23,8 @@ WORKDIR $SRC_DIR
 ARG CGO_ENABLED=0
 ARG GOARCH=amd64
 ARG GOOS=linux
-RUN CGO_ENABLED=${CGO_ENABLED} GOARCH=${GOARCH} GOOS=${GOOS} go build -o /bin/binary ./cmd/main.go
+ARG VERSION=dev
+RUN CGO_ENABLED=${CGO_ENABLED} GOARCH=${GOARCH} GOOS=${GOOS} go build -ldflags="-X main.version=$VERSION -X main.commit=$(git rev-parse --short HEAD)" -o /bin/binary ./cmd/main.go
 
 FROM scratch
 WORKDIR /

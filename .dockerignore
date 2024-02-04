@@ -1,4 +1,4 @@
-.git/
+.githooks/
 .github/
 .idea/
 coverage.*

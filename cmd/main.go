@@ -7,15 +7,21 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/benjohns1/blinkfile/hash"
+
 	"github.com/benjohns1/blinkfile/app/testautomation"
 
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/app/repo"
 	"github.com/benjohns1/blinkfile/app/web"
 	"github.com/benjohns1/blinkfile/featureflag"
-	"github.com/benjohns1/blinkfile/hash"
 	"github.com/benjohns1/blinkfile/log"
 	"github.com/benjohns1/blinkfile/request"
+)
+
+var (
+	version string
+	commit  string
 )
 
 func main() {
@@ -45,6 +51,7 @@ func run(ctx context.Context) (err error) {
 	}
 
 	l := log.New(log.Config{GetRequestID: request.GetID})
+	l.Printf(ctx, "Version %s, commit %s", version, commit)
 
 	ff, err := featureflag.New(featureflag.WithFeaturesFromEnvironment("FEATURE_FLAG_"))
 	if err != nil {

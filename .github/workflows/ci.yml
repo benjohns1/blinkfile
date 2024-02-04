@@ -53,10 +53,10 @@ jobs:
         id: out
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
-          echo "hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ steps.out.outputs.version }}
-      hash: ${{ steps.out.outputs.hash }}
+      commit: ${{ steps.out.outputs.commit }}
   lint:
     runs-on: ubuntu-22.04
     needs: source
@@ -96,10 +96,10 @@ jobs:
       - name: Build go binary
         env:
           VERSION: ${{needs.commitlint-version.outputs.version}}
-          HASH: ${{needs.commitlint-version.outputs.hash}}
+          COMMIT: ${{needs.commitlint-version.outputs.commit}}
         run: |
-          echo "Building app version $VERSION candidate with git hash $HASH"
-          CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./binary ./cmd/main.go
+          echo "Building app version $VERSION candidate with git commit $COMMIT"
+          CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-s -w -X main.version=$VERSION -X main.commit=$COMMIT" -o ./binary ./cmd/main.go
       - uses: docker/setup-buildx-action@v3
       - name: Build release image candidate
         uses: docker/build-push-action@v5
