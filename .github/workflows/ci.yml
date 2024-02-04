@@ -49,11 +49,14 @@ jobs:
         run: npm run commitlint -- --from=HEAD~1 --to HEAD --verbose
       - name: Calculate & set version file
         run: touch VERSION && npx commit-and-tag-version
-      - name: Output version
+      - name: Output version & commit
         id: out
-        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          echo "hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
     outputs:
-      version: ${{ steps.out.outputs.version}}
+      version: ${{ steps.out.outputs.version }}
+      hash: ${{ steps.out.outputs.hash }}
   lint:
     runs-on: ubuntu-22.04
     needs: source
@@ -93,8 +96,9 @@ jobs:
       - name: Build go binary
         env:
           VERSION: ${{needs.commitlint-version.outputs.version}}
+          HASH: ${{needs.commitlint-version.outputs.hash}}
         run: |
-          echo "Building app version $VERSION candidate"
+          echo "Building app version $VERSION candidate with git hash $HASH"
           CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./binary ./cmd/main.go
       - uses: docker/setup-buildx-action@v3
       - name: Build release image candidate
@@ -147,7 +151,7 @@ jobs:
         run: docker compose up --exit-code-from acceptance-test-runner
   deploy:
     runs-on: ubuntu-22.04
-    needs: [lint,unit-test,build,acceptance-test]
+    needs: [commitlint-version,lint,unit-test,build,acceptance-test]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -161,6 +165,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Tag & push image
+        env:
+          VERSION: ${{needs.commitlint-version.outputs.version}}
+          HASH: ${{needs.commitlint-version.outputs.hash}}
         run: |
           docker tag blinkfile-candidate benjohns1/blinkfile:latest
+          docker tag blinkfile-candidate benjohns1/blinkfile:$VERSION
+          docker tag blinkfile-candidate benjohns1/blinkfile:$HASH
           docker push -a benjohns1/blinkfile
