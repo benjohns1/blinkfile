@@ -1,4 +1,4 @@
-[![Docker Image CI](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml) [![Hugo Docs CI](https://github.com/benjohns1/blinkfile/actions/workflows/docs.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/docs.yml)
+[![Docker Image CI](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/ci.yml) [![Hugo Docs CI](https://github.com/benjohns1/blinkfile/actions/workflows/docs.yml/badge.svg)](https://github.com/benjohns1/blinkfile/actions/workflows/docs.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/benjohns1/blinkfile)](https://goreportcard.com/report/github.com/benjohns1/blinkfile)
 
 # Blinkfile
 Send files quickly and securely.
