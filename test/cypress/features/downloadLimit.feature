@@ -10,7 +10,7 @@ Scenario: Upload a file with a download limit and show zero downloads
   And I should see the file at the top of the list
   And I should see a file download count of 0 out of 10
 
-@pending
+@implementing
 Scenario: Upload a file with a download limit counts the number of downloads
   Given I have uploaded a file "files/download-limit.txt" with a download limit of 10
   When I download the file 5 times

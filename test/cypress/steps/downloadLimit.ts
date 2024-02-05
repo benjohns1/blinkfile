@@ -8,7 +8,7 @@ import {
     visitFileUploadPage,
     shouldSeeUploadSuccessMessage,
     filepathBase,
-    getFileDownloads
+    getFileDownloads, verifyDownloadedFile, verifyFileResponse
 } from "./shared/files";
 
 const state: {
@@ -20,7 +20,7 @@ Given("I am logged in", () => {
     login("{admin}", "{admin}");
 });
 
-When("I upload a file {string} with a download limit of {int}", (name: string, limit: number) => {
+const uploadFile = (name: string, limit: number) => {
     visitFileUploadPage();
     state.fileToUpload = `features/${name}`;
     deleteDownloadsFolder();
@@ -30,6 +30,19 @@ When("I upload a file {string} with a download limit of {int}", (name: string, l
     getFileLinks().first().invoke("attr", "href").then(href => {
         state.fileLink = href;
     });
+};
+
+Given("I have uploaded a file {string} with a download limit of {int}", uploadFile);
+
+When("I upload a file {string} with a download limit of {int}", uploadFile);
+
+When("I download the file {int} times", (count: number) => {
+    for (let i = 0; i < count; i++) {
+        deleteDownloadsFolder();
+        cy.request(state.fileLink).then(response => {
+            verifyFileResponse(state.fileToUpload, response);
+        });
+    }
 });
 
 Then("I should see a file upload success message", () => {
