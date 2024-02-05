@@ -118,7 +118,7 @@ func loadFileHeader(_ context.Context, path string) (header fileHeader, err erro
 	return header, Unmarshal(data, &header)
 }
 
-func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
+func (r *FileRepo) Save(ctx context.Context, file blinkfile.File) error {
 	if file.ID == "" {
 		return fmt.Errorf("file ID cannot be empty")
 	}
@@ -138,13 +138,9 @@ func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
 		return fmt.Errorf("making directory %q: %w", dir, err)
 	}
 
-	data, err := Marshal(header)
+	err = r.writeHeaderFile(ctx, headerFilename, header)
 	if err != nil {
-		return fmt.Errorf("marshaling file header: %w", err)
-	}
-	err = WriteFile(headerFilename, data, 0644)
-	if err != nil {
-		return fmt.Errorf("writing file header: %w", err)
+		return err
 	}
 
 	target, err := CreateFile(filename)
@@ -155,6 +151,44 @@ func (r *FileRepo) Save(_ context.Context, file blinkfile.File) error {
 	_, err = Copy(target, file.Data)
 	if err != nil {
 		return fmt.Errorf("writing file %q: %w", filename, err)
+	}
+	r.addToIndices(header)
+
+	return nil
+}
+
+func (r *FileRepo) writeHeaderFile(_ context.Context, headerFilename string, header fileHeader) error {
+	data, err := Marshal(header)
+	if err != nil {
+		return fmt.Errorf("marshaling file header: %w", err)
+	}
+	err = WriteFile(headerFilename, data, 0644)
+	if err != nil {
+		return fmt.Errorf("writing file header: %w", err)
+	}
+
+	return nil
+}
+
+func (r *FileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileHeader) error {
+	if putHeader.ID == "" {
+		return fmt.Errorf("file ID cannot be empty")
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	header := fileHeader(putHeader)
+	previous, found := r.idIndex[header.ID]
+	if !found {
+		return app.ErrFileNotFound
+	}
+
+	_, _, headerFilename := filenames(r.dir, header.ID)
+	header.Location = previous.Location
+
+	err := r.writeHeaderFile(ctx, headerFilename, header)
+	if err != nil {
+		return err
 	}
 	r.addToIndices(header)
 

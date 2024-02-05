@@ -371,6 +371,130 @@ func TestFileRepo_Save(t *testing.T) {
 	}
 }
 
+func TestFileRepo_PutHeader(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		h blinkfile.FileHeader
+	}
+	tests := []struct {
+		name    string
+		patch   func(*testing.T) func()
+		r       *repo.FileRepo
+		args    args
+		wantErr error
+		wantGet blinkfile.FileHeader
+	}{
+		{
+			name: "should fail if header ID is empty",
+			args: args{
+				h: blinkfile.FileHeader{ID: ""},
+			},
+			wantErr: fmt.Errorf("file ID cannot be empty"),
+		},
+		{
+			name: "should fail if header ID not found",
+			args: args{
+				h: blinkfile.FileHeader{ID: "not-in-repo"},
+			},
+			wantErr: app.ErrFileNotFound,
+		},
+		{
+			name: "should fail if writing the file header fails",
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "")
+				err := r.Save(ctx, blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
+						ID:    "file1",
+						Owner: "user1",
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				return r
+			}(),
+			args: args{
+				h: blinkfile.FileHeader{ID: "file1"},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.Marshal
+				repo.Marshal = func(any) ([]byte, error) {
+					return nil, fmt.Errorf("marshal err")
+				}
+				return func() { repo.Marshal = prev }
+			},
+			wantErr: fmt.Errorf("marshaling file header: %w", fmt.Errorf("marshal err")),
+		},
+		{
+			name: "should put a new file header",
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "putFileHeader")
+				err := r.Save(ctx, blinkfile.File{
+					FileHeader: blinkfile.FileHeader{
+						ID:    "file1",
+						Owner: "user1",
+					},
+					Data: io.NopCloser(strings.NewReader("file-data")),
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				return r
+			}(),
+			args: args{
+				h: blinkfile.FileHeader{
+					ID:            "file1",
+					Name:          "name",
+					Owner:         "user1",
+					Created:       time.Unix(1, 0).UTC(),
+					Expires:       time.Unix(2, 0).UTC(),
+					Downloads:     1,
+					DownloadLimit: 2,
+					Size:          3,
+					PasswordHash:  "hash",
+				},
+			},
+			wantGet: blinkfile.FileHeader{
+				ID:            "file1",
+				Name:          "name",
+				Owner:         "user1",
+				Location:      filepath.Clean("_test/repo_file/putFileHeader/file1/file"),
+				Created:       time.Unix(1, 0).UTC(),
+				Expires:       time.Unix(2, 0).UTC(),
+				Downloads:     1,
+				DownloadLimit: 2,
+				Size:          3,
+				PasswordHash:  "hash",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.patch != nil {
+				defer tt.patch(t)()
+			}
+			if tt.r == nil {
+				tt.r = newTestFileRepo(t, "")
+			}
+			err := tt.r.PutHeader(ctx, tt.args.h)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("PutHeader() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr != nil {
+				return
+			}
+			got, err := tt.r.Get(ctx, tt.args.h.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, tt.wantGet) {
+				t.Errorf("After PutHeader() Get():\n\t%+v\nwantErr:\n\t%+v", got, tt.wantGet)
+			}
+		})
+	}
+}
+
 type spyLog struct {
 	errors []string
 }
