@@ -6,3 +6,4 @@ _test/
 data/
 !*/data/
 node_modules/
+tmp/

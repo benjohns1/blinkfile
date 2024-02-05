@@ -26,6 +26,7 @@
     "test:acceptance": "npm run build && npm run acceptance-test:build && npm run acceptance-test",
     "build": "docker build --tag blinkfile-candidate -f .local/build.Dockerfile .",
     "serve": "docker compose -f=.local/docker-compose.yml build blinkfile && docker compose -f=.local/docker-compose.yml run -p=8020:8020 -e=PORT=8020 --rm blinkfile",
+    "dev": "docker compose -f=.local/docker-compose.yml run -p=8020:8020 -e=PORT=8020 --rm blinkfile-dev",
     "docs": "npm run hugo:serve",
     "hugo": "docker compose -f=.local/docker-compose.yml build blinkfile-hugo && docker compose -f=.local/docker-compose.yml run -p=8021:8021 --rm blinkfile-hugo",
     "hugo:serve": "npm run hugo -- server -p=8021 --bind=0.0.0.0 -D --poll 700ms",

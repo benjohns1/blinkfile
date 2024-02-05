@@ -8,3 +8,4 @@ data/
 !*/data/
 node_modules/
 .local/
+tmp/

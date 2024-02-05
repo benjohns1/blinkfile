@@ -10,6 +10,15 @@ services:
       - ENABLE_TEST_AUTOMATION=true
     volumes:
       - blinkfile-data:/data
+  blinkfile-dev:
+    image: cosmtrek/air
+    working_dir: /app
+    volumes:
+      - ../:/app
+      - blinkfile-cache:/root/.cache
+    environment:
+      - air_wd=/app
+      - GOMODCACHE=/root/.cache/go-mod
   blinkfile-hugo:
     build:
       dockerfile: ../.local/hugo.Dockerfile
