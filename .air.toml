@@ -13,7 +13,7 @@ tmp_dir = "tmp"
     # Binary file yields from `cmd`.
     bin = "./tmp/main"
     # Customize binary, can setup environment variables when run your app.
-    full_bin = "ADMIN_USERNAME=admin ADMIN_PASSWORD=1234123412341234 FEATURE_FLAG_DEFAULT=true ENABLE_TEST_AUTOMATION=true DATA_DIR=./tmp/data ./tmp/main"
+    full_bin = "ADMIN_USERNAME=admin ADMIN_PASSWORD=1234123412341234 FEATURE_FLAG_DEFAULT=true ENABLE_TEST_AUTOMATION=true RATE_LIMIT_UNAUTHENTICATED=100 DATA_DIR=./tmp/data ./tmp/main"
     # Watch these filename extensions.
     include_ext = ["go", "tpl", "tmpl", "html"]
     # Ignore these filename extensions or directories.

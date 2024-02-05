@@ -15,7 +15,6 @@ Scenario: Upload a file with a download limit counts the number of downloads
   When I download the file 5 times
   Then I should see a file download count of 5 out of 10
 
-@pending
 Scenario: Upload a file without a download limit counts the number of downloads
   Given I have uploaded a file "files/download-limit.txt" without a download limit
   When I download the file 5 times

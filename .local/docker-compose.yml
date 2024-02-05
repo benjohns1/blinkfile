@@ -8,6 +8,7 @@ services:
       - ADMIN_PASSWORD=1234123412341234
       - FEATURE_FLAG_DEFAULT=true
       - ENABLE_TEST_AUTOMATION=true
+      - RATE_LIMIT_UNAUTHENTICATED=100
     volumes:
       - blinkfile-data:/data
   blinkfile-dev:

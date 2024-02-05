@@ -8,7 +8,9 @@ import {
     visitFileUploadPage,
     shouldSeeUploadSuccessMessage,
     filepathBase,
-    getFileDownloads, verifyDownloadedFile, verifyFileResponse, visitFileListPage
+    getFileDownloads,
+    verifyFileResponse,
+    visitFileListPage
 } from "./shared/files";
 
 const state: {
@@ -25,7 +27,9 @@ const uploadFile = (name: string, limit: number) => {
     state.fileToUpload = `features/${name}`;
     deleteDownloadsFolder();
     getFileBrowser().selectFile(state.fileToUpload);
-    getDownloadLimitField().type(limit.toString());
+    if (limit !== undefined) {
+        getDownloadLimitField().type(limit.toString());
+    }
     getUploadButton().click();
     getFileLinks().first().invoke("attr", "href").then(href => {
         state.fileLink = href;
@@ -33,6 +37,8 @@ const uploadFile = (name: string, limit: number) => {
 };
 
 Given("I have uploaded a file {string} with a download limit of {int}", uploadFile);
+
+Given("I have uploaded a file {string} without a download limit", uploadFile);
 
 When("I upload a file {string} with a download limit of {int}", uploadFile);
 
@@ -52,10 +58,15 @@ Then("I should see a file upload success message", () => {
 Then("I should see the file at the top of the list", () => {
     visitFileListPage();
     const filename = filepathBase(state.fileToUpload);
-    getFileLinks().first().should('contain.text', filename);
+    getFileLinks().first().should('have.text', filename);
 });
 
 Then("I should see a file download count of {int} out of {int}", (count: number, limit: number) => {
     visitFileListPage();
-    getFileDownloads().first().should('contain.text', `${count}/${limit}`);
+    getFileDownloads().first().should('have.text', `${count}/${limit}`);
+});
+
+Then("I should see a file download count of {int}", (count: number) => {
+    visitFileListPage();
+    getFileDownloads().first().should('have.text', `${count}`);
 });
