@@ -12,15 +12,27 @@ Here's how to get started.
 5. Make your changes, including unit and acceptance tests
 6. Submit a PR
 
-## Build & run in containers
-Prerequisites: Docker, Node, NPM
+## Build & run
+Prerequisites: Docker, Node, NPM  
+Install local tooling and NPM scripts:
 ```
 npm i
+```
+### In a container
+```
 npm start
 ```
 Starts the Blinkfile app at [http://localhost:8020](http://localhost:8020) and the documentation at [http://localhost:8021](http://localhost:8021)  
 
-## Install & run on host
+### In a container with live reload
+Recommended for development  
+Uses [Air](https://github.com/cosmtrek/air) for live reload
+```
+npm run dev
+```
+Starts the Blinkfile app at [http://localhost:8020](http://localhost:8020)
+
+### On your host machine
 Requires Go  
 Required environment variables:
 - ADMIN_USERNAME
