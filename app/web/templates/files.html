@@ -32,6 +32,12 @@
     </div>
     <input type="hidden" id="expiration_time" name="expiration_time"/>
     <div style="clear: both"></div>
+    {{ if featureFlagIsOn .ctx "DownloadLimit" }}
+    <div>
+        <label for="download_limit" hidden>Download Limit</label>
+        <input id="download_limit" type="number" name="download_limit" placeholder="Download Limit" data-test="download_limit"/>
+    </div>
+    {{end}}
     <input id="submit_file_upload" type="submit" value="Upload" data-test="upload"/>
 </form>
 {{ render "partials/message.html" .content.MessageView }}
@@ -47,17 +53,20 @@
                 <th data-sort="float">Size</th>
                 <th data-sort="date" data-dir="desc">Uploaded</th>
                 <th data-sort="date">Expires</th>
+                {{ if featureFlagIsOn .ctx "DownloadLimit" }}<th>Downloads</th>{{end}}
                 <th data-sort="string">Access</th>
                 <th>Delete</th>
             </tr>
         </thead>
         <tbody>
+        {{$downloadLimit := featureFlagIsOn .ctx "DownloadLimit"}}
         {{range $file := .content.Files}}
             <tr>
                 <td data-search><a href="/file/{{$file.ID}}" target="_blank" data-test="file_link">{{$file.Name}}</a></td>
                 <td data-sort-value="{{$file.ByteSize}}">{{$file.Size}}</td>
                 <td class="datetime" data-sort-value="{{$file.Uploaded}}">{{$file.Uploaded}}</td>
                 <td class="datetime" data-sort-value="{{$file.Expires}}" data-test="expires">{{$file.Expires}}</td>
+                {{ if $downloadLimit}}<td data-test="downloads">{{$file.Downloads}}{{if (gt $file.DownloadLimit 0)}}/{{$file.DownloadLimit}}{{end}}</td>{{end}}
                 <td data-test="access">{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>

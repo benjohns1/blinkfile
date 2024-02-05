@@ -10,14 +10,16 @@ type (
 	FileID string
 
 	FileHeader struct {
-		ID           FileID
-		Name         string
-		Location     string
-		Owner        UserID
-		Created      time.Time
-		Expires      time.Time
-		Size         int64
-		PasswordHash string
+		ID            FileID
+		Name          string
+		Location      string
+		Owner         UserID
+		Created       time.Time
+		Expires       time.Time
+		Downloads     int64
+		DownloadLimit int64
+		Size          int64
+		PasswordHash  string
 	}
 
 	File struct {
@@ -32,15 +34,16 @@ type (
 	PasswordMatchFunc func(hashedPassword string, checkPassword string) (matched bool, err error)
 
 	UploadFileArgs struct {
-		ID       FileID
-		Name     string
-		Owner    UserID
-		Reader   io.ReadCloser
-		Size     int64
-		Now      NowFunc
-		Password string
-		HashFunc PasswordHashFunc
-		Expires  time.Time
+		ID            FileID
+		Name          string
+		Owner         UserID
+		Reader        io.ReadCloser
+		Size          int64
+		Now           NowFunc
+		Password      string
+		HashFunc      PasswordHashFunc
+		Expires       time.Time
+		DownloadLimit int64
 	}
 )
 
@@ -75,15 +78,19 @@ func UploadFile(args UploadFileArgs) (file File, err error) {
 	if !expires.IsZero() && !expires.After(now) {
 		return File{}, fmt.Errorf("expiration cannot be set in the past")
 	}
+	if args.DownloadLimit < 0 {
+		return File{}, fmt.Errorf("download limit cannot be negative")
+	}
 	return File{
 		FileHeader: FileHeader{
-			ID:           args.ID,
-			Name:         args.Name,
-			Owner:        args.Owner,
-			Created:      now,
-			Size:         args.Size,
-			PasswordHash: hash,
-			Expires:      expires,
+			ID:            args.ID,
+			Name:          args.Name,
+			Owner:         args.Owner,
+			Created:       now,
+			Size:          args.Size,
+			PasswordHash:  hash,
+			Expires:       expires,
+			DownloadLimit: args.DownloadLimit,
 		},
 		Data: args.Reader,
 	}, nil
@@ -93,9 +100,10 @@ var (
 	ErrFilePasswordRequired = fmt.Errorf("file access requires password")
 	ErrFilePasswordInvalid  = fmt.Errorf("invalid file password")
 	ErrFileExpired          = fmt.Errorf("file has expired")
+	ErrDownloadLimitReached = fmt.Errorf("file download limit reached")
 )
 
-func (f *FileHeader) Download(user UserID, password string, matchFunc PasswordMatchFunc, nowFunc NowFunc) error {
+func (f *FileHeader) Download(user UserID, password string, matchFunc PasswordMatchFunc, nowFunc NowFunc) (err error) {
 	if matchFunc == nil {
 		return fmt.Errorf("matchFunc() service cannot be empty")
 	}
@@ -106,10 +114,7 @@ func (f *FileHeader) Download(user UserID, password string, matchFunc PasswordMa
 	if !f.Expires.IsZero() && !now.Before(f.Expires) {
 		return ErrFileExpired
 	}
-	if f.Owner != "" && f.Owner == user {
-		return nil
-	}
-	if f.PasswordHash != "" {
+	if !f.userIsOwner(user) && f.PasswordHash != "" {
 		if password == "" {
 			return ErrFilePasswordRequired
 		}
@@ -121,5 +126,13 @@ func (f *FileHeader) Download(user UserID, password string, matchFunc PasswordMa
 			return ErrFilePasswordInvalid
 		}
 	}
+	if f.DownloadLimit > 0 && f.Downloads >= f.DownloadLimit {
+		return ErrDownloadLimitReached
+	}
+	f.Downloads++
 	return nil
+}
+
+func (f *FileHeader) userIsOwner(user UserID) bool {
+	return f.Owner != "" && f.Owner == user
 }

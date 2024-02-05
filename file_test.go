@@ -143,6 +143,18 @@ func TestUploadFile(t *testing.T) {
 			wantErr: fmt.Errorf("expiration cannot be set in the past"),
 		},
 		{
+			name: "should fail with a negative download limit",
+			args: blinkfile.UploadFileArgs{
+				ID:            "file1",
+				Name:          "file1",
+				Owner:         "user1",
+				Reader:        io.NopCloser(strings.NewReader("file-data")),
+				Now:           func() time.Time { return time.Unix(0, 0).UTC() },
+				DownloadLimit: -1,
+			},
+			wantErr: fmt.Errorf("download limit cannot be negative"),
+		},
+		{
 			name: "should upload a new file with an expiration time",
 			args: blinkfile.UploadFileArgs{
 				ID:      "file1",
@@ -190,6 +202,7 @@ func TestFile_Download(t *testing.T) {
 		f       blinkfile.File
 		args    args
 		wantErr error
+		want    *blinkfile.File
 	}{
 		{
 			name: "should fail if a matchFunc() service was not passed in",
@@ -265,6 +278,13 @@ func TestFile_Download(t *testing.T) {
 				matchFunc: func(string, string) (bool, error) { return false, nil },
 				nowFunc:   func() time.Time { return time.Unix(0, 0).UTC() },
 			},
+			want: &blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
+					Owner:        "user1",
+					PasswordHash: "password-hash",
+					Downloads:    1,
+				},
+			},
 		},
 		{
 			name: "should fail if file has expired",
@@ -288,6 +308,11 @@ func TestFile_Download(t *testing.T) {
 				matchFunc: func(string, string) (bool, error) { return false, nil },
 				nowFunc:   func() time.Time { return time.Unix(0, 0).UTC() },
 			},
+			want: &blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
+					Downloads: 1,
+				},
+			},
 		},
 		{
 			name: "should succeed if the password matches and the file is not yet expired",
@@ -308,6 +333,53 @@ func TestFile_Download(t *testing.T) {
 					return time.Unix(1, 0).UTC()
 				},
 			},
+			want: &blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
+					Owner:        "file-owner",
+					Expires:      time.Unix(2, 0).UTC(),
+					PasswordHash: "password-hash",
+					Downloads:    1,
+				},
+			},
+		},
+		{
+			name: "should fail if the file downloads have reached the limit",
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
+					Downloads:     1,
+					DownloadLimit: 1,
+				},
+			},
+			args: args{
+				matchFunc: func(string, string) (bool, error) { return false, nil },
+				nowFunc:   func() time.Time { return time.Unix(0, 0).UTC() },
+			},
+			wantErr: blinkfile.ErrDownloadLimitReached,
+			want: &blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
+					Downloads:     1,
+					DownloadLimit: 1,
+				},
+			},
+		},
+		{
+			name: "should succeed if the file downloads are within the limit",
+			f: blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
+					Downloads:     1,
+					DownloadLimit: 2,
+				},
+			},
+			args: args{
+				matchFunc: func(string, string) (bool, error) { return false, nil },
+				nowFunc:   func() time.Time { return time.Unix(0, 0).UTC() },
+			},
+			want: &blinkfile.File{
+				FileHeader: blinkfile.FileHeader{
+					Downloads:     2,
+					DownloadLimit: 2,
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -316,6 +388,9 @@ func TestFile_Download(t *testing.T) {
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Download() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if tt.want != nil && !reflect.DeepEqual(tt.f, *tt.want) {
+				t.Errorf("Download() changed file to:\n\t%+v\nwant:\n\t%+v", tt.f, *tt.want)
 			}
 		})
 	}

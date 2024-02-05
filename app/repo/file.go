@@ -28,14 +28,16 @@ type (
 	}
 
 	fileHeader struct {
-		ID           blinkfile.FileID
-		Name         string
-		Location     string
-		Owner        blinkfile.UserID
-		Created      time.Time
-		Expires      time.Time
-		Size         int64
-		PasswordHash string
+		ID            blinkfile.FileID
+		Name          string
+		Location      string
+		Owner         blinkfile.UserID
+		Created       time.Time
+		Expires       time.Time
+		Downloads     int64
+		DownloadLimit int64
+		Size          int64
+		PasswordHash  string
 	}
 
 	Log interface {

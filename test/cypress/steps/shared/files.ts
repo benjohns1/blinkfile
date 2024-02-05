@@ -29,7 +29,7 @@ export const getPasswordField = () => {
 }
 
 export const getDownloadLimitField = () => {
-    return cy.get("[data-test=download-limit]");
+    return cy.get("[data-test=download_limit]");
 }
 
 export const getExpirationDateField = () => {

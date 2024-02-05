@@ -23,6 +23,8 @@ type (
 		Name              string
 		Uploaded          string
 		Expires           string
+		Downloads         int64
+		DownloadLimit     int64
 		ByteSize          int64
 		Size              string
 		PasswordProtected bool
@@ -53,6 +55,8 @@ func showFiles(ctx iris.Context, a App) error {
 			Name:              file.Name,
 			Uploaded:          file.Created.Format(time.RFC3339),
 			Expires:           expires,
+			Downloads:         file.Downloads,
+			DownloadLimit:     file.DownloadLimit,
 			ByteSize:          file.Size,
 			Size:              formatFileSize(file.Size),
 			PasswordProtected: file.PasswordHash != "",
@@ -100,14 +104,23 @@ func uploadFile(ctx iris.Context, a App) error {
 			return app.ErrUser("Invalid expiration time.", fmt.Sprintf("We couldn't understand the file expiration time %q, please make sure the date format is correct.", expirationTime), err)
 		}
 	}
+	var downloadLimit int64
+	downloadLimitStr := ctx.FormValue("download_limit")
+	if downloadLimitStr != "" {
+		_, err = fmt.Sscan(downloadLimitStr, &downloadLimit)
+		if err != nil {
+			return app.ErrUser("Invalid download limit.", "Invalid file download limit, please make sure it's a valid number.", err)
+		}
+	}
 	args := app.UploadFileArgs{
-		Filename:  header.Filename,
-		Owner:     loggedInUser(ctx),
-		Reader:    file,
-		Size:      header.Size,
-		Password:  ctx.FormValue("password"),
-		ExpiresIn: expiresIn,
-		Expires:   expires,
+		Filename:      header.Filename,
+		Owner:         loggedInUser(ctx),
+		Reader:        file,
+		Size:          header.Size,
+		Password:      ctx.FormValue("password"),
+		ExpiresIn:     expiresIn,
+		Expires:       expires,
+		DownloadLimit: downloadLimit,
 	}
 	err = a.UploadFile(ctx, args)
 	if err != nil {

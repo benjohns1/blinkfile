@@ -8,6 +8,7 @@ services:
       - RATE_LIMIT_UNAUTHENTICATED=100
       - ENABLE_TEST_AUTOMATION=true
       - PORT=8020
+      - FEATURE_FLAG_DownloadLimit=true
   acceptance-test-runner:
     image: blinkfile-acceptance-test-runner
     environment:

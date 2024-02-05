@@ -425,7 +425,8 @@ func TestApp_DownloadFile(t *testing.T) {
 				fileID: "file1",
 			},
 			want: blinkfile.FileHeader{
-				ID: "file1",
+				ID:        "file1",
+				Downloads: 1,
 			},
 		},
 		{
@@ -450,6 +451,7 @@ func TestApp_DownloadFile(t *testing.T) {
 			want: blinkfile.FileHeader{
 				ID:           "file1",
 				PasswordHash: "password-hash",
+				Downloads:    1,
 			},
 		},
 		{
@@ -485,6 +487,7 @@ func TestApp_DownloadFile(t *testing.T) {
 				Owner:        "user1",
 				Created:      time.Unix(1, 0).UTC(),
 				Expires:      time.Unix(2, 0).UTC(),
+				Downloads:    1,
 				Size:         3,
 				PasswordHash: "password-hash",
 			},

@@ -50,13 +50,14 @@ func sortFilesByCreatedTimeDesc(files []blinkfile.FileHeader) {
 }
 
 type UploadFileArgs struct {
-	Filename  string
-	Owner     blinkfile.UserID
-	Reader    io.ReadCloser
-	Size      int64
-	Password  string
-	ExpiresIn longduration.LongDuration
-	Expires   time.Time
+	Filename      string
+	Owner         blinkfile.UserID
+	Reader        io.ReadCloser
+	Size          int64
+	Password      string
+	ExpiresIn     longduration.LongDuration
+	Expires       time.Time
+	DownloadLimit int64
 }
 
 func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
@@ -77,15 +78,16 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 		}
 	}
 	file, err := blinkfile.UploadFile(blinkfile.UploadFileArgs{
-		ID:       fileID,
-		Name:     args.Filename,
-		Owner:    args.Owner,
-		Reader:   args.Reader,
-		Size:     args.Size,
-		Now:      a.cfg.Now,
-		Password: args.Password,
-		HashFunc: hashFunc,
-		Expires:  args.Expires,
+		ID:            fileID,
+		Name:          args.Filename,
+		Owner:         args.Owner,
+		Reader:        args.Reader,
+		Size:          args.Size,
+		Now:           a.cfg.Now,
+		Password:      args.Password,
+		HashFunc:      hashFunc,
+		Expires:       args.Expires,
+		DownloadLimit: args.DownloadLimit,
 	})
 	if err != nil {
 		return Err(ErrBadRequest, err)
