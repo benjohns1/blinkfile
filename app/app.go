@@ -36,6 +36,7 @@ type (
 		DeleteExpiredBefore(context.Context, time.Time) (int, error)
 		Get(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error)
 		Delete(context.Context, blinkfile.UserID, []blinkfile.FileID) error
+		PutHeader(context.Context, blinkfile.FileHeader) error
 	}
 
 	PasswordHasher interface {

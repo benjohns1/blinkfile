@@ -8,7 +8,7 @@ import {
     visitFileUploadPage,
     shouldSeeUploadSuccessMessage,
     filepathBase,
-    getFileDownloads, verifyDownloadedFile, verifyFileResponse
+    getFileDownloads, verifyDownloadedFile, verifyFileResponse, visitFileListPage
 } from "./shared/files";
 
 const state: {
@@ -50,10 +50,12 @@ Then("I should see a file upload success message", () => {
 });
 
 Then("I should see the file at the top of the list", () => {
+    visitFileListPage();
     const filename = filepathBase(state.fileToUpload);
     getFileLinks().first().should('contain.text', filename);
 });
 
 Then("I should see a file download count of {int} out of {int}", (count: number, limit: number) => {
+    visitFileListPage();
     getFileDownloads().first().should('contain.text', `${count}/${limit}`);
 });

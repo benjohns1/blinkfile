@@ -131,6 +131,10 @@ func (a *App) DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID 
 		err = a.mimicErr(ctx, password, err)
 		return blinkfile.FileHeader{}, err
 	}
+	err = a.cfg.FileRepo.PutHeader(ctx, file)
+	if err != nil {
+		return blinkfile.FileHeader{}, Err(ErrRepo, err)
+	}
 	return file, nil
 }
 
