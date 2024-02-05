@@ -191,6 +191,26 @@ func Test_New(t *testing.T) {
 				"feature-f": false,
 			},
 		},
+		{
+			name: "should load the default value for all feature flags from env vars",
+			arrange: func(t *testing.T) func() {
+				restore := cleanEnvVars(t, "TEST_FEATURE_FLAG_")
+				anyFatalErr(t,
+					os.Setenv("TEST_FEATURE_FLAG_DEFAULT", "1"),
+					os.Setenv("TEST_FEATURE_FLAG_feature-b", "0"),
+					os.Setenv("TEST_FEATURE_FLAG_feature-c", "1"),
+				)
+				return restore
+			},
+			opts: []featureflag.ConfigOption{
+				featureflag.WithFeaturesFromEnvironment("TEST_FEATURE_FLAG_"),
+			},
+			wantValues: map[string]bool{
+				"feature-a": true,
+				"feature-b": false,
+				"feature-c": true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

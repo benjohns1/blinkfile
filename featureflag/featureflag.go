@@ -11,8 +11,9 @@ import (
 
 type (
 	FeatureFlags struct {
-		mu       sync.RWMutex
-		features map[Name]bool
+		mu         sync.RWMutex
+		features   map[Name]bool
+		defaultVal bool
 	}
 
 	Name string
@@ -23,6 +24,8 @@ type (
 
 	CheckOption func(*CheckConfig)
 )
+
+const defaultKey = "DEFAULT"
 
 func WithFeature(name string, value bool) ConfigOption {
 	return func(ff *FeatureFlags) error {
@@ -44,6 +47,10 @@ func WithFeaturesFromEnvironment(prefix string) ConfigOption {
 			value, err := strconv.ParseBool(split[1])
 			if err != nil {
 				return fmt.Errorf("parsing boolean feature flag value for env var %q: %q is not a valid boolean value", split[0], split[1])
+			}
+			if key == defaultKey {
+				ff.setDefault(value)
+				continue
 			}
 			if err = ff.register(Name(key), value); err != nil {
 				return fmt.Errorf("registering feature flag %q: %w", key, err)
@@ -76,10 +83,19 @@ func (ff *FeatureFlags) register(feature Name, value bool) error {
 	return nil
 }
 
+func (ff *FeatureFlags) setDefault(value bool) {
+	ff.mu.Lock()
+	defer ff.mu.Unlock()
+	ff.defaultVal = value
+}
+
 func (ff *FeatureFlags) get(feature Name) bool {
 	ff.mu.RLock()
 	defer ff.mu.RUnlock()
-	return ff.features[feature]
+	if val, ok := ff.features[feature]; ok {
+		return val
+	}
+	return ff.defaultVal
 }
 
 func (ff *FeatureFlags) IsOn(_ context.Context, feature string, opts ...CheckOption) (bool, error) {

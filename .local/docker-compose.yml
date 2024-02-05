@@ -6,7 +6,7 @@ services:
     environment:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=1234123412341234
-      - FEATURE_FLAG_LogAllAuthnCalls=1
+      - FEATURE_FLAG_DEFAULT=true
       - ENABLE_TEST_AUTOMATION=true
     volumes:
       - blinkfile-data:/data

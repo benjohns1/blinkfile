@@ -6,9 +6,9 @@ services:
       - ADMIN_PASSWORD=1234123412341234
       - DATA_DIR=/data
       - RATE_LIMIT_UNAUTHENTICATED=100
+      - FEATURE_FLAG_DEFAULT=true
       - ENABLE_TEST_AUTOMATION=true
       - PORT=8020
-      - FEATURE_FLAG_DownloadLimit=true
   acceptance-test-runner:
     image: blinkfile-acceptance-test-runner
     environment:
