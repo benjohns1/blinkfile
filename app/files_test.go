@@ -165,6 +165,52 @@ func TestApp_ListFiles(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should not return files downloaded up to their limit",
+			cfg: app.Config{
+				FileRepo: &StubFileRepo{
+					ListByUserFunc: func(context.Context, blinkfile.UserID) ([]blinkfile.FileHeader, error) {
+						return []blinkfile.FileHeader{
+							{
+								ID:            "1",
+								Name:          "File1",
+								Downloads:     1,
+								DownloadLimit: 1,
+							},
+							{
+								ID:            "2",
+								Name:          "File2",
+								Downloads:     1,
+								DownloadLimit: 2,
+							},
+							{
+								ID:            "3",
+								Name:          "File3",
+								Downloads:     1,
+								DownloadLimit: 0,
+							},
+						}, nil
+					},
+				},
+			},
+			args: args{
+				"user1",
+			},
+			want: []blinkfile.FileHeader{
+				{
+					ID:            "2",
+					Name:          "File2",
+					Downloads:     1,
+					DownloadLimit: 2,
+				},
+				{
+					ID:            "3",
+					Name:          "File3",
+					Downloads:     1,
+					DownloadLimit: 0,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

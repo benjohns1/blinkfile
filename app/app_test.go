@@ -102,6 +102,7 @@ type StubFileRepo struct {
 	DeleteExpiredBeforeFunc func(context.Context, time.Time) (int, error)
 	GetFunc                 func(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error)
 	DeleteFunc              func(context.Context, blinkfile.UserID, []blinkfile.FileID) error
+	PutHeaderFunc           func(context.Context, blinkfile.FileHeader) error
 }
 
 func (fr *StubFileRepo) Save(ctx context.Context, f blinkfile.File) error {
@@ -131,6 +132,13 @@ func (fr *StubFileRepo) Get(ctx context.Context, fID blinkfile.FileID) (blinkfil
 func (fr *StubFileRepo) Delete(ctx context.Context, uID blinkfile.UserID, fID []blinkfile.FileID) error {
 	if fr.DeleteFunc != nil {
 		return fr.DeleteFunc(ctx, uID, fID)
+	}
+	return nil
+}
+
+func (fr *StubFileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileHeader) error {
+	if fr.PutHeaderFunc != nil {
+		return fr.PutHeaderFunc(ctx, putHeader)
 	}
 	return nil
 }
