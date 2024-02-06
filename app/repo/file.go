@@ -218,7 +218,15 @@ func (r *FileRepo) delete(_ context.Context, filter func(fileHeader) bool) (int,
 
 func (r *FileRepo) DeleteExpiredBefore(ctx context.Context, t time.Time) (int, error) {
 	return r.delete(ctx, func(header fileHeader) bool {
-		return !(header.Expires.IsZero() || header.Expires.After(t))
+		if !header.Expires.IsZero() && !header.Expires.After(t) {
+			return true
+		}
+
+		if header.DownloadLimit > 0 && header.Downloads >= header.DownloadLimit {
+			return true
+		}
+
+		return false
 	})
 }
 

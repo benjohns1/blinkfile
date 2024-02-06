@@ -691,6 +691,45 @@ func TestFileRepo_DeleteExpiredBefore(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "should delete all files downloaded up to their limit",
+			r: func() *repo.FileRepo {
+				r := newTestFileRepo(t, "deleteDownloadLimit_success")
+				fatalOnErr(t,
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:            "file1",
+							Owner:         "user1",
+							Downloads:     1,
+							DownloadLimit: 1,
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+					r.Save(ctx, blinkfile.File{
+						FileHeader: blinkfile.FileHeader{
+							ID:            "file2",
+							Owner:         "user1",
+							Downloads:     2,
+							DownloadLimit: 2,
+						},
+						Data: io.NopCloser(strings.NewReader("file-data")),
+					}),
+				)
+				return r
+			}(),
+			want: 2,
+			assert: func(t *testing.T, r *repo.FileRepo) {
+				want := []blinkfile.FileHeader{}
+
+				got, err := r.ListByUser(ctx, "user1")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("After DeleteExpiredBefore(), ListByUser() for user1 got: \n\t%+v\nwant: \n\t%+v", got, want)
+				}
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
