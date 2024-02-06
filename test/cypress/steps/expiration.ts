@@ -11,7 +11,7 @@ import {
     getFileExpirations,
     getExpiresInField,
     getExpiresInUnitField,
-    verifyFileResponse, visitFileListPage, fileRowsSelector
+    verifyFileResponse, visitFileListPage, fileRowsSelector, cannotDownloadFileNoPassword, fileNotInList
 } from "./shared/files";
 import {login, logout} from "./shared/login";
 import dayjs from "dayjs";
@@ -158,13 +158,9 @@ When("{string} has passed", (timeframe: string) => {
 });
 
 Then("I can no longer download the file", () => {
-    cy.request(state.fileLink).then(response => {
-        expect(response.headers["content-type"]).to.contain("text/html");
-        expect(response.body).to.contain("Download File");
-    });
+    cannotDownloadFileNoPassword(state.fileLink);
 });
 
 Then("it no longer shows up in the file list", () => {
-    visitFileListPage();
-    cy.get(`${fileRowsSelector} [href=\"${state.fileLink}]\"`).should("not.exist");
+    fileNotInList(state.fileLink);
 });

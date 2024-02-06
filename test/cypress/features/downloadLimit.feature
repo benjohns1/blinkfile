@@ -20,7 +20,7 @@ Scenario: Upload a file without a download limit counts the number of downloads
   When I download the file 5 times
   Then I should see a file download count of 5
 
-@pending
+@implementing
 Scenario: The file is removed after downloading it the maximum number of times
   Given I have uploaded a file "files/download-limit.txt" with a download limit of 10
   When I download the file 10 times

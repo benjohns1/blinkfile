@@ -10,7 +10,7 @@ import {
     filepathBase,
     getFileDownloads,
     verifyFileResponse,
-    visitFileListPage
+    visitFileListPage, fileRowsSelector, cannotDownloadFileNoPassword, fileNotInList
 } from "./shared/files";
 
 const state: {
@@ -69,4 +69,12 @@ Then("I should see a file download count of {int} out of {int}", (count: number,
 Then("I should see a file download count of {int}", (count: number) => {
     visitFileListPage();
     getFileDownloads().first().should('have.text', `${count}`);
+});
+
+Then("I can no longer download the file", () => {
+    cannotDownloadFileNoPassword(state.fileLink);
+});
+
+Then("it no longer shows up in the file list", () => {
+    fileNotInList(state.fileLink);
 });
