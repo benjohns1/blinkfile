@@ -162,5 +162,6 @@ Then("I can no longer download the file", () => {
 });
 
 Then("it no longer shows up in the file list", () => {
+    visitFileListPage();
     fileNotInList(state.fileLink);
 });

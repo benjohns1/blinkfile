@@ -62,12 +62,10 @@ Then("I should see the file at the top of the list", () => {
 });
 
 Then("I should see a file download count of {int} out of {int}", (count: number, limit: number) => {
-    visitFileListPage();
     getFileDownloads().first().should('have.text', `${count}/${limit}`);
 });
 
 Then("I should see a file download count of {int}", (count: number) => {
-    visitFileListPage();
     getFileDownloads().first().should('have.text', `${count}`);
 });
 

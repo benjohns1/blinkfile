@@ -48,6 +48,7 @@ type (
 		UploadFile(ctx context.Context, args app.UploadFileArgs) error
 		DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID blinkfile.FileID, pass string) (blinkfile.FileHeader, error)
 		DeleteFiles(context.Context, blinkfile.UserID, []blinkfile.FileID) error
+		SubscribeToFileChanges(userID blinkfile.UserID) (<-chan app.FileEvent, func())
 
 		app.Log
 	}
@@ -201,6 +202,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		upload := authenticated.Post("/files", w.f(uploadFile))
 		upload.Use(maxSize(cfg.MaxFileByteSize))
 		authenticated.Post("/files/delete", w.f(deleteFiles))
+		authenticated.Any("/files/notifications", w.f(fileNotifications))
 		if cfg.TestAutomator != nil {
 			authenticated.Post("/test-automation", func(ctx iris.Context) {
 				var deleteUserFiles blinkfile.UserID

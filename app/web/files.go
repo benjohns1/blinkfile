@@ -1,8 +1,11 @@
 package web
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -36,6 +39,26 @@ type (
 	}
 )
 
+func fileToView(file blinkfile.FileHeader) FileView {
+	var expires string
+	if file.Expires.IsZero() {
+		expires = "Never"
+	} else {
+		expires = file.Expires.Format(time.RFC3339)
+	}
+	return FileView{
+		ID:                string(file.ID),
+		Name:              file.Name,
+		Uploaded:          file.Created.Format(time.RFC3339),
+		Expires:           expires,
+		Downloads:         file.Downloads,
+		DownloadLimit:     file.DownloadLimit,
+		ByteSize:          file.Size,
+		Size:              formatFileSize(file.Size),
+		PasswordProtected: file.PasswordHash != "",
+	}
+}
+
 func showFiles(ctx iris.Context, a App) error {
 	owner := loggedInUser(ctx)
 	files, err := a.ListFiles(ctx, owner)
@@ -44,23 +67,7 @@ func showFiles(ctx iris.Context, a App) error {
 	}
 	fileList := make([]FileView, 0, len(files))
 	for _, file := range files {
-		var expires string
-		if file.Expires.IsZero() {
-			expires = "Never"
-		} else {
-			expires = file.Expires.Format(time.RFC3339)
-		}
-		fileList = append(fileList, FileView{
-			ID:                string(file.ID),
-			Name:              file.Name,
-			Uploaded:          file.Created.Format(time.RFC3339),
-			Expires:           expires,
-			Downloads:         file.Downloads,
-			DownloadLimit:     file.DownloadLimit,
-			ByteSize:          file.Size,
-			Size:              formatFileSize(file.Size),
-			PasswordProtected: file.PasswordHash != "",
-		})
+		fileList = append(fileList, fileToView(file))
 	}
 	ctx.ViewData("content", FilesView{
 		Files:       fileList,
@@ -191,4 +198,46 @@ func deleteFiles(ctx iris.Context, a App) error {
 
 	ctx.Redirect("/")
 	return nil
+}
+
+func fileNotifications(irisCtx iris.Context, a App) error {
+	w := irisCtx.ResponseWriter()
+	userID := loggedInUser(irisCtx)
+	ctx := irisCtx.Request().Context()
+	return subscribeToFileChanges(ctx, w, userID, a)
+}
+
+const sseConnectionTTL = 5 * time.Minute
+
+func subscribeToFileChanges(ctx context.Context, w http.ResponseWriter, userID blinkfile.UserID, a App) error {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		return fmt.Errorf("streaming unsupported")
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	changes, unsub := a.SubscribeToFileChanges(userID)
+	defer unsub()
+	for {
+		select {
+		case event, more := <-changes:
+			if !more {
+				return nil
+			}
+			data, mErr := json.Marshal(event)
+			if mErr != nil {
+				return mErr
+			}
+			a.Printf(ctx, "sending file %s event to client", event.Change)
+			_, err := fmt.Fprintf(w, "data: %s\n\n", data)
+			if err != nil {
+				return fmt.Errorf("writing event: %v", err)
+			}
+			flusher.Flush()
+		case <-time.After(sseConnectionTTL):
+			return nil
+		}
+	}
 }

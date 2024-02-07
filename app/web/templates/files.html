@@ -61,12 +61,12 @@
         <tbody>
         {{$downloadLimit := featureFlagIsOn .ctx "DownloadLimit"}}
         {{range $file := .content.Files}}
-            <tr>
+            <tr id="file_{{$file.ID}}">
                 <td data-search><a href="/file/{{$file.ID}}" target="_blank" data-test="file_link">{{$file.Name}}</a></td>
                 <td data-sort-value="{{$file.ByteSize}}">{{$file.Size}}</td>
                 <td class="datetime" data-sort-value="{{$file.Uploaded}}">{{$file.Uploaded}}</td>
                 <td class="datetime" data-sort-value="{{$file.Expires}}" data-test="expires">{{$file.Expires}}</td>
-                {{ if $downloadLimit}}<td data-test="downloads">{{$file.Downloads}}{{if (gt $file.DownloadLimit 0)}}/{{$file.DownloadLimit}}{{end}}</td>{{end}}
+                {{ if $downloadLimit}}<td data-test="downloads"><span class="download_count">{{$file.Downloads}}</span>{{if (gt $file.DownloadLimit 0)}}/{{$file.DownloadLimit}}{{end}}</td>{{end}}
                 <td data-test="access">{{if $file.PasswordProtected}}Password{{else}}Public{{end}}</td>
                 <td><label for="select-{{$file.ID}}" hidden>Select</label><input id="select-{{$file.ID}}" name="select-{{$file.ID}}" type="checkbox"></td>
             </tr>
@@ -217,4 +217,50 @@
         }
     }
     searchTable();
+
+    {{if featureFlagIsOn .ctx "DownloadLimit"}}
+    const sseNotifications = () => {
+        if (typeof(EventSource) === "undefined") {
+            return;
+        }
+        const source = new EventSource("/files/notifications");
+        source.onmessage = function(event) {
+            if (!event.data) {
+                return;
+            }
+            const data = JSON.parse(event.data);
+            switch (data.Change) {
+                case "deleted":
+                    deleteFileRow(data.ID);
+                    return;
+                case "downloaded":
+                    if (data.DownloadLimit > 0 && data.Downloads >= data.DownloadLimit) {
+                        deleteFileRow(data.ID);
+                        return;
+                    }
+                    updateDownloadCount(data.ID, data.Downloads);
+                    return;
+            }
+        };
+    }
+    sseNotifications();
+
+    const deleteFileRow = (id) => {
+        const fileElem = document.getElementById("file_" + id);
+        if (fileElem) {
+            fileElem.remove();
+        }
+    }
+
+    const updateDownloadCount = (id, count) => {
+        const fileElem = document.getElementById("file_" + id);
+        if (!fileElem) {
+            return;
+        }
+        const countElem = fileElem.querySelector("td .download_count");
+        if (countElem) {
+            countElem.innerHTML = count;
+        }
+    }
+    {{end}}
 </script>

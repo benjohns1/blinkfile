@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/benjohns1/blinkfile"
@@ -108,6 +109,7 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 	if err != nil {
 		return Err(ErrRepo, err)
 	}
+	fileChanged(ctx, file.Owner, FileEvent{FileHeader: file.FileHeader, Change: FileUploaded})
 	return nil
 }
 
@@ -147,6 +149,7 @@ func (a *App) DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID 
 	if err != nil {
 		return blinkfile.FileHeader{}, Err(ErrRepo, err)
 	}
+	fileChanged(ctx, file.Owner, FileEvent{FileHeader: file, Change: FileDownloaded})
 	return file, nil
 }
 
@@ -157,6 +160,12 @@ func (a *App) DeleteFiles(ctx context.Context, owner blinkfile.UserID, deleteFil
 	err := a.cfg.FileRepo.Delete(ctx, owner, deleteFiles)
 	if err != nil {
 		return Err(ErrRepo, err)
+	}
+	for _, fileID := range deleteFiles {
+		fileChanged(ctx, owner, FileEvent{
+			FileHeader: blinkfile.FileHeader{ID: fileID},
+			Change:     FileDeleted,
+		})
 	}
 	return nil
 }
@@ -171,4 +180,63 @@ func (a *App) DeleteExpiredFiles(ctx context.Context) error {
 		return Err(ErrRepo, err)
 	}
 	return nil
+}
+
+var (
+	subscriptions = map[blinkfile.UserID]map[uint64]chan FileEvent{}
+	subKey        uint64
+	subMutex      sync.Mutex
+)
+
+func (a *App) SubscribeToFileChanges(userID blinkfile.UserID) (<-chan FileEvent, func()) {
+	subMutex.Lock()
+	defer subMutex.Unlock()
+	if _, ok := subscriptions[userID]; !ok {
+		subscriptions[userID] = make(map[uint64]chan FileEvent, 1)
+	}
+	key := subKey
+	subKey++
+	sub := make(chan FileEvent)
+	subscriptions[userID][key] = sub
+	return sub, func() {
+		subMutex.Lock()
+		defer subMutex.Unlock()
+		if _, ok := subscriptions[userID][key]; !ok {
+			return
+		}
+		close(sub)
+		delete(subscriptions[userID], key)
+		if len(subscriptions[userID]) == 0 {
+			delete(subscriptions, userID)
+		}
+	}
+}
+
+type (
+	FileEvent struct {
+		blinkfile.FileHeader
+		Change EventType
+	}
+	EventType string
+)
+
+const (
+	FileDownloaded EventType = "downloaded"
+	FileUploaded   EventType = "uploaded"
+	FileDeleted    EventType = "deleted"
+)
+
+func fileChanged(_ context.Context, user blinkfile.UserID, file FileEvent) {
+	subMutex.Lock()
+	defer subMutex.Unlock()
+	subs, ok := subscriptions[user]
+	if !ok {
+		return
+	}
+	for _, sub := range subs {
+		select {
+		case sub <- file:
+		default:
+		}
+	}
 }

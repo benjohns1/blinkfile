@@ -92,6 +92,5 @@ export const cannotDownloadFileNoPassword = (link: string) => {
 };
 
 export const fileNotInList = (link: string) => {
-    visitFileListPage();
     cy.get(`${fileRowsSelector} [href=\"${link}\"]`).should("not.exist");
 };
