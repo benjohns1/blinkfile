@@ -103,6 +103,9 @@ func (a *App) UploadFile(ctx context.Context, args UploadFileArgs) error {
 		DownloadLimit: args.DownloadLimit,
 	})
 	if err != nil {
+		if errors.Is(err, blinkfile.ErrExpirationInPast) {
+			return ErrUser("Error uploading file", "Cannot upload a file that expires in the past.", err)
+		}
 		return Err(ErrBadRequest, err)
 	}
 	err = a.cfg.FileRepo.Save(ctx, file)

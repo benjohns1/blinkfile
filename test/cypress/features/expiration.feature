@@ -25,3 +25,9 @@ Scenario: A file is removed after it expires
   When "3 days" has passed
   Then I can no longer download the file
   And it no longer shows up in the file list
+
+Scenario: Cannot upload a file that expires in the past
+  Given I have selected the file "files/expiration.txt" to upload
+  When I set it to expire in "-1 minutes"
+  And I try to upload the file
+  Then I should see an error message that contains "Cannot upload a file that expires in the past"

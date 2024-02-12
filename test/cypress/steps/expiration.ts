@@ -11,7 +11,12 @@ import {
     getFileExpirations,
     getExpiresInField,
     getExpiresInUnitField,
-    verifyFileResponse, visitFileListPage, fileRowsSelector, cannotDownloadFileNoPassword, fileNotInList
+    verifyFileResponse,
+    visitFileListPage,
+    fileRowsSelector,
+    cannotDownloadFileNoPassword,
+    fileNotInList,
+    shouldSeeUploadFailureMessage
 } from "./shared/files";
 import {login, logout} from "./shared/login";
 import dayjs from "dayjs";
@@ -65,11 +70,17 @@ When("I enter {string} for the expiration date", (date: string) => {
 const expireIn = (expiresIn: string) => {
     let expiresInAmount: string;
     let expiresInUnit: string;
-    if (expiresIn === "3 days") {
-        expiresInAmount = "3";
-        expiresInUnit = "d";
-    } else {
-        throw `expiresIn string ${expiresIn} not implemented`;
+    switch (expiresIn) {
+        case "3 days":
+            expiresInAmount = "3";
+            expiresInUnit = "d";
+            break;
+        case "-1 minutes":
+            expiresInAmount = "-1";
+            expiresInUnit = "m";
+            break;
+        default:
+            throw `expiresIn string ${expiresIn} not implemented`;
     }
     getExpiresInField().type(expiresInAmount);
     getExpiresInUnitField().select(expiresInUnit);
@@ -91,6 +102,10 @@ const uploadSelectedFile = () => {
 
 When("I upload the file", () => {
     uploadSelectedFile();
+});
+
+When("I try to upload the file", () => {
+    getUploadButton().click();
 });
 
 Then("it should upload successfully", () => {
@@ -165,3 +180,5 @@ Then("it no longer shows up in the file list", () => {
     visitFileListPage();
     fileNotInList(state.fileLink);
 });
+
+Then("I should see an error message that contains {string}", shouldSeeUploadFailureMessage);

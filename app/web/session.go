@@ -35,6 +35,16 @@ func setFlashSuccess(ctx iris.Context, msg string) {
 	sess.SetFlash(flashMessageKey, view)
 }
 
+func setFlashErr(ctx iris.Context, a App, err error) {
+	sess := sessions.Get(ctx)
+	if sess == nil {
+		return
+	}
+	view := MessageView{ErrorView: ParseAppErr(ctx, a, err)}
+
+	sess.SetFlash(flashMessageKey, view)
+}
+
 func flashMessageView(ctx iris.Context) MessageView {
 	sess := sessions.Get(ctx)
 	if sess == nil {

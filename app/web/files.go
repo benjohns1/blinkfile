@@ -92,9 +92,33 @@ func formatFileSize(size int64) string {
 }
 
 func uploadFile(ctx iris.Context, a App) error {
+	filename, err := doFileUpload(ctx, a)
+	if err != nil {
+		setFlashErr(ctx, a, err)
+	} else {
+		setFlashSuccess(ctx, fmt.Sprintf("Successfully uploaded %s", filename))
+	}
+	ctx.Redirect("/")
+	return nil
+}
+
+func doFileUpload(ctx iris.Context, a App) (string, error) {
+	args, err := parseFileUploadArgs(ctx)
+	if err != nil {
+		return "", err
+	}
+	err = a.UploadFile(ctx, args)
+	if err != nil {
+		return "", err
+	}
+	return args.Filename, nil
+}
+
+func parseFileUploadArgs(ctx iris.Context) (app.UploadFileArgs, error) {
+	var empty app.UploadFileArgs
 	file, header, err := ctx.FormFile("file")
 	if err != nil {
-		return app.ErrUser("Invalid file.", "We couldn't retrieve the uploaded file, please try again.", err)
+		return empty, app.ErrUser("Invalid file.", "We couldn't retrieve the uploaded file, please try again.", err)
 	}
 
 	var expiresIn longduration.LongDuration
@@ -108,7 +132,7 @@ func uploadFile(ctx iris.Context, a App) error {
 		expires, err = time.Parse(time.RFC3339, expirationTime)
 		if err != nil {
 			err = fmt.Errorf("parsing expiration time %q: %w", expirationTime, err)
-			return app.ErrUser("Invalid expiration time.", fmt.Sprintf("We couldn't understand the file expiration time %q, please make sure the date format is correct.", expirationTime), err)
+			return empty, app.ErrUser("Invalid expiration time.", fmt.Sprintf("We couldn't understand the file expiration time %q, please make sure the date format is correct.", expirationTime), err)
 		}
 	}
 	var downloadLimit int64
@@ -116,10 +140,10 @@ func uploadFile(ctx iris.Context, a App) error {
 	if downloadLimitStr != "" {
 		_, err = fmt.Sscan(downloadLimitStr, &downloadLimit)
 		if err != nil {
-			return app.ErrUser("Invalid download limit.", "Invalid file download limit, please make sure it's a valid number.", err)
+			return empty, app.ErrUser("Invalid download limit.", "Invalid file download limit, please make sure it's a valid number.", err)
 		}
 	}
-	args := app.UploadFileArgs{
+	return app.UploadFileArgs{
 		Filename:      header.Filename,
 		Owner:         loggedInUser(ctx),
 		Reader:        file,
@@ -128,14 +152,7 @@ func uploadFile(ctx iris.Context, a App) error {
 		ExpiresIn:     expiresIn,
 		Expires:       expires,
 		DownloadLimit: downloadLimit,
-	}
-	err = a.UploadFile(ctx, args)
-	if err != nil {
-		return err
-	}
-	setFlashSuccess(ctx, fmt.Sprintf("Successfully uploaded %s", header.Filename))
-	ctx.Redirect("/")
-	return nil
+	}, nil
 }
 
 func sanitizeFilename(in string) string {

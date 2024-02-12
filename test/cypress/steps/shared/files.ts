@@ -84,6 +84,10 @@ export const shouldSeeUploadSuccessMessage = (filepath: string) => {
     getMessage().should("contain", `Successfully uploaded ${filename}`);
 };
 
+export const shouldSeeUploadFailureMessage = (contains: string) => {
+    getMessage().should("contain", contains);
+};
+
 export const cannotDownloadFileNoPassword = (link: string) => {
     cy.request(link).then(response => {
         expect(response.headers["content-type"]).to.contain("text/html");

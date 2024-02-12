@@ -76,7 +76,7 @@ func UploadFile(args UploadFileArgs) (file File, err error) {
 		expires = args.Expires
 	}
 	if !expires.IsZero() && !expires.After(now) {
-		return File{}, fmt.Errorf("expiration cannot be set in the past")
+		return File{}, ErrExpirationInPast
 	}
 	if args.DownloadLimit < 0 {
 		return File{}, fmt.Errorf("download limit cannot be negative")
@@ -101,6 +101,7 @@ var (
 	ErrFilePasswordInvalid  = fmt.Errorf("invalid file password")
 	ErrFileExpired          = fmt.Errorf("file has expired")
 	ErrDownloadLimitReached = fmt.Errorf("file download limit reached")
+	ErrExpirationInPast     = fmt.Errorf("expiration cannot be set in the past")
 )
 
 func (f *FileHeader) Download(user UserID, password string, matchFunc PasswordMatchFunc, nowFunc NowFunc) (err error) {
