@@ -25,3 +25,8 @@ Scenario: The file is removed after downloading it the maximum number of times
   When I download the file 3 times
   Then I can no longer download the file
   And it no longer shows up in the file list
+
+Scenario: Cannot upload a file that has a negative download limit
+  Given I have selected the file "files/download-limit.txt" to upload
+  When I set its download limit to -1
+  Then I should not be able to upload the file

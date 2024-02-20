@@ -76,3 +76,18 @@ Then("I can no longer download the file", () => {
 Then("it no longer shows up in the file list", () => {
     fileNotInList(state.fileLink);
 });
+
+Given("I have selected the file {string} to upload", (name: string) => {
+    visitFileUploadPage();
+    state.fileToUpload = `features/${name}`;
+    deleteDownloadsFolder();
+    getFileBrowser().selectFile(state.fileToUpload);
+});
+
+When("I set its download limit to {int}", (limit: number) => {
+    getDownloadLimitField().type(limit.toString());
+});
+
+Then("I should not be able to upload the file", () => {
+    getUploadButton().should('be.disabled');
+});

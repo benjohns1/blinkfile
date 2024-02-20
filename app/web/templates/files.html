@@ -35,7 +35,7 @@
     {{ if featureFlagIsOn .ctx "DownloadLimit" }}
     <div>
         <label for="download_limit" hidden>Download Limit</label>
-        <input id="download_limit" type="number" name="download_limit" placeholder="Download Limit" data-test="download_limit"/>
+        <input id="download_limit" type="number" name="download_limit" placeholder="Download Limit" data-test="download_limit" min="1"/>
     </div>
     {{end}}
     <input id="submit_file_upload" type="submit" value="Upload" data-test="upload"/>
@@ -95,6 +95,7 @@
             document.getElementById("file"),
             document.getElementById("expire_in_amount"),
             document.getElementById("expiration_time"),
+            document.getElementById("download_limit"),
         ]
         const onInput = () => {
             let valid = true;
