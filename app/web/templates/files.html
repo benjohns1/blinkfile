@@ -4,7 +4,7 @@
     <h4 class="form_header">Upload File</h4>
     <div>
         <label for="file" hidden>File</label>
-        <input id="file" type="file" name="file" placeholder="File" data-test="file"/>
+        <input id="file" type="file" name="file" placeholder="File" data-test="file" required/>
     </div>
     <div>
         <label for="password" hidden>Password</label>
@@ -12,7 +12,7 @@
     </div>
     <div style="float: left">
         <label for="expire_in_amount" hidden>Expires In</label>
-        <input id="expire_in_amount" type="number" name="expire_in_amount" placeholder="Expires In" data-test="expire_in"/>
+        <input id="expire_in_amount" type="number" name="expire_in_amount" placeholder="Expires In" data-test="expire_in" min="1"/>
     </div>
     <div style="float: left">
         <label for="expire_in_unit" hidden>Expiration Unit</label>
@@ -91,14 +91,36 @@
 
     const uploadForm = () => {
         const submitElem = document.getElementById("submit_file_upload");
-        const fileElem = document.getElementById("file");
-        const checkEnableSubmit = () => {
-            attr(submitElem, "disabled", !fileElem.value)
+        const fields = [
+            document.getElementById("file"),
+            document.getElementById("expire_in_amount"),
+            document.getElementById("expiration_time"),
+        ]
+        const onInput = () => {
+            let valid = true;
+            for (let i = 0; i < fields.length; i++) {
+                if (!fields[i].checkValidity()) {
+                    valid = false;
+                } else {
+                    fields[i].classList.remove("warn");
+                }
+            }
+            attr(submitElem, "disabled", !valid)
         }
-        fileElem.addEventListener("change", () => {
-            checkEnableSubmit();
-        });
-        checkEnableSubmit();
+        const onChange = () => {
+            for (let i = 0; i < fields.length; i++) {
+                if (fields[i].checkValidity()) {
+                    fields[i].classList.remove("warn");
+                } else {
+                    fields[i].classList.add("warn");
+                }
+            }
+        }
+        for (let i = 0; i < fields.length; i++) {
+            fields[i].addEventListener("input", onInput);
+            fields[i].addEventListener("change", onChange);
+        }
+        onInput();
     }
     uploadForm();
 
@@ -131,6 +153,8 @@
                 expiration = date.toISOString();
             }
             expirationElem.value = expiration;
+            expirationElem.dispatchEvent(new Event('change'));
+            expirationElem.dispatchEvent(new Event('input'));
         }
         datepickerElem.addEventListener("changeDate", (e) => {
             datePickerChanged(e.detail.date);

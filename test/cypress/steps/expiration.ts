@@ -1,4 +1,4 @@
-import {Before, Given, When, Then} from "@badeball/cypress-cucumber-preprocessor";
+import {Given, When, Then} from "@badeball/cypress-cucumber-preprocessor";
 import {
     getFileBrowser,
     getFileLinks,
@@ -13,12 +13,10 @@ import {
     getExpiresInUnitField,
     verifyFileResponse,
     visitFileListPage,
-    fileRowsSelector,
     cannotDownloadFileNoPassword,
-    fileNotInList,
-    shouldSeeUploadFailureMessage
+    fileNotInList
 } from "./shared/files";
-import {login, logout} from "./shared/login";
+import {login} from "./shared/login";
 import dayjs from "dayjs";
 
 const state: {
@@ -181,4 +179,6 @@ Then("it no longer shows up in the file list", () => {
     fileNotInList(state.fileLink);
 });
 
-Then("I should see an error message that contains {string}", shouldSeeUploadFailureMessage);
+Then("I should not be able to upload the file", () => {
+    getUploadButton().should('be.disabled');
+});
