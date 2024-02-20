@@ -122,9 +122,9 @@ func parseFileUploadArgs(ctx iris.Context) (app.UploadFileArgs, error) {
 	}
 
 	var expiresIn longduration.LongDuration
-	expireFutureAmount := ctx.FormValue("expire_future_amount")
+	expireFutureAmount := ctx.FormValue("expire_in_amount")
 	if expireFutureAmount != "" {
-		expiresIn = longduration.LongDuration(fmt.Sprintf("%s%s", expireFutureAmount, ctx.FormValue("expire_future_unit")))
+		expiresIn = longduration.LongDuration(fmt.Sprintf("%s%s", expireFutureAmount, ctx.FormValue("expire_in_unit")))
 	}
 	var expires time.Time
 	expirationTime := ctx.FormValue("expiration_time")

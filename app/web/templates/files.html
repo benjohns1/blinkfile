@@ -11,12 +11,12 @@
         <input id="password" type="password" name="password" placeholder="Password" data-test="password"/>
     </div>
     <div style="float: left">
-        <label for="expire_future_amount" hidden>Expires In</label>
-        <input id="expire_future_amount" type="number" name="expire_future_amount" placeholder="Expires In" data-test="expire_in"/>
+        <label for="expire_in_amount" hidden>Expires In</label>
+        <input id="expire_in_amount" type="number" name="expire_in_amount" placeholder="Expires In" data-test="expire_in"/>
     </div>
     <div style="float: left">
-        <label for="expire_future_unit" hidden>Expiration Unit</label>
-        <select id="expire_future_unit" name="expire_future_unit" data-test="expire_in_unit">
+        <label for="expire_in_unit" hidden>Expiration Unit</label>
+        <select id="expire_in_unit" name="expire_in_unit" data-test="expire_in_unit">
             <option value="m">Minutes</option>
             <option value="h">Hours</option>
             <option value="d" selected="">Days</option>
@@ -103,7 +103,7 @@
     uploadForm();
 
     const expiration = () => {
-        const expiresInElem = document.getElementById("expire_future_amount");
+        const expiresInElem = document.getElementById("expire_in_amount");
         const datepickerElem = document.getElementById("expiration_date_display");
         const expirationDateElem = document.getElementById("expiration_date_fields");
 
