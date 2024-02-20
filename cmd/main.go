@@ -50,7 +50,10 @@ func run(ctx context.Context) (err error) {
 	l := log.New(log.Config{GetRequestID: request.GetID})
 	l.Printf(ctx, "Running build %q", build)
 
-	ff, err := featureflag.New(featureflag.WithFeaturesFromEnvironment("FEATURE_FLAG_"))
+	ff, err := featureflag.New(
+		featureflag.WithFeaturesFromEnvironment("FEATURE_FLAG_"),
+		featureflag.WithReleasedFeatures("DownloadLimit"),
+	)
 	if err != nil {
 		return err
 	}

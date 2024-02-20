@@ -60,6 +60,15 @@ func WithFeaturesFromEnvironment(prefix string) ConfigOption {
 	}
 }
 
+func WithReleasedFeatures(features ...string) ConfigOption {
+	return func(ff *FeatureFlags) error {
+		for _, feature := range features {
+			ff.features[Name(feature)] = true
+		}
+		return nil
+	}
+}
+
 func New(opts ...ConfigOption) (*FeatureFlags, error) {
 	ff := FeatureFlags{
 		features: make(map[Name]bool),
