@@ -199,6 +199,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	{
 		authenticated.Use(w.f(loginRequired))
 		authenticated.Get("/", w.f(showFiles))
+		authenticated.Get("/users", w.f(showUsers))
 		upload := authenticated.Post("/files", w.f(uploadFile))
 		upload.Use(maxSize(cfg.MaxFileByteSize))
 		authenticated.Post("/files/delete", w.f(deleteFiles))
