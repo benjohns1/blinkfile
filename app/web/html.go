@@ -45,10 +45,12 @@ type (
 		Logout(context.Context, app.Token) error
 		IsAuthenticated(context.Context, app.Token) (blinkfile.UserID, bool, error)
 		ListFiles(context.Context, blinkfile.UserID) ([]blinkfile.FileHeader, error)
-		UploadFile(ctx context.Context, args app.UploadFileArgs) error
+		UploadFile(context.Context, app.UploadFileArgs) error
 		DownloadFile(ctx context.Context, userID blinkfile.UserID, fileID blinkfile.FileID, pass string) (blinkfile.FileHeader, error)
 		DeleteFiles(context.Context, blinkfile.UserID, []blinkfile.FileID) error
-		SubscribeToFileChanges(userID blinkfile.UserID) (<-chan app.FileEvent, func())
+		SubscribeToFileChanges(blinkfile.UserID) (<-chan app.FileEvent, func())
+		CreateUser(context.Context, app.CreateUserArgs) error
+		ListUsers(context.Context) ([]app.User, error)
 
 		app.Log
 	}
@@ -199,11 +201,16 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 	{
 		authenticated.Use(w.f(loginRequired))
 		authenticated.Get("/", w.f(showFiles))
-		authenticated.Get("/users", w.f(showUsers))
 		upload := authenticated.Post("/files", w.f(uploadFile))
 		upload.Use(maxSize(cfg.MaxFileByteSize))
 		authenticated.Post("/files/delete", w.f(deleteFiles))
 		authenticated.Any("/files/notifications", w.f(fileNotifications))
+
+		if app.FeatureFlagIsOn(ctx, "UserAccounts") {
+			authenticated.Get("/users", w.f(showUsers))
+			authenticated.Post("/users", w.f(createUser))
+		}
+
 		if cfg.TestAutomator != nil {
 			authenticated.Post("/test-automation", func(ctx iris.Context) {
 				var deleteUserFiles blinkfile.UserID

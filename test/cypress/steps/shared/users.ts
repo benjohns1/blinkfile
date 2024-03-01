@@ -7,7 +7,7 @@ export const getPassword = () => {
 };
 
 export const shouldSeeCreatedSuccessMessage = (user: string) => {
-    getMessage().should("contain", `Created new user ${user}`);
+    getMessage().should("contain", `Created new user "${user}"`);
 };
 
 export const getMessage = () => {
@@ -16,4 +16,10 @@ export const getMessage = () => {
 
 export const getCreateUserButton = () => {
     return cy.get("[data-test=create_user]");
+};
+
+export const userRowsSelector = "[data-test=user_table] tbody tr";
+
+export const getUsernames = () => {
+    return cy.get(`${userRowsSelector} [data-test=username]`);
 };

@@ -1,6 +1,12 @@
 import {Given,When,Then} from "@badeball/cypress-cucumber-preprocessor";
 import {login} from "./shared/login";
-import {getUsername,getPassword,shouldSeeCreatedSuccessMessage,getCreateUserButton} from "./shared/users";
+import {
+    getUsername,
+    getPassword,
+    shouldSeeCreatedSuccessMessage,
+    getCreateUserButton,
+    getUsernames
+} from "./shared/users";
 
 const state: {
     user?: string,
@@ -23,4 +29,8 @@ When("I create a new user with the username {string} and password {string}", (us
 
 Then("I should see a user created success message", () => {
     shouldSeeCreatedSuccessMessage(state.user);
+});
+
+Then("I should see the user in the list", () => {
+    getUsernames().first().should('contain.text', state.user);
 });

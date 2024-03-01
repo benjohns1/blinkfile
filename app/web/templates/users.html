@@ -1,15 +1,32 @@
 <h3>Users</h3>
-<div id="create_user_form">{{ render "partials/message.html" .content.MessageView }}
-    <form action="/users" method="post" enctype="multipart/form-data">
-        <h4 class="form_header">Create New User</h4>
-        <div>
-            <label for="username" hidden>Username</label>
-            <input id="username" type="text" name="username" placeholder="Username" data-test="username" required/>
-        </div>
-        <div>
-            <label for="password" hidden>Password</label>
-            <input id="password" type="password" name="password" placeholder="Password" data-test="password"/>
-        </div>
-        <input id="submit_create_user" type="submit" value="Create" data-test="create_user"/>
-    </form>
-</div>
+<form action="/users" method="post" enctype="multipart/form-data">
+    <h4 class="form_header">Create New User</h4>
+    <div>
+        <label for="username" hidden>Username</label>
+        <input id="username" type="text" name="username" placeholder="Username" data-test="username" required/>
+    </div>
+    <div>
+        <label for="password" hidden>Password</label>
+        <input id="password" type="password" name="password" placeholder="Password" data-test="password" required/>
+    </div>
+    <input id="submit_create_user" type="submit" value="Create" data-test="create_user"/>
+</form>
+{{ render "partials/message.html" .content.MessageView }}
+{{- if (len .content.Users)}}
+<table id="user_table" data-test="user_table">
+    <thead>
+    <tr>
+        <th>Username</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range $user := .content.Users}}
+    <tr id="user_{{$user.ID}}">
+        <td>{{$user.Username}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+{{- else}}
+<p>No users.</p>
+{{- end}}
