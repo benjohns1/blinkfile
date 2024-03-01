@@ -16,10 +16,10 @@ type (
 	}
 )
 
-func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
+func (a *App) CreateUser(context.Context, CreateUserArgs) error {
 	return nil
 }
 
-func (a *App) ListUsers(ctx context.Context) ([]User, error) {
+func (a *App) ListUsers(context.Context) ([]User, error) {
 	return nil, nil
 }
