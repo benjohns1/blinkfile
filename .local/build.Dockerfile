@@ -15,7 +15,7 @@ RUN go mod download
 COPY . ./
 ENV OUT_DIR=/out_src
 ENV OUT_GO_CACHE=/out_cache
-CMD ["sh", "-c", "mkdir -p ${OUT_DIR} && rsync -ar ./ ${OUT_DIR} && rsync -ar /cache/ ${OUT_GO_CACHE}"]
+CMD ["sh", "-c", "mkdir -p ${OUT_DIR} && rsync -ar ./ ${OUT_DIR} --delete && rsync -ar /cache/ ${OUT_GO_CACHE} --delete"]
 
 FROM source as build
 ARG SRC_DIR=/src
