@@ -167,11 +167,11 @@ func TestNewFileRepo(t *testing.T) {
 			}
 			_, err := repo.NewFileRepo(tt.args.ctx, tt.args.cfg)
 			if !reflect.DeepEqual(err, tt.wantErr) {
-				t.Errorf("NewSession() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewFileRepo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErrLogs != nil && !reflect.DeepEqual(spy.errors, tt.wantErrLogs) {
-				t.Errorf("NewSession() error logs = %v, wantErrLogs %v", spy.errors, tt.wantErrLogs)
+				t.Errorf("NewFileRepo() error logs = %v, wantErrLogs %v", spy.errors, tt.wantErrLogs)
 			}
 		})
 	}
@@ -493,14 +493,6 @@ func TestFileRepo_PutHeader(t *testing.T) {
 			}
 		})
 	}
-}
-
-type spyLog struct {
-	errors []string
-}
-
-func (l *spyLog) Errorf(_ context.Context, format string, v ...any) {
-	l.errors = append(l.errors, fmt.Sprintf(format, v...))
 }
 
 func newTestFileRepo(t *testing.T, dir string) *repo.FileRepo {

@@ -86,7 +86,7 @@ func (r *FileRepo) buildIndices(ctx context.Context, dir string) error {
 		if !d.IsDir() {
 			return nil
 		}
-		_, _, headerFilename := filenames(dir, blinkfile.FileID(d.Name()))
+		_, _, headerFilename := r.filenames(blinkfile.FileID(d.Name()))
 		header, err := loadFileHeader(ctx, headerFilename)
 		if err != nil {
 			r.Errorf(ctx, "Loading file header %q: %v", headerFilename, err)
@@ -131,7 +131,7 @@ func (r *FileRepo) Save(ctx context.Context, file blinkfile.File) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	header := fileHeader(file.FileHeader)
-	dir, filename, headerFilename := filenames(r.dir, header.ID)
+	dir, filename, headerFilename := r.filenames(header.ID)
 	header.Location = filename
 	err := MkdirAll(dir, ModeDir|0755)
 	if err != nil {
@@ -183,7 +183,7 @@ func (r *FileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileHeader
 		return app.ErrFileNotFound
 	}
 
-	_, _, headerFilename := filenames(r.dir, header.ID)
+	_, _, headerFilename := r.filenames(header.ID)
 	header.Location = previous.Location
 
 	err := r.writeHeaderFile(ctx, headerFilename, header)
@@ -266,7 +266,7 @@ func (r *FileRepo) Get(_ context.Context, fileID blinkfile.FileID) (blinkfile.Fi
 		return blinkfile.FileHeader{}, app.ErrFileNotFound
 	}
 	if header.Location == "" {
-		_, header.Location, _ = filenames(r.dir, header.ID)
+		_, header.Location, _ = r.filenames(header.ID)
 	}
 	return blinkfile.FileHeader(header), nil
 }
@@ -303,7 +303,7 @@ func (r *FileRepo) Delete(_ context.Context, owner blinkfile.UserID, deleteFiles
 }
 
 func (r *FileRepo) deleteFile(file blinkfile.FileHeader) error {
-	dir, _, _ := filenames(r.dir, file.ID)
+	dir, _, _ := r.filenames(file.ID)
 	if err := RemoveAll(dir); err != nil {
 		return err
 	}
@@ -311,8 +311,8 @@ func (r *FileRepo) deleteFile(file blinkfile.FileHeader) error {
 	return nil
 }
 
-func filenames(root string, fileID blinkfile.FileID) (dir, file, header string) {
-	dir = fmt.Sprintf("%s/%s", root, fileID)
+func (r *FileRepo) filenames(fileID blinkfile.FileID) (dir, file, header string) {
+	dir = fmt.Sprintf("%s/%s", r.dir, fileID)
 	file = fmt.Sprintf("%s/file", dir)
 	header = fmt.Sprintf("%s/header.json", dir)
 	return filepath.Clean(dir), filepath.Clean(file), filepath.Clean(header)

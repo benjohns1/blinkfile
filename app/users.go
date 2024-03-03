@@ -13,11 +13,6 @@ type (
 		Username blinkfile.Username
 		Password string
 	}
-
-	User struct {
-		ID       string
-		Username string
-	}
 )
 
 func (a *App) CreateUser(_ context.Context, args CreateUserArgs) error {
