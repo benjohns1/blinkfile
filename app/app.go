@@ -22,6 +22,7 @@ type (
 		Clock
 		PasswordHasher
 		GenerateFileID func() (blinkfile.FileID, error)
+		GenerateUserID func() (blinkfile.UserID, error)
 	}
 
 	SessionRepo interface {
@@ -90,6 +91,9 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	if cfg.GenerateFileID == nil {
 		cfg.GenerateFileID = generateFileID
 	}
+	if cfg.GenerateUserID == nil {
+		cfg.GenerateUserID = generateUserID
+	}
 
 	a := &App{cfg, make(map[blinkfile.Username]Credentials, 1), cfg.Log}
 
@@ -101,14 +105,24 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	return a, nil
 }
 
-const fileIDLength = 64
-
 func generateFileID() (blinkfile.FileID, error) {
-	b := make([]byte, fileIDLength)
+	const fileIDLength = 64
+	id, err := generateRandomBase64(fileIDLength)
+	return blinkfile.FileID(id), err
+}
+
+func generateUserID() (blinkfile.UserID, error) {
+	const userIDLength = 32
+	id, err := generateRandomBase64(userIDLength)
+	return blinkfile.UserID(id), err
+}
+
+func generateRandomBase64(length int) (string, error) {
+	b := make([]byte, length)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}
 	id := base64.URLEncoding.EncodeToString(b)
-	return blinkfile.FileID(id), nil
+	return id, nil
 }

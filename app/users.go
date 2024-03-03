@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/benjohns1/blinkfile"
@@ -9,7 +10,7 @@ import (
 
 type (
 	CreateUserArgs struct {
-		Username string
+		Username blinkfile.Username
 		Password string
 	}
 
@@ -19,7 +20,18 @@ type (
 	}
 )
 
-func (a *App) CreateUser(context.Context, CreateUserArgs) error {
+func (a *App) CreateUser(_ context.Context, args CreateUserArgs) error {
+	uID, err := a.cfg.GenerateUserID()
+	if err != nil {
+		return Err(ErrInternal, fmt.Errorf("generating user ID: %w", err))
+	}
+	_, err = blinkfile.CreateUser(uID, args.Username, a.cfg.Now)
+	if err != nil {
+		if errors.Is(err, blinkfile.ErrEmptyUsername) {
+			return ErrUser("Error creating user", "Username cannot be empty.", err)
+		}
+		return Err(ErrInternal, err)
+	}
 	return nil
 }
 

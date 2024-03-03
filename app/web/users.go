@@ -59,7 +59,7 @@ func createUser(ctx iris.Context, a App) error {
 
 func doCreateUser(ctx iris.Context, a App) (string, error) {
 	user, pass := ctx.FormValue("username"), ctx.FormValue("password")
-	err := a.CreateUser(ctx, app.CreateUserArgs{Username: user, Password: pass})
+	err := a.CreateUser(ctx, app.CreateUserArgs{Username: blinkfile.Username(user), Password: pass})
 	if err != nil {
 		return "", err
 	}
