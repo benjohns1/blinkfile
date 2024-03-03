@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
+
+	"github.com/benjohns1/blinkfile/app"
 
 	"github.com/benjohns1/blinkfile"
 )
@@ -110,8 +113,11 @@ func (r *UserRepo) Create(_ context.Context, user blinkfile.User) error {
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if _, exists := r.idIndex[u.ID]; exists {
+		return fmt.Errorf("duplicate user ID %q already exists", u.ID)
+	}
 	if _, exists := r.usernameIndex[u.Username]; exists {
-		return fmt.Errorf("username %q already exists", u.Username)
+		return fmt.Errorf(`%w: %q`, app.ErrDuplicateUsername, u.Username)
 	}
 	err = WriteFile(r.filename(u.ID), data, 0644)
 	if err != nil {
@@ -132,5 +138,19 @@ func (r *UserRepo) ListAll(_ context.Context) ([]blinkfile.User, error) {
 	for _, user := range r.idIndex {
 		out = append(out, blinkfile.User(user))
 	}
-	return out, nil
+	return sortUsers(out), nil
+}
+
+func sortUsers(users []blinkfile.User) []blinkfile.User {
+	sort.Slice(users, func(i, j int) bool {
+		x, y := users[i], users[j]
+		if x.Username != y.Username {
+			return x.Username < y.Username
+		}
+		if !x.Created.Equal(y.Created) {
+			return x.Created.After(y.Created)
+		}
+		return x.ID < y.ID
+	})
+	return users
 }

@@ -15,6 +15,10 @@ type (
 	}
 )
 
+var (
+	ErrDuplicateUsername = fmt.Errorf("username already exists")
+)
+
 func (a *App) CreateUser(_ context.Context, args CreateUserArgs) error {
 	uID, err := a.cfg.GenerateUserID()
 	if err != nil {

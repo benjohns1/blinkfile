@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benjohns1/blinkfile/app"
+
 	"github.com/benjohns1/blinkfile"
 	"github.com/benjohns1/blinkfile/app/repo"
 )
@@ -222,7 +224,7 @@ func TestUserRepo_Create(t *testing.T) {
 			wantErr: fmt.Errorf("marshaling user data: %w", fmt.Errorf("marshal err")),
 		},
 		{
-			name: "should fail if a duplicate username already exists",
+			name: "should fail if a duplicate user ID already exists",
 			r: func(t *testing.T, dir string) *repo.UserRepo {
 				cfg := repo.UserRepoConfig{Dir: dir}
 				r, err := repo.NewUserRepo(context.Background(), cfg)
@@ -238,10 +240,32 @@ func TestUserRepo_Create(t *testing.T) {
 			args: args{
 				user: blinkfile.User{
 					ID:       "u1",
+					Username: "username2",
+				},
+			},
+			wantErr: fmt.Errorf(`duplicate user ID "u1" already exists`),
+		},
+		{
+			name: "should fail if a duplicate username already exists",
+			r: func(t *testing.T, dir string) *repo.UserRepo {
+				cfg := repo.UserRepoConfig{Dir: dir}
+				r, err := repo.NewUserRepo(context.Background(), cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				fatalOnErr(t, r.Create(context.Background(), blinkfile.User{
+					ID:       "u1",
+					Username: "username1",
+				}))
+				return r
+			},
+			args: args{
+				user: blinkfile.User{
+					ID:       "u2",
 					Username: "username1",
 				},
 			},
-			wantErr: fmt.Errorf(`username "username1" already exists`),
+			wantErr: fmt.Errorf(`%w: "username1"`, app.ErrDuplicateUsername),
 		},
 		{
 			name: "should fail if writing the user fails",
@@ -308,7 +332,7 @@ func TestUserRepo_Create(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(got, tt.wantAll) {
-				t.Errorf("Create() resulted in all users:\n\t%+v\nwantAll:\n\t%v", got, tt.wantAll)
+				t.Errorf("Create() resulted in all users:\n\t%+v\nwantAll:\n\t%+v", got, tt.wantAll)
 			}
 		})
 	}
@@ -320,4 +344,98 @@ func newTestUserRepo(t *testing.T, dir string) *repo.UserRepo {
 		t.Fatal(err)
 	}
 	return r
+}
+
+func TestUserRepo_ListAll(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name string
+		r    func(*testing.T, string) *repo.UserRepo
+		want []blinkfile.User
+	}{
+		{
+			name: "should return an empty list from an empty repo",
+			want: []blinkfile.User{},
+		},
+		{
+			name: "should return a user after creating one",
+			r: func(t *testing.T, dir string) *repo.UserRepo {
+				cfg := repo.UserRepoConfig{Dir: dir}
+				r, err := repo.NewUserRepo(ctx, cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				fatalOnErr(t, r.Create(ctx, blinkfile.User{
+					ID:       "u1",
+					Username: "username1",
+					Created:  time.Unix(1, 1),
+				}))
+				return r
+			},
+			want: []blinkfile.User{{
+				ID:       "u1",
+				Username: "username1",
+				Created:  time.Unix(1, 1),
+			}},
+		},
+		{
+			name: "should return 2 users sorted by ascending username",
+			r: func(t *testing.T, dir string) *repo.UserRepo {
+				cfg := repo.UserRepoConfig{Dir: dir}
+				r, err := repo.NewUserRepo(ctx, cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				fatalOnErr(t,
+					r.Create(ctx, blinkfile.User{
+						ID:       "u1",
+						Username: "bbb",
+						Created:  time.Unix(1, 1),
+					}),
+					r.Create(ctx, blinkfile.User{
+						ID:       "u2",
+						Username: "aaa",
+						Created:  time.Unix(1, 1),
+					}),
+				)
+				return r
+			},
+			want: []blinkfile.User{
+				{
+					ID:       "u2",
+					Username: "aaa",
+					Created:  time.Unix(1, 1),
+				},
+				{
+					ID:       "u1",
+					Username: "bbb",
+					Created:  time.Unix(1, 1),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := newUserDir(t, "list_all_test")
+			cleanDir(t, dir)
+			defer func() {
+				if !t.Failed() {
+					cleanDir(t, dir)
+				}
+			}()
+			var r *repo.UserRepo
+			if tt.r == nil {
+				r = newTestUserRepo(t, dir)
+			} else {
+				r = tt.r(t, dir)
+			}
+			got, err := r.ListAll(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListAll() got:\n\t%+v\nwant:\n\t%+v", got, tt.want)
+			}
+		})
+	}
 }
