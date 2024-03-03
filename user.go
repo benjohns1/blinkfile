@@ -10,6 +10,7 @@ type (
 	UserID   string
 
 	User struct {
+		ID UserID
 		Username
 		Created time.Time
 	}
@@ -26,6 +27,7 @@ func CreateUser(id UserID, name Username, now func() time.Time) (User, error) {
 		return User{}, fmt.Errorf("now() service cannot be empty")
 	}
 	return User{
+		ID:       id,
 		Username: name,
 		Created:  now(),
 	}, nil

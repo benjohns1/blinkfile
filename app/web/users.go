@@ -3,6 +3,8 @@ package web
 import (
 	"fmt"
 
+	"github.com/benjohns1/blinkfile"
+
 	"github.com/benjohns1/blinkfile/app"
 
 	"github.com/kataras/iris/v12"
@@ -37,10 +39,10 @@ func showUsers(ctx iris.Context, a App) error {
 	return ctx.View("users.html")
 }
 
-func userToView(user app.User) UserView {
+func userToView(u blinkfile.User) UserView {
 	return UserView{
-		ID:       user.ID,
-		Username: user.Username,
+		ID:       string(u.ID),
+		Username: string(u.Username),
 	}
 }
 

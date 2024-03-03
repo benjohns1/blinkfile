@@ -50,7 +50,7 @@ type (
 		DeleteFiles(context.Context, blinkfile.UserID, []blinkfile.FileID) error
 		SubscribeToFileChanges(blinkfile.UserID) (<-chan app.FileEvent, func())
 		CreateUser(context.Context, app.CreateUserArgs) error
-		ListUsers(context.Context) ([]app.User, error)
+		ListUsers(context.Context) ([]blinkfile.User, error)
 
 		app.Log
 	}

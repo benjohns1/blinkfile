@@ -53,6 +53,7 @@ func TestCreateUser(t *testing.T) {
 				now:  func() time.Time { return time.Unix(1, 0).UTC() },
 			},
 			want: blinkfile.User{
+				ID:       "user1",
 				Username: "user1",
 				Created:  time.Unix(1, 0).UTC(),
 			},
