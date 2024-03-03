@@ -15,27 +15,37 @@ type (
 	}
 )
 
-var (
-	ErrDuplicateUsername = fmt.Errorf("username already exists")
-)
+var ErrDuplicateUsername = fmt.Errorf("username already exists")
 
-func (a *App) CreateUser(_ context.Context, args CreateUserArgs) error {
+func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
 	uID, err := a.cfg.GenerateUserID()
 	if err != nil {
 		return Err(ErrInternal, fmt.Errorf("generating user ID: %w", err))
 	}
-	_, err = blinkfile.CreateUser(uID, args.Username, a.cfg.Now)
+	user, err := blinkfile.CreateUser(uID, args.Username, a.cfg.Now)
 	if err != nil {
 		if errors.Is(err, blinkfile.ErrEmptyUsername) {
 			return ErrUser("Error creating user", "Username cannot be empty.", err)
 		}
 		return Err(ErrInternal, err)
 	}
+	err = a.cfg.UserRepo.Create(ctx, user)
+	if err != nil {
+		if errors.Is(err, ErrDuplicateUsername) {
+			return ErrUser("Error creating user", fmt.Sprintf("Username %q already exists.", user.Username), err)
+		}
+		return Err(ErrRepo, err)
+	}
 	return nil
 }
 
-func (a *App) ListUsers(context.Context) ([]blinkfile.User, error) {
-	return nil, nil
+func (a *App) ListUsers(ctx context.Context) ([]blinkfile.User, error) {
+	users, err := a.cfg.UserRepo.ListAll(ctx)
+	if err != nil {
+		return nil, Err(ErrRepo, err)
+	}
+	return users, nil
+
 }
 
 const AdminUserID = "_admin"

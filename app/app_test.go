@@ -23,6 +23,10 @@ func AppConfigDefaults(cfg app.Config) app.Config {
 		out.FileRepo = &StubFileRepo{}
 	}
 
+	if cfg.UserRepo == nil {
+		out.UserRepo = &StubUserRepo{}
+	}
+
 	if cfg.Log == nil {
 		out.Log = log.New(log.Config{})
 	}
@@ -141,6 +145,24 @@ func (fr *StubFileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileH
 		return fr.PutHeaderFunc(ctx, putHeader)
 	}
 	return nil
+}
+
+type StubUserRepo struct {
+	CreateFunc  func(context.Context, blinkfile.User) error
+	ListAllFunc func(context.Context) ([]blinkfile.User, error)
+}
+
+func (ur *StubUserRepo) Create(ctx context.Context, u blinkfile.User) error {
+	if ur.CreateFunc != nil {
+		return ur.CreateFunc(ctx, u)
+	}
+	return nil
+}
+func (ur *StubUserRepo) ListAll(ctx context.Context) ([]blinkfile.User, error) {
+	if ur.ListAllFunc != nil {
+		return ur.ListAllFunc(ctx)
+	}
+	return nil, nil
 }
 
 func TestNew(t *testing.T) {

@@ -18,6 +18,7 @@ type (
 		SessionExpiration time.Duration
 		SessionRepo
 		FileRepo
+		UserRepo
 		GenerateToken func() (Token, error)
 		Clock
 		PasswordHasher
@@ -38,6 +39,11 @@ type (
 		Get(context.Context, blinkfile.FileID) (blinkfile.FileHeader, error)
 		Delete(context.Context, blinkfile.UserID, []blinkfile.FileID) error
 		PutHeader(context.Context, blinkfile.FileHeader) error
+	}
+
+	UserRepo interface {
+		Create(context.Context, blinkfile.User) error
+		ListAll(context.Context) ([]blinkfile.User, error)
 	}
 
 	PasswordHasher interface {

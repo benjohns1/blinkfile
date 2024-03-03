@@ -47,6 +47,13 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 
+	userRepo, err := repo.NewUserRepo(ctx, repo.UserRepoConfig{
+		Dir: fmt.Sprintf("%s/users", cfg.DataDir),
+	})
+	if err != nil {
+		return err
+	}
+
 	l := log.New(log.Config{GetRequestID: request.GetID})
 	l.Printf(ctx, "Running build %q", build)
 
@@ -72,6 +79,7 @@ func run(ctx context.Context) (err error) {
 		SessionExpiration: 7 * 24 * time.Hour,
 		SessionRepo:       sessionRepo,
 		FileRepo:          fileRepo,
+		UserRepo:          userRepo,
 		PasswordHasher:    &hash.Argon2idDefault,
 	}
 

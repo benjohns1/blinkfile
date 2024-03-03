@@ -57,10 +57,6 @@ func NewUserRepo(ctx context.Context, cfg UserRepoConfig) (*UserRepo, error) {
 	return r, err
 }
 
-func (r *UserRepo) Dir() string {
-	return r.dir
-}
-
 func (r *UserRepo) buildIndices(ctx context.Context, dir string) error {
 	return filepath.WalkDir(dir, func(path string, f fs.DirEntry, err error) error {
 		if ctxErr := ctx.Err(); ctxErr != nil {
@@ -143,14 +139,7 @@ func (r *UserRepo) ListAll(_ context.Context) ([]blinkfile.User, error) {
 
 func sortUsers(users []blinkfile.User) []blinkfile.User {
 	sort.Slice(users, func(i, j int) bool {
-		x, y := users[i], users[j]
-		if x.Username != y.Username {
-			return x.Username < y.Username
-		}
-		if !x.Created.Equal(y.Created) {
-			return x.Created.After(y.Created)
-		}
-		return x.ID < y.ID
+		return users[i].Username < users[j].Username
 	})
 	return users
 }
