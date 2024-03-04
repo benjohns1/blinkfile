@@ -143,3 +143,34 @@ func sortUsers(users []blinkfile.User) []blinkfile.User {
 	})
 	return users
 }
+
+func (r *UserRepo) Delete(_ context.Context, userID blinkfile.UserID) error {
+	if userID == "" {
+		return fmt.Errorf("user ID cannot be empty")
+	}
+	filename := r.filename(userID)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if err := RemoveFile(filename); err != nil {
+		return err
+	}
+	r.removeFromIndices(userID)
+	return nil
+}
+
+func (r *UserRepo) removeFromIndices(userID blinkfile.UserID) {
+	for _, username := range r.getUsernames(userID) {
+		delete(r.usernameIndex, username)
+	}
+	delete(r.idIndex, userID)
+}
+
+func (r *UserRepo) getUsernames(userID blinkfile.UserID) []blinkfile.Username {
+	var usernames []blinkfile.Username
+	for username, user := range r.usernameIndex {
+		if user.ID == userID {
+			usernames = append(usernames, username)
+		}
+	}
+	return usernames
+}

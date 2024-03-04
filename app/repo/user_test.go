@@ -439,3 +439,94 @@ func TestUserRepo_ListAll(t *testing.T) {
 		})
 	}
 }
+
+func TestUserRepo_Delete(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		userID blinkfile.UserID
+	}
+	tests := []struct {
+		name    string
+		patch   func(*testing.T) func()
+		r       func(t *testing.T, dir string) *repo.UserRepo
+		args    args
+		wantErr error
+		wantAll []blinkfile.User
+	}{
+		{
+			name: "should fail if user ID is empty",
+			args: args{
+				userID: "",
+			},
+			wantErr: fmt.Errorf("user ID cannot be empty"),
+		},
+		{
+			name: "should fail if user to delete doesn't exist",
+			patch: func(t *testing.T) func() {
+				prev := repo.RemoveAll
+				repo.RemoveFile = func(path string) error {
+					return fmt.Errorf("remove err")
+				}
+				return func() { repo.RemoveFile = prev }
+			},
+			args: args{
+				userID: "u1",
+			},
+			wantErr: fmt.Errorf("remove err"),
+		},
+		{
+			name: "should delete a user",
+			args: args{
+				userID: "u1",
+			},
+			r: func(t *testing.T, dir string) *repo.UserRepo {
+				cfg := repo.UserRepoConfig{Dir: dir}
+				r, err := repo.NewUserRepo(ctx, cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				fatalOnErr(t, r.Create(ctx, blinkfile.User{
+					ID:       "u1",
+					Username: "user1",
+				}))
+				return r
+			},
+			wantAll: []blinkfile.User{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.patch != nil {
+				defer tt.patch(t)()
+			}
+			dir := newUserDir(t, "delete_test")
+			cleanDir(t, dir)
+			defer func() {
+				if !t.Failed() {
+					cleanDir(t, dir)
+				}
+			}()
+			var r *repo.UserRepo
+			if tt.r == nil {
+				r = newTestUserRepo(t, dir)
+			} else {
+				r = tt.r(t, dir)
+			}
+			err := r.Delete(ctx, tt.args.userID)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantAll == nil {
+				return
+			}
+			got, err := r.ListAll(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, tt.wantAll) {
+				t.Errorf("Delete() resulted in all users:\n\t%+v\nwantAll:\n\t%+v", got, tt.wantAll)
+			}
+		})
+	}
+}

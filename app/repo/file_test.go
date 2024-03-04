@@ -937,7 +937,7 @@ func TestFileRepo_Delete(t *testing.T) {
 			defer cleanDir(t, tt.r.Dir())
 			err := tt.r.Delete(ctx, tt.args.owner, tt.args.deleteFiles)
 			if !reflect.DeepEqual(err, tt.wantErr) {
-				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.assert != nil {
