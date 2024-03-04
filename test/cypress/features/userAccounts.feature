@@ -13,15 +13,6 @@ Scenario: Create a new user with a valid username and password
   Then I should see a user created success message
   And I should see the user in the list
 
-@pending
-Scenario: Newly created user can log in
-  Given I have created a new user "testuser" with the password "password12345678"
-
-  When I log out and enter the username "testuser" and password "password123" in the login form
-
-  Then I should successfully log in
-
-@pending
 Scenario: Admin cannot create a user with a duplicate username
   Given I am on the user list page
   And a user with the name "testuser" already exists
@@ -29,6 +20,14 @@ Scenario: Admin cannot create a user with a duplicate username
   When I create a new user with the username "testuser" and password "password12345678"
 
   Then I should see a duplicate username failure message
+
+@pending
+Scenario: Newly created user can log in
+  Given I have created a new user "testuser" with the password "password12345678"
+
+  When I log out and enter the username "testuser" and password "password123" in the login form
+
+  Then I should successfully log in
 
 @pending
 Scenario Outline: Admin cannot create a user with an invalid password
