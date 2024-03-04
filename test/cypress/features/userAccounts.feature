@@ -21,6 +21,13 @@ Scenario: Admin cannot create a user with a duplicate username
 
   Then I should see a duplicate username failure message
 
+Scenario: Admin cannot create a user with the same username as the admin
+  Given I am on the user list page
+
+  When I create a new user with the username "admin" and password "password12345678"
+
+  Then I should see a reserved username failure message
+
 Scenario: Admin can delete users
   Given I am on the user list page
   And a user with the name "testuser1" exists

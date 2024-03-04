@@ -18,6 +18,13 @@ type (
 var ErrDuplicateUsername = fmt.Errorf("username already exists")
 
 func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
+	_, found, err := a.getCredentials(args.Username)
+	if err != nil {
+		return Err(ErrInternal, err)
+	}
+	if found {
+		return ErrUser("Error creating user", fmt.Sprintf("Username %q is reserved and cannot be used.", args.Username), fmt.Errorf("attempted to create a user with same username as the system admin %q", args.Username))
+	}
 	uID, err := a.cfg.GenerateUserID()
 	if err != nil {
 		return Err(ErrInternal, fmt.Errorf("generating user ID: %w", err))

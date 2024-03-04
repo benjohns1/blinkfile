@@ -66,6 +66,10 @@ Then("I should see a duplicate username failure message", () => {
     getMessage().should("contain", `Username "${state.user}" already exists.`);
 });
 
+Then("I should see a reserved username failure message", () => {
+    getMessage().should("contain", `Username "${state.user}" is reserved and cannot be used.`);
+});
+
 Then("I should see the user in the list", () => {
     getUsernames().first().should('contain.text', state.user);
 });

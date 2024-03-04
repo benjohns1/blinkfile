@@ -85,7 +85,11 @@ func deleteUsers(ctx iris.Context, a App) error {
 		if err != nil {
 			setFlashErr(ctx, a, err)
 		} else {
-			setFlashSuccess(ctx, fmt.Sprintf("Deleted %d users.", len(deleteUserIDs)))
+			var plural string
+			if len(deleteUserIDs) != 1 {
+				plural = "s"
+			}
+			setFlashSuccess(ctx, fmt.Sprintf("Deleted %d user%s.", len(deleteUserIDs), plural))
 		}
 	}
 
