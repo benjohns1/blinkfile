@@ -15,11 +15,22 @@ Scenario: Create a new user with a valid username and password
 
 Scenario: Admin cannot create a user with a duplicate username
   Given I am on the user list page
-  And a user with the name "testuser" already exists
+  And a user with the name "testuser" exists
 
   When I create a new user with the username "testuser" and password "password12345678"
 
   Then I should see a duplicate username failure message
+
+@implementing
+Scenario: Admin can delete users
+  Given I am on the user list page
+  And a user with the name "testuser1" exists
+  And a user with the name "testuser2" exists
+
+  When I delete users "testuser1" and "testuser2"
+
+  Then I should see a users deleted success message
+  And I should not see "testuser1" and "testuser2" in the list
 
 @pending
 Scenario: Newly created user can log in

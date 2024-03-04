@@ -32,7 +32,7 @@ Given("I am on the user list page", () => {
    cy.visit("/users");
 });
 
-Given("a user with the name {string} already exists", (user: string) => {
+Given("a user with the name {string} exists", (user: string) => {
     const validPassword = "password12345678";
     createUser(user, validPassword)
 });
