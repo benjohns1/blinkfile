@@ -3,8 +3,8 @@ Feature: User Accounts
 
 Background:
   Given I am logged in as the admin
+  And there are no other users registered
 
-@implementing
 Scenario: Create a new user with a valid username and password
   Given I am on the user list page
 

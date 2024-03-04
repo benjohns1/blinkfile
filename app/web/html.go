@@ -214,13 +214,15 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		if cfg.TestAutomator != nil {
 			authenticated.Post("/test-automation", func(ctx iris.Context) {
 				var deleteUserFiles blinkfile.UserID
-				doDelete, _ := strconv.ParseBool(ctx.FormValue("delete_user_files"))
-				if doDelete {
+				doDeleteUserFiles, _ := strconv.ParseBool(ctx.FormValue("delete_user_files"))
+				if doDeleteUserFiles {
 					deleteUserFiles = loggedInUser(ctx)
 				}
+				deleteAllUsers, _ := strconv.ParseBool(ctx.FormValue("delete_all_users"))
 				if aErr := cfg.TestAutomator.TestAutomation(ctx, testautomation.Args{
 					DeleteUserFiles: deleteUserFiles,
 					TimeOffset:      longduration.LongDuration(ctx.FormValue("time_offset")),
+					DeleteAllUsers:  deleteAllUsers,
 				}); aErr != nil {
 					panic(aErr)
 				}

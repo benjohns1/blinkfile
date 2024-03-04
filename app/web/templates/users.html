@@ -22,7 +22,7 @@
     <tbody>
     {{range $user := .content.Users}}
     <tr id="user_{{$user.ID}}">
-        <td>{{$user.Username}}</td>
+        <td data-test="username">{{$user.Username}}</td>
     </tr>
     {{end}}
     </tbody>

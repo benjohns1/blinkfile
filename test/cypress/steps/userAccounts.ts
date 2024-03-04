@@ -16,6 +16,19 @@ Given("I am logged in as the admin", () => {
     login("{admin}", "{admin}");
 });
 
+Given("there are no other users registered", () => {
+    cy.request({
+        method: "POST",
+        url: "/test-automation",
+        form: true,
+        body: {
+            delete_all_users: true,
+        },
+    }).then(response => {
+        cy.log(JSON.stringify(response.headers));
+    });
+});
+
 Given("I am on the user list page", () => {
    cy.visit("/users");
 });

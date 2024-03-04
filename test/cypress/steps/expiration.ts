@@ -41,7 +41,7 @@ Given("there are no uploaded files", () => {
         },
     }).then(response => {
         cy.log(JSON.stringify(response.headers));
-    })
+    });
 });
 
 const selectFile = (name: string) => {

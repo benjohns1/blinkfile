@@ -91,6 +91,7 @@ func run(ctx context.Context) (err error) {
 			Log:      l,
 			Clock:    testClock,
 			FileRepo: fileRepo,
+			UserRepo: userRepo,
 		}
 		appConfig.Clock = testClock
 	}

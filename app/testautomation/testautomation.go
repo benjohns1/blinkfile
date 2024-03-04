@@ -15,11 +15,13 @@ type (
 		Log app.Log
 		Clock
 		FileRepo
+		UserRepo UserRepo
 	}
 
 	Args struct {
 		DeleteUserFiles blinkfile.UserID
 		TimeOffset      longduration.LongDuration
+		DeleteAllUsers  bool
 	}
 
 	Clock interface {
@@ -30,6 +32,11 @@ type (
 	FileRepo interface {
 		ListByUser(context.Context, blinkfile.UserID) ([]blinkfile.FileHeader, error)
 		Delete(context.Context, blinkfile.UserID, []blinkfile.FileID) error
+	}
+
+	UserRepo interface {
+		ListAll(context.Context) ([]blinkfile.User, error)
+		Delete(context.Context, blinkfile.UserID) error
 	}
 )
 
@@ -56,6 +63,19 @@ func (a *Automator) TestAutomation(ctx context.Context, args Args) error {
 		}
 		a.Clock.SetTimeOffset(d)
 		a.Log.Printf(ctx, "fast-forwarded time by %v, new clock time is %v", args.TimeOffset, a.Clock.Now())
+	}
+	if args.DeleteAllUsers {
+		users, err := a.UserRepo.ListAll(ctx)
+		if err != nil {
+			return err
+		}
+		for _, user := range users {
+			err = a.UserRepo.Delete(ctx, user.ID)
+			if err != nil {
+				return err
+			}
+		}
+		a.Log.Printf(ctx, "deleted all users")
 	}
 	return nil
 }

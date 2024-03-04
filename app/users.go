@@ -45,7 +45,6 @@ func (a *App) ListUsers(ctx context.Context) ([]blinkfile.User, error) {
 		return nil, Err(ErrRepo, err)
 	}
 	return users, nil
-
 }
 
 const AdminUserID = "_admin"
