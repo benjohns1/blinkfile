@@ -4,7 +4,7 @@ import {
     getUsername,
     getPassword,
     getCreateUserButton,
-    getUsernames, getMessage
+    getUsernames, getMessage, getDeleteCheckboxForUsername, getDeleteUsersButton
 } from "./shared/users";
 
 const state: {
@@ -48,14 +48,29 @@ When("I create a new user with the username {string} and password {string}", (us
     state.user = user;
 });
 
+When("I delete users {string} and {string}", (user1: string, user2: string) => {
+    getDeleteCheckboxForUsername(user1).check();
+    getDeleteCheckboxForUsername(user2).check();
+    getDeleteUsersButton().click();
+});
+
 Then("I should see a user created success message", () => {
     getMessage().should("contain", `Created new user "${state.user}"`);
+});
+
+Then("I should see a users deleted success message", () => {
+    getMessage().should("contain", `Users successfully deleted.`);
+});
+
+Then("I should see a duplicate username failure message", () => {
+    getMessage().should("contain", `Username "${state.user}" already exists.`);
 });
 
 Then("I should see the user in the list", () => {
     getUsernames().first().should('contain.text', state.user);
 });
 
-Then("I should see a duplicate username failure message", () => {
-    getMessage().should("contain", `Username "${state.user}" already exists.`);
+Then("I should not see {string} or {string} in the list", (user1: string, user2: string) => {
+    getUsernames().should('not.contain.text', user1);
+    getUsernames().should('not.contain.text', user2);
 });
