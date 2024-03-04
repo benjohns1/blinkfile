@@ -44,6 +44,7 @@ type (
 	UserRepo interface {
 		Create(context.Context, blinkfile.User) error
 		ListAll(context.Context) ([]blinkfile.User, error)
+		Delete(context.Context, blinkfile.UserID) error
 	}
 
 	PasswordHasher interface {

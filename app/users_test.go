@@ -154,3 +154,48 @@ func TestApp_ListUsers(t *testing.T) {
 		})
 	}
 }
+
+func TestApp_DeleteUsers(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		userIDs []blinkfile.UserID
+	}
+	tests := []struct {
+		name    string
+		args    args
+		cfg     app.Config
+		wantErr error
+	}{
+		{
+			name: "should fail if user repo returns an error",
+			args: args{
+				userIDs: []blinkfile.UserID{"u1"},
+			},
+			cfg: app.Config{
+				UserRepo: &StubUserRepo{DeleteFunc: func(context.Context, blinkfile.UserID) error {
+					return fmt.Errorf("user repo delete err")
+				}},
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("user repo delete err"),
+			},
+		},
+		{
+			name: "should delete a user",
+			args: args{
+				userIDs: []blinkfile.UserID{"u1"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := AppConfigDefaults(tt.cfg)
+			application := NewTestApp(ctx, t, cfg)
+			err := application.DeleteUsers(ctx, tt.args.userIDs)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("DeleteUsers() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

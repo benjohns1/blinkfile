@@ -1,5 +1,5 @@
 Feature: User Accounts
-  The admin can manually create user accounts
+  The admin can manually create and delete user accounts
 
 Background:
   Given I am logged in as the admin
@@ -21,7 +21,6 @@ Scenario: Admin cannot create a user with a duplicate username
 
   Then I should see a duplicate username failure message
 
-@implementing
 Scenario: Admin can delete users
   Given I am on the user list page
   And a user with the name "testuser1" exists
@@ -29,8 +28,8 @@ Scenario: Admin can delete users
 
   When I delete users "testuser1" and "testuser2"
 
-  Then I should see a users deleted success message
-  And I should not see "testuser1" and "testuser2" in the list
+  Then I should see a 2 users deleted success message
+  And I should see an empty user list
 
 @pending
 Scenario: Newly created user can log in

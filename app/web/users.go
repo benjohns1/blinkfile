@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/benjohns1/blinkfile"
 
@@ -64,4 +65,30 @@ func doCreateUser(ctx iris.Context, a App) (string, error) {
 		return "", err
 	}
 	return user, nil
+}
+
+func deleteUsers(ctx iris.Context, a App) error {
+	req := ctx.Request()
+	err := req.ParseForm()
+	if err != nil {
+		return err
+	}
+	deleteUserIDs := make([]blinkfile.UserID, 0, len(req.Form))
+	for name, values := range req.Form {
+		if len(values) == 0 || values[0] != "on" {
+			continue
+		}
+		deleteUserIDs = append(deleteUserIDs, blinkfile.UserID(strings.TrimPrefix(name, "select-")))
+	}
+	if len(deleteUserIDs) > 0 {
+		err = a.DeleteUsers(ctx, deleteUserIDs)
+		if err != nil {
+			setFlashErr(ctx, a, err)
+		} else {
+			setFlashSuccess(ctx, fmt.Sprintf("Deleted %d users.", len(deleteUserIDs)))
+		}
+	}
+
+	ctx.Redirect("/users")
+	return nil
 }

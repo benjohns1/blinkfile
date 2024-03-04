@@ -51,6 +51,7 @@ type (
 		SubscribeToFileChanges(blinkfile.UserID) (<-chan app.FileEvent, func())
 		CreateUser(context.Context, app.CreateUserArgs) error
 		ListUsers(context.Context) ([]blinkfile.User, error)
+		DeleteUsers(context.Context, []blinkfile.UserID) error
 
 		app.Log
 	}
@@ -209,6 +210,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		if app.FeatureFlagIsOn(ctx, "UserAccounts") {
 			authenticated.Get("/users", w.f(showUsers))
 			authenticated.Post("/users", w.f(createUser))
+			authenticated.Post("/users/delete", w.f(deleteUsers))
 		}
 
 		if cfg.TestAutomator != nil {

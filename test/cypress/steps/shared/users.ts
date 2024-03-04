@@ -23,9 +23,9 @@ export const getUsernames = () => {
 };
 
 export const getDeleteCheckboxForUsername = (username: string) => {
-    return cy.get(`${userRowsSelector} [data-test=username] ~ [data-test=delete_select]`);
+    return cy.get(`[data-test=delete_users_form] ${userRowsSelector} [data-test=delete_select_${username}]`);
 };
 
 export const getDeleteUsersButton = () => {
-    return cy.get("[data-test=delete_users_form] [data-test=delete_user]");
+    return cy.get("[data-test=delete_users_form] [data-test=delete_users]");
 };

@@ -58,8 +58,8 @@ Then("I should see a user created success message", () => {
     getMessage().should("contain", `Created new user "${state.user}"`);
 });
 
-Then("I should see a users deleted success message", () => {
-    getMessage().should("contain", `Users successfully deleted.`);
+Then("I should see a {int} users deleted success message", (count: number) => {
+    getMessage().should("contain", `Deleted ${count} users.`);
 });
 
 Then("I should see a duplicate username failure message", () => {
@@ -70,7 +70,6 @@ Then("I should see the user in the list", () => {
     getUsernames().first().should('contain.text', state.user);
 });
 
-Then("I should not see {string} or {string} in the list", (user1: string, user2: string) => {
-    getUsernames().should('not.contain.text', user1);
-    getUsernames().should('not.contain.text', user2);
+Then("I should see an empty user list", () => {
+    getUsernames().should('not.exist');
 });

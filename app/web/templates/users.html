@@ -13,20 +13,26 @@
 </form>
 {{ render "partials/message.html" .content.MessageView }}
 {{- if (len .content.Users)}}
-<table id="user_table" data-test="user_table">
-    <thead>
-    <tr>
-        <th>Username</th>
-    </tr>
-    </thead>
-    <tbody>
-    {{range $user := .content.Users}}
-    <tr id="user_{{$user.ID}}">
-        <td data-test="username">{{$user.Username}}</td>
-    </tr>
-    {{end}}
-    </tbody>
-</table>
+<form action="/users/delete" method="post" data-test="delete_users_form">
+    <table id="user_table" data-test="user_table">
+        <thead>
+        <tr>
+            <th>Username</th>
+            <th>Delete</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{range $user := .content.Users}}
+        <tr id="user_{{$user.ID}}">
+            <td data-test="username">{{$user.Username}}</td>
+            <td><label for="select-{{$user.ID}}" hidden>Select</label><input id="select-{{$user.ID}}" name="select-{{$user.ID}}" type="checkbox" data-test="delete_select_{{$user.Username}}"></td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+    <br/>
+    <input class="warn right" type="submit" value="Delete Selected" data-test="delete_users"/>
+</form>
 {{- else}}
 <p>No users.</p>
 {{- end}}

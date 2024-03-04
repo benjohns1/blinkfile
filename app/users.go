@@ -47,6 +47,16 @@ func (a *App) ListUsers(ctx context.Context) ([]blinkfile.User, error) {
 	return users, nil
 }
 
+func (a *App) DeleteUsers(ctx context.Context, userIDs []blinkfile.UserID) error {
+	for _, userID := range userIDs {
+		err := a.cfg.UserRepo.Delete(ctx, userID)
+		if err != nil {
+			return Err(ErrRepo, err)
+		}
+	}
+	return nil
+}
+
 const AdminUserID = "_admin"
 
 func (a *App) registerAdminUser(ctx context.Context, username blinkfile.Username, password string) error {

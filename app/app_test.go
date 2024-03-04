@@ -150,6 +150,7 @@ func (fr *StubFileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileH
 type StubUserRepo struct {
 	CreateFunc  func(context.Context, blinkfile.User) error
 	ListAllFunc func(context.Context) ([]blinkfile.User, error)
+	DeleteFunc  func(context.Context, blinkfile.UserID) error
 }
 
 func (ur *StubUserRepo) Create(ctx context.Context, u blinkfile.User) error {
@@ -163,6 +164,12 @@ func (ur *StubUserRepo) ListAll(ctx context.Context) ([]blinkfile.User, error) {
 		return ur.ListAllFunc(ctx)
 	}
 	return nil, nil
+}
+func (ur *StubUserRepo) Delete(ctx context.Context, userID blinkfile.UserID) error {
+	if ur.DeleteFunc != nil {
+		return ur.DeleteFunc(ctx, userID)
+	}
+	return nil
 }
 
 func TestNew(t *testing.T) {
