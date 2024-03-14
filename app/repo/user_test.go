@@ -73,7 +73,7 @@ func TestNewUserRepo(t *testing.T) {
 					cancelFunc()
 					return ctx
 				}(),
-				makeCfg: func(_ *testing.T, dir string) repo.UserRepoConfig {
+				makeCfg: func(t *testing.T, dir string) repo.UserRepoConfig {
 					cfg := repo.UserRepoConfig{Dir: dir}
 					r, err := repo.NewUserRepo(context.Background(), cfg)
 					if err != nil {
