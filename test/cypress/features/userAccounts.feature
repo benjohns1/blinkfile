@@ -38,11 +38,12 @@ Scenario: Admin can delete users
   Then I should see a 2 users deleted success message
   And I should see an empty user list
 
-@pending
+@implementing
 Scenario: Newly created user can log in
   Given I have created a new user "testuser" with the password "password12345678"
 
-  When I log out and enter the username "testuser" and password "password123" in the login form
+  When I log out
+  And log in with the username "testuser" and password "password123"
 
   Then I should successfully log in
 

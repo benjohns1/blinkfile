@@ -37,11 +37,16 @@ Given("a user with the name {string} exists", (user: string) => {
     createUser(user, validPassword)
 });
 
+Given("I have created a new user {string} with the password {string}", (user: string, pass: string) => {
+    cy.visit("/users");
+    createUser(user, pass);
+});
+
 const createUser = (user: string, pass: string) => {
     getUsername().type(user);
     getPassword().type(pass);
     getCreateUserButton().click();
-}
+};
 
 When("I create a new user with the username {string} and password {string}", (user: string, pass: string) => {
     createUser(user, pass);
@@ -52,6 +57,14 @@ When("I delete users {string} and {string}", (user1: string, user2: string) => {
     getDeleteCheckboxForUsername(user1).check();
     getDeleteCheckboxForUsername(user2).check();
     getDeleteUsersButton().click();
+});
+
+When("I log out", () => {
+    cy.visit("/logout");
+});
+
+When("log in with the username {string} and password {string}", (user: string, pass: string) => {
+    login(user, pass);
 });
 
 Then("I should see a user created success message", () => {
@@ -76,4 +89,8 @@ Then("I should see the user in the list", () => {
 
 Then("I should see an empty user list", () => {
     getUsernames().should('not.exist');
+});
+
+Then("I should successfully log in", () => {
+    cy.location("pathname").should("equal", "/");
 });
