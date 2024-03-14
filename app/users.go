@@ -15,10 +15,14 @@ type (
 	}
 )
 
-var ErrDuplicateUsername = fmt.Errorf("username already exists")
+var (
+	ErrDuplicateUsername  = fmt.Errorf("username already exists")
+	ErrUsernameTaken      = fmt.Errorf("username already taken")
+	ErrCredentialNotFound = fmt.Errorf("credential not found")
+)
 
 func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
-	_, found, err := a.getCredentials(args.Username)
+	_, found, err := a.getAdminCredentials(args.Username)
 	if err != nil {
 		return Err(ErrInternal, err)
 	}
@@ -43,6 +47,26 @@ func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
 		}
 		return Err(ErrRepo, err)
 	}
+	err = a.registerCredentials(ctx, user.ID, user.Username, args.Password)
+	if err != nil {
+		if deleteErr := a.cfg.UserRepo.Delete(ctx, user.ID); deleteErr != nil {
+			a.Errorf(ctx, "deleting user after failure to register credentials: %v", deleteErr)
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (a *App) registerCredentials(ctx context.Context, userID blinkfile.UserID, username blinkfile.Username, password string) error {
+	cred, err := newPasswordCredentials(userID, username, password, a.cfg.PasswordHasher.Hash)
+	if err != nil {
+		return ErrUser("Error creating user credentials", fmt.Sprintf("Credential error: %s", err), err)
+	}
+	err = a.cfg.CredentialRepo.Set(ctx, cred)
+	if err != nil {
+		return Err(ErrRepo, err)
+	}
 	return nil
 }
 
@@ -60,6 +84,10 @@ func (a *App) DeleteUsers(ctx context.Context, userIDs []blinkfile.UserID) error
 		if err != nil {
 			return Err(ErrRepo, err)
 		}
+		err = a.cfg.CredentialRepo.Remove(ctx, userID)
+		if err != nil {
+			return Err(ErrRepo, err)
+		}
 	}
 	return nil
 }
@@ -70,11 +98,11 @@ func (a *App) registerAdminUser(ctx context.Context, username blinkfile.Username
 	if username == "" {
 		return nil
 	}
-	creds, err := newPasswordCredentials(AdminUserID, username, password, a.cfg.PasswordHasher.Hash)
+	cred, err := newPasswordCredentials(AdminUserID, username, password, a.cfg.PasswordHasher.Hash)
 	if err != nil {
 		return err
 	}
-	err = a.registerUserCredentials(creds)
+	err = a.registerAdminCredentials(cred)
 	if err != nil {
 		return err
 	}
@@ -82,12 +110,10 @@ func (a *App) registerAdminUser(ctx context.Context, username blinkfile.Username
 	return nil
 }
 
-var ErrUsernameTaken = fmt.Errorf("username already taken")
-
-func (a *App) registerUserCredentials(creds Credentials) error {
-	if _, exists := a.credentials[creds.username]; exists {
+func (a *App) registerAdminCredentials(cred Credentials) error {
+	if _, exists := a.adminCredentials[cred.Username]; exists {
 		return ErrUsernameTaken
 	}
-	a.credentials[creds.username] = creds
+	a.adminCredentials[cred.Username] = cred
 	return nil
 }

@@ -19,6 +19,7 @@ type (
 		SessionRepo
 		FileRepo
 		UserRepo
+		CredentialRepo
 		GenerateToken func() (Token, error)
 		Clock
 		PasswordHasher
@@ -47,14 +48,19 @@ type (
 		Delete(context.Context, blinkfile.UserID) error
 	}
 
+	CredentialRepo interface {
+		Set(context.Context, Credentials) error
+		Remove(context.Context, blinkfile.UserID) error
+	}
+
 	PasswordHasher interface {
 		Hash(data []byte) (hash string)
 		Match(hash string, data []byte) (matched bool, err error)
 	}
 
 	App struct {
-		cfg         Config
-		credentials map[blinkfile.Username]Credentials
+		cfg              Config
+		adminCredentials map[blinkfile.Username]Credentials
 		Log
 	}
 

@@ -15,7 +15,8 @@ type (
 		Log app.Log
 		Clock
 		FileRepo
-		UserRepo UserRepo
+		UserRepo       UserRepo
+		CredentialRepo CredentialRepo
 	}
 
 	Args struct {
@@ -37,6 +38,10 @@ type (
 	UserRepo interface {
 		ListAll(context.Context) ([]blinkfile.User, error)
 		Delete(context.Context, blinkfile.UserID) error
+	}
+
+	CredentialRepo interface {
+		Remove(context.Context, blinkfile.UserID) error
 	}
 )
 
@@ -71,6 +76,10 @@ func (a *Automator) TestAutomation(ctx context.Context, args Args) error {
 		}
 		for _, user := range users {
 			err = a.UserRepo.Delete(ctx, user.ID)
+			if err != nil {
+				return err
+			}
+			err = a.CredentialRepo.Remove(ctx, user.ID)
 			if err != nil {
 				return err
 			}

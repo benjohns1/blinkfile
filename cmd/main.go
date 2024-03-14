@@ -54,6 +54,13 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 
+	credentialRepo, err := repo.NewCredentialRepo(ctx, repo.CredentialRepoConfig{
+		Dir: fmt.Sprintf("%s/credentials", cfg.DataDir),
+	})
+	if err != nil {
+		return err
+	}
+
 	l := log.New(log.Config{GetRequestID: request.GetID})
 	l.Printf(ctx, "Running build %q", build)
 
@@ -80,6 +87,7 @@ func run(ctx context.Context) (err error) {
 		SessionRepo:       sessionRepo,
 		FileRepo:          fileRepo,
 		UserRepo:          userRepo,
+		CredentialRepo:    credentialRepo,
 		PasswordHasher:    &hash.Argon2idDefault,
 	}
 
@@ -88,10 +96,11 @@ func run(ctx context.Context) (err error) {
 		l.Printf(ctx, "WARNING: Server running with test automation enabled! DO NOT RUN IN PRODUCTION!")
 		testClock := &testautomation.TestClock{}
 		automator = &testautomation.Automator{
-			Log:      l,
-			Clock:    testClock,
-			FileRepo: fileRepo,
-			UserRepo: userRepo,
+			Log:            l,
+			Clock:          testClock,
+			FileRepo:       fileRepo,
+			UserRepo:       userRepo,
+			CredentialRepo: credentialRepo,
 		}
 		appConfig.Clock = testClock
 	}

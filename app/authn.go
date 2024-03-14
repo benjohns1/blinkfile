@@ -10,11 +10,13 @@ import (
 
 type Credentials struct {
 	blinkfile.UserID
-	username            blinkfile.Username
-	encodedPasswordHash string
+	blinkfile.Username
+	PasswordHash string
 }
 
 const passwordMinLength = 16
+
+var ErrPasswordTooShort = fmt.Errorf("password must be at least %d characters long", passwordMinLength)
 
 func newPasswordCredentials(userID blinkfile.UserID, user blinkfile.Username, pass string, hash func([]byte) string) (Credentials, error) {
 	if userID == "" {
@@ -24,13 +26,13 @@ func newPasswordCredentials(userID blinkfile.UserID, user blinkfile.Username, pa
 		return Credentials{}, fmt.Errorf("username cannot be empty")
 	}
 	if len(pass) < passwordMinLength {
-		return Credentials{}, fmt.Errorf("password must be at least %d characters long", passwordMinLength)
+		return Credentials{}, ErrPasswordTooShort
 	}
 	encodedHash := hash([]byte(pass))
 	return Credentials{
-		UserID:              userID,
-		username:            user,
-		encodedPasswordHash: encodedHash,
+		UserID:       userID,
+		Username:     user,
+		PasswordHash: encodedHash,
 	}, nil
 }
 
@@ -108,32 +110,32 @@ func (a *App) authenticate(username blinkfile.Username, password string) (blinkf
 	if password == "" {
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: password cannot be empty"))
 	}
-	credentials, found, err := a.getCredentials(username)
+	cred, found, err := a.getAdminCredentials(username)
 	if err != nil {
 		return "", Err(ErrInternal, fmt.Errorf("error retrieving credentials for %q: %w", username, err))
 	}
 	if !found {
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: no username %q found", username))
 	}
-	match, err := credentialsMatch(credentials, username, password, a.cfg.PasswordHasher.Match)
+	match, err := credentialsMatch(cred, username, password, a.cfg.PasswordHasher.Match)
 	if err != nil {
 		return "", Err(ErrInternal, fmt.Errorf("error matching credentials: %w", err))
 	}
 	if !match {
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: passwords do not match"))
 	}
-	return credentials.UserID, nil
+	return cred.UserID, nil
 }
 
 func credentialsMatch(c Credentials, username blinkfile.Username, password string, passwordMatcher func(hash string, data []byte) (matched bool, err error)) (bool, error) {
-	if !stringsAreEqual(string(c.username), string(username)) {
+	if !stringsAreEqual(string(c.Username), string(username)) {
 		return false, nil
 	}
-	return passwordMatcher(c.encodedPasswordHash, []byte(password))
+	return passwordMatcher(c.PasswordHash, []byte(password))
 }
 
-func (a *App) getCredentials(username blinkfile.Username) (Credentials, bool, error) {
-	creds, found := a.credentials[username]
+func (a *App) getAdminCredentials(username blinkfile.Username) (Credentials, bool, error) {
+	creds, found := a.adminCredentials[username]
 	if !found {
 		return Credentials{}, false, nil
 	}
@@ -141,11 +143,12 @@ func (a *App) getCredentials(username blinkfile.Username) (Credentials, bool, er
 }
 
 func (a *App) userIsValid(userID blinkfile.UserID) bool {
-	for _, creds := range a.credentials {
+	for _, creds := range a.adminCredentials {
 		if creds.UserID == userID {
 			return true
 		}
 	}
+
 	return false
 }
 

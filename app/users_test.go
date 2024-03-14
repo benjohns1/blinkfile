@@ -91,9 +91,39 @@ func TestApp_CreateUser(t *testing.T) {
 			},
 		},
 		{
-			name: "should create a new user",
+			name: "should fail if password credential is too short",
 			args: app.CreateUserArgs{
 				Username: "user1",
+				Password: "",
+			},
+			wantErr: &app.Error{
+				Type:   app.ErrBadRequest,
+				Title:  "Error creating user credentials",
+				Detail: fmt.Sprintf("Credential error: %s", app.ErrPasswordTooShort),
+				Err:    app.ErrPasswordTooShort,
+			},
+		},
+		{
+			name: "should fail if credentials cannot be stored",
+			cfg: app.Config{
+				CredentialRepo: &StubCredentialRepo{SetFunc: func(context.Context, app.Credentials) error {
+					return fmt.Errorf("cred repo err")
+				}},
+			},
+			args: app.CreateUserArgs{
+				Username: "user1",
+				Password: "1234567812345678",
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("cred repo err"),
+			},
+		},
+		{
+			name: "should successfully create a user",
+			args: app.CreateUserArgs{
+				Username: "user1",
+				Password: "1234567812345678",
 			},
 		},
 	}
@@ -179,6 +209,21 @@ func TestApp_DeleteUsers(t *testing.T) {
 			wantErr: &app.Error{
 				Type: app.ErrRepo,
 				Err:  fmt.Errorf("user repo delete err"),
+			},
+		},
+		{
+			name: "should fail if credential repo returns an error",
+			args: args{
+				userIDs: []blinkfile.UserID{"u1"},
+			},
+			cfg: app.Config{
+				CredentialRepo: &StubCredentialRepo{RemoveFunc: func(context.Context, blinkfile.UserID) error {
+					return fmt.Errorf("cred repo err")
+				}},
+			},
+			wantErr: &app.Error{
+				Type: app.ErrRepo,
+				Err:  fmt.Errorf("cred repo err"),
 			},
 		},
 		{

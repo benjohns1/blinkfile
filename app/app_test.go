@@ -27,6 +27,10 @@ func AppConfigDefaults(cfg app.Config) app.Config {
 		out.UserRepo = &StubUserRepo{}
 	}
 
+	if cfg.CredentialRepo == nil {
+		out.CredentialRepo = &StubCredentialRepo{}
+	}
+
 	if cfg.Log == nil {
 		out.Log = log.New(log.Config{})
 	}
@@ -168,6 +172,24 @@ func (ur *StubUserRepo) ListAll(ctx context.Context) ([]blinkfile.User, error) {
 func (ur *StubUserRepo) Delete(ctx context.Context, userID blinkfile.UserID) error {
 	if ur.DeleteFunc != nil {
 		return ur.DeleteFunc(ctx, userID)
+	}
+	return nil
+}
+
+type StubCredentialRepo struct {
+	SetFunc    func(context.Context, app.Credentials) error
+	RemoveFunc func(context.Context, blinkfile.UserID) error
+}
+
+func (cr *StubCredentialRepo) Set(ctx context.Context, cred app.Credentials) error {
+	if cr.SetFunc != nil {
+		return cr.SetFunc(ctx, cred)
+	}
+	return nil
+}
+func (cr *StubCredentialRepo) Remove(ctx context.Context, userID blinkfile.UserID) error {
+	if cr.RemoveFunc != nil {
+		return cr.RemoveFunc(ctx, userID)
 	}
 	return nil
 }
