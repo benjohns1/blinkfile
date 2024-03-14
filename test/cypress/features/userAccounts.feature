@@ -57,4 +57,14 @@ Scenario Outline: Admin cannot create a user with an invalid password
   Examples:
     |          password |
     |                "" |
-    | "password1234567" |
+    |       "too-short" |
+
+@pending
+Scenario: Only the admin can manage users
+  Given I have created a new user "testuser" with the password "password12345678"
+
+  When I log out
+  And log in with the username "testuser" and password "password12345678"
+
+  Then I should not see the users link
+  And I should not be able to access the user list page
