@@ -21,6 +21,7 @@ func TestApp_Login(t *testing.T) {
 	tests := []struct {
 		name            string
 		cfg             app.Config
+		arrange         func(*testing.T, *app.App)
 		args            args
 		want            app.Session
 		wantErr         error
@@ -49,6 +50,11 @@ func TestApp_Login(t *testing.T) {
 		},
 		{
 			name: "should fail authentication if username cannot be found",
+			cfg: app.Config{
+				CredentialRepo: &StubCredentialRepo{GetByUsernameFunc: func(context.Context, blinkfile.Username) (app.Credentials, error) {
+					return app.Credentials{}, app.ErrCredentialNotFound
+				}},
+			},
 			args: args{
 				username: "unknown-username",
 				password: "super-secret-password",
@@ -154,6 +160,66 @@ func TestApp_Login(t *testing.T) {
 				},
 			}},
 		},
+		{
+			name: "should successfully login a standard user and return a valid session",
+			cfg: app.Config{
+				GenerateToken: func() (app.Token, error) {
+					return "token1", nil
+				},
+				Clock:             &StaticClock{T: time.Unix(1, 1)},
+				GenerateUserID:    func() (blinkfile.UserID, error) { return "user-id-1", nil },
+				SessionExpiration: 2*time.Second + 2*time.Nanosecond,
+				CredentialRepo: func() *StubCredentialRepo {
+					var setCred app.Credentials
+					return &StubCredentialRepo{
+						SetFunc: func(_ context.Context, cred app.Credentials) error {
+							setCred = cred
+							return nil
+						},
+						GetByUsernameFunc: func(context.Context, blinkfile.Username) (app.Credentials, error) {
+							return setCred, nil
+						},
+					}
+				}(),
+			},
+			arrange: func(t *testing.T, a *app.App) {
+				err := a.CreateUser(context.Background(), app.CreateUserArgs{
+					Username: "user1",
+					Password: "user-super-secret-password1",
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			args: args{
+				username: "user1",
+				password: "user-super-secret-password1",
+				requestData: app.SessionRequestData{
+					UserAgent: "ua-data",
+					IP:        "ip-addr",
+				},
+			},
+			want: app.Session{
+				Token:    "token1",
+				UserID:   "user-id-1",
+				LoggedIn: time.Unix(1, 1),
+				Expires:  time.Unix(3, 3),
+				SessionRequestData: app.SessionRequestData{
+					UserAgent: "ua-data",
+					IP:        "ip-addr",
+				},
+			},
+			wantSessionSave: []app.Session{{
+				Token:    "token1",
+				UserID:   "user-id-1",
+				LoggedIn: time.Unix(1, 1),
+				Expires:  time.Unix(3, 3),
+				SessionRequestData: app.SessionRequestData{
+					UserAgent: "ua-data",
+					IP:        "ip-addr",
+				},
+			}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -161,6 +227,9 @@ func TestApp_Login(t *testing.T) {
 			spy := &SpySessionRepo{repo: cfg.SessionRepo}
 			cfg.SessionRepo = spy
 			application := NewTestApp(ctx, t, cfg)
+			if tt.arrange != nil {
+				tt.arrange(t, application)
+			}
 			got, err := application.Login(ctx, tt.args.username, tt.args.password, tt.args.requestData)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
@@ -316,7 +385,7 @@ func TestApp_IsAuthenticated(t *testing.T) {
 			wantErr: app.Err(app.ErrAuthnFailed, fmt.Errorf(`session is valid but user ID "user1" isn't valid`)),
 		},
 		{
-			name: "should return userID if session is valid",
+			name: "should return admin userID if session is valid",
 			cfg: app.Config{
 				SessionRepo: &StubSessionRepo{
 					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
@@ -334,6 +403,32 @@ func TestApp_IsAuthenticated(t *testing.T) {
 				token: "token1",
 			},
 			wantUserID: app.AdminUserID,
+			want:       true,
+		},
+		{
+			name: "should return standard userID if session is valid",
+			cfg: app.Config{
+				SessionRepo: &StubSessionRepo{
+					GetFunc: func(context.Context, app.Token) (app.Session, bool, error) {
+						return app.Session{
+							UserID:  "user-id-1",
+							Expires: time.Unix(1, 1),
+						}, true, nil
+					},
+				},
+				Clock: &StaticClock{T: time.Unix(1, 0)},
+				UserRepo: &StubUserRepo{
+					GetFunc: func(context.Context, blinkfile.UserID) (blinkfile.User, bool, error) {
+						return blinkfile.User{
+							ID: "user-id-1",
+						}, true, nil
+					},
+				},
+			},
+			args: args{
+				token: "token1",
+			},
+			wantUserID: "user-id-1",
 			want:       true,
 		},
 	}

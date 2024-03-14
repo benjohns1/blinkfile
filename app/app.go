@@ -44,12 +44,14 @@ type (
 
 	UserRepo interface {
 		Create(context.Context, blinkfile.User) error
+		Get(context.Context, blinkfile.UserID) (blinkfile.User, bool, error)
 		ListAll(context.Context) ([]blinkfile.User, error)
 		Delete(context.Context, blinkfile.UserID) error
 	}
 
 	CredentialRepo interface {
 		Set(context.Context, Credentials) error
+		GetByUsername(context.Context, blinkfile.Username) (Credentials, error)
 		Remove(context.Context, blinkfile.UserID) error
 	}
 

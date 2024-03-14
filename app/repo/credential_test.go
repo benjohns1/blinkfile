@@ -368,7 +368,7 @@ func TestUserRepo_Set(t *testing.T) {
 			if tt.args.cred.Username == "" {
 				return
 			}
-			got, err := r.Get(ctx, tt.args.cred.Username)
+			got, err := r.GetByUsername(ctx, tt.args.cred.Username)
 			if err != nil {
 				if tt.want != nil {
 					t.Fatal(err)
@@ -467,7 +467,7 @@ func TestUserRepo_Remove(t *testing.T) {
 			if tt.lookupUser == "" {
 				return
 			}
-			got, err := r.Get(ctx, tt.lookupUser)
+			got, err := r.GetByUsername(ctx, tt.lookupUser)
 			if err != nil {
 				if tt.want != nil {
 					t.Fatal(err)

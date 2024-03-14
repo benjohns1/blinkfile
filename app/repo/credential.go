@@ -114,10 +114,12 @@ func (r *CredentialRepo) Set(_ context.Context, cred app.Credentials) error {
 	return nil
 }
 
-func (r *CredentialRepo) Get(_ context.Context, user blinkfile.Username) (out app.Credentials, err error) {
+func (r *CredentialRepo) GetByUsername(_ context.Context, user blinkfile.Username) (out app.Credentials, err error) {
 	if user == "" {
 		return out, fmt.Errorf("username cannot be empty")
 	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	found, exists := r.usernameIndex[user]
 	if !exists {
 		return out, app.ErrCredentialNotFound

@@ -122,6 +122,20 @@ func (r *UserRepo) Create(_ context.Context, user blinkfile.User) error {
 	return nil
 }
 
+func (r *UserRepo) Get(_ context.Context, userID blinkfile.UserID) (blinkfile.User, bool, error) {
+	var user blinkfile.User
+	if userID == "" {
+		return user, false, fmt.Errorf("user ID cannot be empty")
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	found, exists := r.idIndex[userID]
+	if !exists {
+		return user, false, nil
+	}
+	return blinkfile.User(found), true, nil
+}
+
 func (r *UserRepo) filename(userID blinkfile.UserID) string {
 	return fmt.Sprintf("%s/%s.json", r.dir, userID)
 }

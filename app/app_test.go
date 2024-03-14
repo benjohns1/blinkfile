@@ -153,6 +153,7 @@ func (fr *StubFileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileH
 
 type StubUserRepo struct {
 	CreateFunc  func(context.Context, blinkfile.User) error
+	GetFunc     func(ctx context.Context, userID blinkfile.UserID) (blinkfile.User, bool, error)
 	ListAllFunc func(context.Context) ([]blinkfile.User, error)
 	DeleteFunc  func(context.Context, blinkfile.UserID) error
 }
@@ -162,6 +163,12 @@ func (ur *StubUserRepo) Create(ctx context.Context, u blinkfile.User) error {
 		return ur.CreateFunc(ctx, u)
 	}
 	return nil
+}
+func (ur *StubUserRepo) Get(ctx context.Context, userID blinkfile.UserID) (blinkfile.User, bool, error) {
+	if ur.GetFunc != nil {
+		return ur.GetFunc(ctx, userID)
+	}
+	return blinkfile.User{}, false, nil
 }
 func (ur *StubUserRepo) ListAll(ctx context.Context) ([]blinkfile.User, error) {
 	if ur.ListAllFunc != nil {
@@ -177,8 +184,9 @@ func (ur *StubUserRepo) Delete(ctx context.Context, userID blinkfile.UserID) err
 }
 
 type StubCredentialRepo struct {
-	SetFunc    func(context.Context, app.Credentials) error
-	RemoveFunc func(context.Context, blinkfile.UserID) error
+	SetFunc           func(context.Context, app.Credentials) error
+	GetByUsernameFunc func(context.Context, blinkfile.Username) (app.Credentials, error)
+	RemoveFunc        func(context.Context, blinkfile.UserID) error
 }
 
 func (cr *StubCredentialRepo) Set(ctx context.Context, cred app.Credentials) error {
@@ -186,6 +194,12 @@ func (cr *StubCredentialRepo) Set(ctx context.Context, cred app.Credentials) err
 		return cr.SetFunc(ctx, cred)
 	}
 	return nil
+}
+func (cr *StubCredentialRepo) GetByUsername(ctx context.Context, user blinkfile.Username) (app.Credentials, error) {
+	if cr.GetByUsernameFunc != nil {
+		return cr.GetByUsernameFunc(ctx, user)
+	}
+	return app.Credentials{}, nil
 }
 func (cr *StubCredentialRepo) Remove(ctx context.Context, userID blinkfile.UserID) error {
 	if cr.RemoveFunc != nil {

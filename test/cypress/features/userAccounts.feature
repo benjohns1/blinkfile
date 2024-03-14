@@ -38,7 +38,6 @@ Scenario: Admin can delete users
   Then I should see a 2 users deleted success message
   And I should see an empty user list
 
-@implementing
 Scenario: Newly created user can log in
   Given I have created a new user "testuser" with the password "password12345678"
 

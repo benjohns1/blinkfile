@@ -530,3 +530,87 @@ func TestUserRepo_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestUserRepo_Get(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		userID blinkfile.UserID
+	}
+	tests := []struct {
+		name      string
+		r         func(t *testing.T, dir string) *repo.UserRepo
+		args      args
+		wantErr   error
+		wantFound bool
+		want      blinkfile.User
+	}{
+		{
+			name: "should fail if user ID is empty",
+			args: args{
+				userID: "",
+			},
+			wantErr: fmt.Errorf("user ID cannot be empty"),
+		},
+		{
+			name: "should not find a user if user doesn't exist",
+			args: args{
+				userID: "u1",
+			},
+			wantFound: false,
+		},
+		{
+			name: "should get a user",
+			args: args{
+				userID: "u1",
+			},
+			r: func(t *testing.T, dir string) *repo.UserRepo {
+				cfg := repo.UserRepoConfig{Dir: dir}
+				r, err := repo.NewUserRepo(ctx, cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				fatalOnErr(t, r.Create(ctx, blinkfile.User{
+					ID:       "u1",
+					Username: "user1",
+					Created:  time.Unix(1, 1).UTC(),
+				}))
+				return r
+			},
+			wantFound: true,
+			want: blinkfile.User{
+				ID:       "u1",
+				Username: "user1",
+				Created:  time.Unix(1, 1).UTC(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := newUserDir(t, "get_test")
+			cleanDir(t, dir)
+			defer func() {
+				if !t.Failed() {
+					cleanDir(t, dir)
+				}
+			}()
+			var r *repo.UserRepo
+			if tt.r == nil {
+				r = newTestUserRepo(t, dir)
+			} else {
+				r = tt.r(t, dir)
+			}
+			got, found, err := r.Get(ctx, tt.args.userID)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if found != tt.wantFound {
+				t.Errorf("Get() found: %v, want: %v", found, tt.wantFound)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Get():\n\t%+v\nwant:\n\t%+v", got, tt.want)
+			}
+		})
+	}
+}

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 
 	"github.com/benjohns1/blinkfile"
@@ -53,7 +54,7 @@ func (a *App) IsAuthenticated(ctx context.Context, token Token) (blinkfile.UserI
 	if !session.isValid(a.cfg.Now) {
 		return "", false, nil
 	}
-	if !a.userIsValid(session.UserID) {
+	if !a.userIsValid(ctx, session.UserID) {
 		return "", false, Err(ErrAuthnFailed, fmt.Errorf("session is valid but user ID %q isn't valid", session.UserID))
 	}
 
@@ -61,7 +62,7 @@ func (a *App) IsAuthenticated(ctx context.Context, token Token) (blinkfile.UserI
 }
 
 func (a *App) Login(ctx context.Context, username blinkfile.Username, password string, requestData SessionRequestData) (Session, error) {
-	userID, err := a.authenticate(username, password)
+	userID, err := a.authenticate(ctx, username, password)
 	if err != nil {
 		return Session{}, err
 	}
@@ -103,14 +104,14 @@ func (a *App) newSession(ctx context.Context, userID blinkfile.UserID, data Sess
 	return session, nil
 }
 
-func (a *App) authenticate(username blinkfile.Username, password string) (blinkfile.UserID, error) {
+func (a *App) authenticate(ctx context.Context, username blinkfile.Username, password string) (blinkfile.UserID, error) {
 	if username == "" {
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: username cannot be empty"))
 	}
 	if password == "" {
 		return "", Err(ErrAuthnFailed, fmt.Errorf("invalid credentials: password cannot be empty"))
 	}
-	cred, found, err := a.getAdminCredentials(username)
+	cred, found, err := a.getCredentials(ctx, username)
 	if err != nil {
 		return "", Err(ErrInternal, fmt.Errorf("error retrieving credentials for %q: %w", username, err))
 	}
@@ -134,22 +135,51 @@ func credentialsMatch(c Credentials, username blinkfile.Username, password strin
 	return passwordMatcher(c.PasswordHash, []byte(password))
 }
 
+func (a *App) getCredentials(ctx context.Context, username blinkfile.Username) (Credentials, bool, error) {
+	cred, found, err := a.getAdminCredentials(username)
+	if err != nil {
+		return cred, false, err
+	}
+	if found {
+		return cred, true, nil
+	}
+	cred, err = a.cfg.CredentialRepo.GetByUsername(ctx, username)
+	if err != nil {
+		if errors.Is(err, ErrCredentialNotFound) {
+			err = nil
+		}
+		return cred, false, err
+	}
+	return cred, true, nil
+}
+
 func (a *App) getAdminCredentials(username blinkfile.Username) (Credentials, bool, error) {
-	creds, found := a.adminCredentials[username]
+	cred, found := a.adminCredentials[username]
 	if !found {
 		return Credentials{}, false, nil
 	}
-	return creds, true, nil
+	return cred, true, nil
 }
 
-func (a *App) userIsValid(userID blinkfile.UserID) bool {
-	for _, creds := range a.adminCredentials {
-		if creds.UserID == userID {
+func (a *App) userIsValid(ctx context.Context, userID blinkfile.UserID) bool {
+	for _, cred := range a.adminCredentials {
+		if cred.UserID == userID {
 			return true
 		}
 	}
+	user, found, err := a.cfg.UserRepo.Get(ctx, userID)
+	if err != nil {
+		a.cfg.Log.Errorf(ctx, "getting user ID %q from repo: %+v", userID, err)
+		return false
+	}
+	if !found {
+		return false
+	}
+	if user.ID != userID {
+		return false
+	}
 
-	return false
+	return true
 }
 
 func stringsAreEqual(a, b string) bool {
