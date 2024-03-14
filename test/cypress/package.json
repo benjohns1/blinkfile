@@ -6,7 +6,8 @@
     "test:run:all": "cypress run",
     "test:run:implementing": "cypress run --env tags=\"@implementing\"",
     "test:run:pending": "cypress run --env tags=\"@pending or @implementing\"",
-    "test:open": "cypress open --env tags=\"not @pending\""
+    "test:open": "cypress open --env tags=\"not @pending\"",
+    "test:open:implementing": "cypress open --env tags=\"@implementing\""
   },
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^20.0.1",

@@ -43,7 +43,7 @@ Scenario: Newly created user can log in
   Given I have created a new user "testuser" with the password "password12345678"
 
   When I log out
-  And log in with the username "testuser" and password "password123"
+  And log in with the username "testuser" and password "password12345678"
 
   Then I should successfully log in
 

@@ -41,6 +41,7 @@
     "cypress:lint": "cd test/cypress && npm run test:lint && cd ../..",
     "cypress:run": "cd test/cypress && npm run test && cd ../..",
     "cypress:open": "cd test/cypress && npm run test:open && cd ../..",
+    "cypress:open:implementing": "cd test/cypress && npm run test:open:implementing && cd ../..",
     "prepare": "git config core.hooksPath .githooks",
     "git:hook:commit-msg": "commitlint --edit --verbose",
     "git:hook:pre-push": "npm run lint && npm run test"
