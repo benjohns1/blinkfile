@@ -47,3 +47,16 @@ Scenario: Only the admin can manage users
   Then I should successfully log in
   And I should not see the users link
   And I should not be able to access the user list page
+
+@pending
+Scenario: User files are removed when user is deleted
+  Given I have created a new user "testuser" with the password "password12345678"
+  When "testuser" is deleted
+  Then I there are no extraneous files owned by "testuser"
+
+@pending
+Scenario: User is logged out when deleted
+  Given I have created a new user "testuser" with the password "password12345678"
+  And I am logged in as the user "testuser" with password "password12345678"
+  When "testuser" is deleted
+  Then I am logged out and cannot access my files anymore
