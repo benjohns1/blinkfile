@@ -108,7 +108,10 @@ Then("I should not see the users link", () => {
 });
 
 Then("I should not be able to access the user list page", () => {
-    cy.visit("/users");
-    cy.get("body").should('contain.text', "404");
-    cy.get("body").should('contain.text', "Not Found");
+    cy.request({
+        method: "GET",
+        url: "/users",
+        failOnStatusCode: false,
+    }).as("response");
+    cy.get("@response").should("have.property", "status", 404);
 });

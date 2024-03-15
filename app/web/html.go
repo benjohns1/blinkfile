@@ -208,9 +208,13 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		authenticated.Any("/files/notifications", w.f(fileNotifications))
 
 		if app.FeatureFlagIsOn(ctx, "UserAccounts") {
-			authenticated.Get("/users", w.f(showUsers))
-			authenticated.Post("/users", w.f(createUser))
-			authenticated.Post("/users/delete", w.f(deleteUsers))
+			userMgmt := authenticated.Party("/users")
+			{
+				userMgmt.Use(w.f(requirePermission("user_management")))
+				userMgmt.Get("/", w.f(showUsers))
+				userMgmt.Post("/", w.f(createUser))
+				userMgmt.Post("/delete", w.f(deleteUsers))
+			}
 		}
 
 		if cfg.TestAutomator != nil {

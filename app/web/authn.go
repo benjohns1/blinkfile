@@ -53,6 +53,21 @@ func loginRequired(ctx iris.Context, a App) error {
 	return nil
 }
 
+func requirePermission(permission string) func(iris.Context, App) error {
+	return func(ctx iris.Context, a App) error {
+		sess, err := getSession(ctx)
+		if err != nil {
+			return err
+		}
+		if sess.GetBooleanDefault(fmt.Sprintf("permission.%s", permission), false) {
+			ctx.Next()
+			return nil
+		}
+		ctx.StopWithStatus(http.StatusNotFound)
+		return nil
+	}
+}
+
 func logout(ctx iris.Context, a App) error {
 	authnToken := ctx.GetCookie(authnTokenCookieName)
 	ctx.RemoveCookie(authnTokenCookieName)

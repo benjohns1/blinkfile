@@ -1,7 +1,9 @@
     <ul data-test="nav">
         <li><a href="/">Home</a></li>
         {{ if featureFlagIsOn .ctx "UserAccounts" }}
+        {{- if (.session.Get `permission.user_management`) }}
         <li><a href="/users" data-test="users">Users</a></li>
+        {{- end}}
         {{end}}
         {{- if (.session.Get `authenticated`) }}
         <li><a href="/logout" data-test="logout">Logout</a></li>

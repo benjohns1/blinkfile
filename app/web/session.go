@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/benjohns1/blinkfile"
 	"github.com/kataras/iris/v12"
@@ -68,6 +69,9 @@ func loggedInUser(ctx iris.Context) blinkfile.UserID {
 
 func (s *Session) setAuthenticated(userID blinkfile.UserID) {
 	s.Set("authenticated", string(userID))
+	if userID == "_admin" {
+		s.Set("permission.user_management", true)
+	}
 }
 
 func (s *Session) setUsername(username blinkfile.Username) {
@@ -77,4 +81,9 @@ func (s *Session) setUsername(username blinkfile.Username) {
 func (s *Session) setLogout() {
 	s.Delete("username")
 	s.Delete("authenticated")
+	for key := range s.GetAll() {
+		if strings.HasPrefix(key, "permission.") {
+			s.Delete(key)
+		}
+	}
 }

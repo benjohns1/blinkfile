@@ -31,12 +31,14 @@ func parseIrisErr(ctx iris.Context) *app.Error {
 	if irisErr == nil {
 		irisErr = fmt.Errorf(text)
 	}
-	errType := app.ErrUnknown
+	var errType app.ErrorType
 	var detail string
 	switch status {
 	case http.StatusNotFound:
 		errType = app.ErrNotFound
 		detail = fmt.Sprintf("Sorry, but the resource at %q could not be found.", ctx.Request().RequestURI)
+	default:
+		errType = app.ErrUnknown
 	}
 	appErr := &app.Error{
 		Type:   errType,
