@@ -43,8 +43,12 @@ Given("I have created a new user {string} with the password {string}", (user: st
 });
 
 const createUser = (user: string, pass: string) => {
-    getUsername().type(user);
-    getPassword().type(pass);
+    if (user !== "") {
+        getUsername().type(user);
+    }
+    if (pass !== "") {
+        getPassword().type(pass);
+    }
     getCreateUserButton().click();
 };
 
@@ -93,4 +97,18 @@ Then("I should see an empty user list", () => {
 
 Then("I should successfully log in", () => {
     cy.location("pathname").should("equal", "/");
+});
+
+Then("I should see failure message text {string}", (msg: string) => {
+    getMessage().should("contain", msg);
+});
+
+Then("I should not see the users link", () => {
+    cy.get("[data-test=nav] [data-test=users]").should("not.exist");
+});
+
+Then("I should not be able to access the user list page", () => {
+    cy.visit("/users");
+    cy.get("body").should('contain.text', "404");
+    cy.get("body").should('contain.text', "Not Found");
 });
