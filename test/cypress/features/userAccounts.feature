@@ -47,3 +47,19 @@ Scenario: Only the admin can manage users
   Then I should successfully log in
   And I should not see the users link
   And I should not be able to access the user list page
+
+@pending
+Scenario: Admin can update users' usernames and passwords
+  Given I have created a new user "testuser1" with the password "old_pass12345678"
+  When I edit user "testuser1"
+  And I update their username "testuser2"
+  And I update password to "new_pass12345678"
+  Then I should see a user updated success message
+
+@pending
+Scenario: User can log in with newly updated credentials
+  Given I have created a new user "testuser1" with the password "old_pass12345678"
+  And I have updated the user "testuser1" to have username "testuser2" and password "new_pass12345678"
+  When I log out
+  And log in with the username "testuser2" and password "new_pass12345678"
+  Then I should successfully log in
