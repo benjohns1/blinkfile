@@ -46,6 +46,10 @@ func isAuthenticated(ctx iris.Context, a App) bool {
 
 func loginRequired(ctx iris.Context, a App) error {
 	if !isAuthenticated(ctx, a) {
+		err := doLogout(ctx, a)
+		if err != nil {
+			return err
+		}
 		ctx.Redirect("/login")
 		return nil
 	}
@@ -69,6 +73,19 @@ func requirePermission(permission string) func(iris.Context, App) error {
 }
 
 func logout(ctx iris.Context, a App) error {
+	err := doLogout(ctx, a)
+	if err != nil {
+		return err
+	}
+	ctx.ViewData("content", LoginView{
+		MessageView: MessageView{
+			SuccessMessage: "Successfully logged out",
+		},
+	})
+	return ctx.View("login.html")
+}
+
+func doLogout(ctx iris.Context, a App) error {
 	authnToken := ctx.GetCookie(authnTokenCookieName)
 	ctx.RemoveCookie(authnTokenCookieName)
 	session, err := getSession(ctx)
@@ -82,12 +99,7 @@ func logout(ctx iris.Context, a App) error {
 			return fmt.Errorf("logging out: %w", err)
 		}
 	}
-	ctx.ViewData("content", LoginView{
-		MessageView: MessageView{
-			SuccessMessage: "Successfully logged out",
-		},
-	})
-	return ctx.View("login.html")
+	return nil
 }
 
 func login(ctx iris.Context, a App) error {

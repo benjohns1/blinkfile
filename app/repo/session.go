@@ -174,6 +174,7 @@ func (r *SessionRepo) delete(ctx context.Context, token app.Token) error {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
+		return nil
 	}
 	r.removeFromIndices(ctx, token)
 	return nil
