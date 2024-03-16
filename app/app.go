@@ -31,6 +31,7 @@ type (
 		Save(context.Context, Session) error
 		Get(context.Context, Token) (Session, bool, error)
 		Delete(context.Context, Token) error
+		DeleteAllUserSessions(context.Context, blinkfile.UserID) (int, error)
 	}
 
 	FileRepo interface {

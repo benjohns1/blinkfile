@@ -33,7 +33,11 @@ func main() {
 func run(ctx context.Context) (err error) {
 	cfg := parseConfig()
 
-	sessionRepo, err := repo.NewSession(repo.SessionConfig{
+	l := log.New(log.Config{GetRequestID: request.GetID})
+	l.Printf(ctx, "Running build %q", build)
+
+	sessionRepo, err := repo.NewSessionRepo(ctx, repo.SessionConfig{
+		Log: l,
 		Dir: fmt.Sprintf("%s/sessions", cfg.DataDir),
 	})
 	if err != nil {
@@ -41,6 +45,7 @@ func run(ctx context.Context) (err error) {
 	}
 
 	fileRepo, err := repo.NewFileRepo(ctx, repo.FileRepoConfig{
+		Log: l,
 		Dir: fmt.Sprintf("%s/files", cfg.DataDir),
 	})
 	if err != nil {
@@ -48,6 +53,7 @@ func run(ctx context.Context) (err error) {
 	}
 
 	userRepo, err := repo.NewUserRepo(ctx, repo.UserRepoConfig{
+		Log: l,
 		Dir: fmt.Sprintf("%s/users", cfg.DataDir),
 	})
 	if err != nil {
@@ -55,14 +61,12 @@ func run(ctx context.Context) (err error) {
 	}
 
 	credentialRepo, err := repo.NewCredentialRepo(ctx, repo.CredentialRepoConfig{
+		Log: l,
 		Dir: fmt.Sprintf("%s/credentials", cfg.DataDir),
 	})
 	if err != nil {
 		return err
 	}
-
-	l := log.New(log.Config{GetRequestID: request.GetID})
-	l.Printf(ctx, "Running build %q", build)
 
 	ff, err := featureflag.New(
 		featureflag.WithFeaturesFromEnvironment("FEATURE_FLAG_"),

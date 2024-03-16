@@ -66,15 +66,16 @@ func (sr *SpySessionRepo) Save(ctx context.Context, session app.Session) error {
 	sr.SaveCalls = append(sr.SaveCalls, session)
 	return sr.repo.Save(ctx, session)
 }
-
 func (sr *SpySessionRepo) Delete(ctx context.Context, token app.Token) error {
 	sr.DeleteCalls = append(sr.DeleteCalls, token)
 	return sr.repo.Delete(ctx, token)
 }
-
 func (sr *SpySessionRepo) Get(ctx context.Context, token app.Token) (app.Session, bool, error) {
 	sr.GetCalls = append(sr.GetCalls, token)
 	return sr.repo.Get(ctx, token)
+}
+func (sr *SpySessionRepo) DeleteAllUserSessions(context.Context, blinkfile.UserID) (int, error) {
+	return 0, nil
 }
 
 type StubSessionRepo struct {
@@ -89,19 +90,20 @@ func (sr *StubSessionRepo) Save(ctx context.Context, s app.Session) error {
 	}
 	return nil
 }
-
 func (sr *StubSessionRepo) Get(ctx context.Context, t app.Token) (app.Session, bool, error) {
 	if sr.GetFunc != nil {
 		return sr.GetFunc(ctx, t)
 	}
 	return app.Session{}, false, nil
 }
-
 func (sr *StubSessionRepo) Delete(ctx context.Context, t app.Token) error {
 	if sr.DeleteFunc != nil {
 		return sr.DeleteFunc(ctx, t)
 	}
 	return nil
+}
+func (sr *StubSessionRepo) DeleteAllUserSessions(context.Context, blinkfile.UserID) (int, error) {
+	return 0, nil
 }
 
 type StubFileRepo struct {

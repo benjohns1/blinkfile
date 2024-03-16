@@ -10,6 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benjohns1/blinkfile"
+	"github.com/benjohns1/blinkfile/log"
+
 	"github.com/benjohns1/blinkfile/app"
 	"github.com/benjohns1/blinkfile/app/repo"
 )
@@ -28,7 +31,7 @@ func newSessionDir(t *testing.T) string {
 	return filepath.Clean(fmt.Sprintf("%s/%d", testDir, sessionDirNum))
 }
 
-func TestNewSession(t *testing.T) {
+func TestNewSessionRepo(t *testing.T) {
 	type args struct {
 		cfg repo.SessionConfig
 	}
@@ -47,16 +50,16 @@ func TestNewSession(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer cleanDir(t, tt.args.cfg.Dir)
-			_, err := repo.NewSession(tt.args.cfg)
+			_, err := repo.NewSessionRepo(context.Background(), tt.args.cfg)
 			if !reflect.DeepEqual(err, tt.wantErr) {
-				t.Errorf("NewSession() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewSessionRepo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
 	}
 }
 
-func TestSession_Save(t *testing.T) {
+func TestSessionRepo_Save(t *testing.T) {
 	type args struct {
 		session app.Session
 	}
@@ -128,7 +131,7 @@ func TestSession_Save(t *testing.T) {
 				defer func() { repo.WriteFile = prev }()
 			}
 			defer cleanDir(t, tt.cfg.Dir)
-			r, err := repo.NewSession(tt.cfg)
+			r, err := repo.NewSessionRepo(context.Background(), tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -140,7 +143,7 @@ func TestSession_Save(t *testing.T) {
 	}
 }
 
-func TestSession_Get(t *testing.T) {
+func TestSessionRepo_Get(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
 		token app.Token
@@ -149,7 +152,7 @@ func TestSession_Get(t *testing.T) {
 		name      string
 		cfg       repo.SessionConfig
 		unmarshal func(data []byte, v any) error
-		arrange   func(*testing.T, *repo.Session)
+		arrange   func(*testing.T, *repo.SessionRepo)
 		args      args
 		want      app.Session
 		wantOK    bool
@@ -177,7 +180,7 @@ func TestSession_Get(t *testing.T) {
 			unmarshal: func([]byte, any) error {
 				return fmt.Errorf("unmarshal err")
 			},
-			arrange: func(t *testing.T, r *repo.Session) {
+			arrange: func(t *testing.T, r *repo.SessionRepo) {
 				if err := r.Save(ctx, app.Session{Token: "token1"}); err != nil {
 					t.Fatal(err)
 				}
@@ -190,7 +193,7 @@ func TestSession_Get(t *testing.T) {
 		{
 			name: "should get a session",
 			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
-			arrange: func(t *testing.T, r *repo.Session) {
+			arrange: func(t *testing.T, r *repo.SessionRepo) {
 				if err := r.Save(ctx, app.Session{Token: "token1"}); err != nil {
 					t.Fatal(err)
 				}
@@ -204,7 +207,7 @@ func TestSession_Get(t *testing.T) {
 		{
 			name: "should get a fully populated session",
 			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
-			arrange: func(t *testing.T, r *repo.Session) {
+			arrange: func(t *testing.T, r *repo.SessionRepo) {
 				if err := r.Save(ctx, app.Session{
 					Token:    "token1",
 					UserID:   "user1",
@@ -242,7 +245,7 @@ func TestSession_Get(t *testing.T) {
 				defer func() { repo.Unmarshal = prev }()
 			}
 			defer cleanDir(t, tt.cfg.Dir)
-			r, err := repo.NewSession(tt.cfg)
+			r, err := repo.NewSessionRepo(context.Background(), tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -264,7 +267,7 @@ func TestSession_Get(t *testing.T) {
 	}
 }
 
-func TestSession_Delete(t *testing.T) {
+func TestSessionRepo_Delete(t *testing.T) {
 	ctx := context.Background()
 	type args struct {
 		token app.Token
@@ -273,10 +276,10 @@ func TestSession_Delete(t *testing.T) {
 		name       string
 		cfg        repo.SessionConfig
 		removeFile func(name string) error
-		arrange    func(*testing.T, *repo.Session)
+		arrange    func(*testing.T, *repo.SessionRepo)
 		args       args
 		wantErr    error
-		assert     func(*testing.T, *repo.Session)
+		assert     func(*testing.T, *repo.SessionRepo)
 	}{
 		{
 			name: "should fail with an empty token",
@@ -308,7 +311,7 @@ func TestSession_Delete(t *testing.T) {
 		{
 			name: "should delete a token",
 			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
-			arrange: func(t *testing.T, r *repo.Session) {
+			arrange: func(t *testing.T, r *repo.SessionRepo) {
 				if err := r.Save(ctx, app.Session{Token: "token1"}); err != nil {
 					t.Fatal(err)
 				}
@@ -316,7 +319,7 @@ func TestSession_Delete(t *testing.T) {
 			args: args{
 				token: "token1",
 			},
-			assert: func(t *testing.T, r *repo.Session) {
+			assert: func(t *testing.T, r *repo.SessionRepo) {
 				_, ok, _ := r.Get(ctx, "token1")
 				if ok {
 					t.Errorf("Delete() did not delete token")
@@ -331,8 +334,11 @@ func TestSession_Delete(t *testing.T) {
 				repo.RemoveFile = tt.removeFile
 				defer func() { repo.RemoveFile = prev }()
 			}
+			if tt.cfg.Log == nil {
+				tt.cfg.Log = log.New(log.Config{})
+			}
 			defer cleanDir(t, tt.cfg.Dir)
-			r, err := repo.NewSession(tt.cfg)
+			r, err := repo.NewSessionRepo(context.Background(), tt.cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -341,8 +347,108 @@ func TestSession_Delete(t *testing.T) {
 			}
 			err = r.Delete(ctx, tt.args.token)
 			if !reflect.DeepEqual(err, tt.wantErr) {
-				t.Errorf("GetByToken() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if tt.assert != nil {
+				tt.assert(t, r)
+			}
+		})
+	}
+}
+
+func TestSessionRepo_DeleteAllUserSessions(t *testing.T) {
+	ctx := context.Background()
+	type args struct {
+		userID blinkfile.UserID
+	}
+	tests := []struct {
+		name       string
+		cfg        repo.SessionConfig
+		removeFile func(name string) error
+		arrange    func(*testing.T, *repo.SessionRepo)
+		args       args
+		wantCount  int
+		wantErr    error
+		assert     func(*testing.T, *repo.SessionRepo)
+	}{
+		{
+			name: "should fail with an empty user ID",
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
+			args: args{
+				userID: "",
+			},
+			wantErr: fmt.Errorf("user ID cannot be empty"),
+		},
+		{
+			name: "should no-op a user ID with no sessions",
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
+			args: args{
+				userID: "u1",
+			},
+			wantCount: 0,
+			wantErr:   nil,
+		},
+		{
+			name: "should fail if removing the session fails",
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
+			arrange: func(t *testing.T, r *repo.SessionRepo) {
+				fatalOnErr(t, r.Save(ctx, app.Session{UserID: "u1", Token: "token1"}))
+			},
+			removeFile: func(name string) error {
+				return fmt.Errorf("err remove")
+			},
+			args: args{
+				userID: "u1",
+			},
+			wantErr: fmt.Errorf("err remove"),
+		},
+		{
+			name: "should delete all sessions for the user",
+			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
+			arrange: func(t *testing.T, r *repo.SessionRepo) {
+				fatalOnErr(t,
+					r.Save(ctx, app.Session{UserID: "u1", Token: "token1"}),
+					r.Save(ctx, app.Session{UserID: "u1", Token: "token2"}))
+			},
+			args: args{
+				userID: "u1",
+			},
+			wantCount: 2,
+			assert: func(t *testing.T, r *repo.SessionRepo) {
+				_, ok1, _ := r.Get(ctx, "token1")
+				_, ok2, _ := r.Get(ctx, "token2")
+				if ok1 || ok2 {
+					t.Errorf("DeleteAllUserSessions() did not delete all sessions")
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.removeFile != nil {
+				prev := repo.RemoveFile
+				repo.RemoveFile = tt.removeFile
+				defer func() { repo.RemoveFile = prev }()
+			}
+			if tt.cfg.Log == nil {
+				tt.cfg.Log = log.New(log.Config{})
+			}
+			defer cleanDir(t, tt.cfg.Dir)
+			r, err := repo.NewSessionRepo(context.Background(), tt.cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tt.arrange != nil {
+				tt.arrange(t, r)
+			}
+			gotCount, err := r.DeleteAllUserSessions(ctx, tt.args.userID)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("DeleteAllUserSessions() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotCount != tt.wantCount {
+				t.Errorf("DeleteAllUserSessions() count = %v, wantCount %v", gotCount, tt.wantCount)
 			}
 			if tt.assert != nil {
 				tt.assert(t, r)

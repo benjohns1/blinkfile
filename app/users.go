@@ -80,14 +80,35 @@ func (a *App) ListUsers(ctx context.Context) ([]blinkfile.User, error) {
 
 func (a *App) DeleteUsers(ctx context.Context, userIDs []blinkfile.UserID) error {
 	for _, userID := range userIDs {
-		err := a.cfg.UserRepo.Delete(ctx, userID)
+		count, err := a.cfg.SessionRepo.DeleteAllUserSessions(ctx, userID)
 		if err != nil {
 			return Err(ErrRepo, err)
 		}
+		a.Printf(ctx, "deleted %d sessions for user ID %s", count, userID)
+		files, err := a.cfg.FileRepo.ListByUser(ctx, userID)
+		if err != nil {
+			if err != nil {
+				return Err(ErrRepo, err)
+			}
+		}
+		filesToDelete := make([]blinkfile.FileID, 0, len(files))
+		for _, file := range files {
+			filesToDelete = append(filesToDelete, file.ID)
+		}
+		appErr := a.DeleteFiles(ctx, userID, filesToDelete)
+		if appErr != nil {
+			return appErr
+		}
+		a.Printf(ctx, "deleted %d files for user ID %s", len(filesToDelete), userID)
 		err = a.cfg.CredentialRepo.Remove(ctx, userID)
 		if err != nil {
 			return Err(ErrRepo, err)
 		}
+		err = a.cfg.UserRepo.Delete(ctx, userID)
+		if err != nil {
+			return Err(ErrRepo, err)
+		}
+		a.Printf(ctx, "deleted user ID %s and their credentials", userID)
 	}
 	return nil
 }
