@@ -23,6 +23,7 @@ npm i
 npm start
 ```
 Starts the Blinkfile app at [http://localhost:8020](http://localhost:8020) and the documentation at [http://localhost:8021](http://localhost:8021)  
+Default login credentials are defined in `./local/docker-compose.yml`
 
 ### In a container with live reload
 Recommended for development  

@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine as source
+FROM golang:1.21-alpine AS source
 RUN apk add --update npm rsync git
 ARG GOCACHE=/cache/go-build
 ENV GOCACHE=${GOCACHE}
@@ -17,7 +17,7 @@ ENV OUT_DIR=/out_src
 ENV OUT_GO_CACHE=/out_cache
 CMD ["sh", "-c", "mkdir -p ${OUT_DIR} && rsync -ar ./ ${OUT_DIR} --delete && rsync -ar /cache/ ${OUT_GO_CACHE} --delete"]
 
-FROM source as build
+FROM source AS build
 ARG SRC_DIR=/src
 WORKDIR $SRC_DIR
 ARG CGO_ENABLED=0
