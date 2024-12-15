@@ -8,4 +8,5 @@ type FeatureFlag string
 
 const (
 	FeatureUserAccounts FeatureFlag = "UserAccounts"
+	LogAllAuthnCalls    FeatureFlag = "LogAllAuthnCalls"
 )
