@@ -70,7 +70,7 @@ func run(ctx context.Context) (err error) {
 
 	ff, err := featureflag.New(
 		featureflag.WithFeaturesFromEnvironment("FEATURE_FLAG_"),
-		featureflag.WithReleasedFeatures("DownloadLimit"),
+		featureflag.WithReleasedFeatures("UserAccounts"),
 	)
 	if err != nil {
 		return err
