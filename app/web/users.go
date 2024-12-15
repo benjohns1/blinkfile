@@ -22,6 +22,12 @@ type (
 		ID       string
 		Username string
 	}
+
+	EditUserView struct {
+		LayoutView
+		User UserView
+		MessageView
+	}
 )
 
 func showUsers(ctx iris.Context, a App) error {
@@ -38,6 +44,46 @@ func showUsers(ctx iris.Context, a App) error {
 		MessageView: flashMessageView(ctx),
 	})
 	return ctx.View("users.html")
+}
+
+func showEditUser(ctx iris.Context, a App) error {
+	userID := blinkfile.UserID(ctx.Params().Get("user_id"))
+	user, err := a.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	ctx.ViewData("content", EditUserView{
+		User:        userToView(user),
+		MessageView: flashMessageView(ctx),
+	})
+	return ctx.View("user_edit.html")
+}
+
+func editUser(ctx iris.Context, a App) error {
+	userID := blinkfile.UserID(ctx.Params().Get("user_id"))
+	successMsg, err := doEditUser(ctx, a, userID)
+	if err != nil {
+		setFlashErr(ctx, a, err)
+	} else {
+		setFlashSuccess(ctx, successMsg)
+	}
+	ctx.Redirect(fmt.Sprintf("/users/%s/edit", userID))
+	return nil
+}
+
+func doEditUser(ctx iris.Context, a App, userID blinkfile.UserID) (string, error) {
+	action := ctx.FormValue("action")
+	switch action {
+	case "change_username":
+		username := ctx.FormValue("username")
+		err := a.ChangeUsername(ctx, app.ChangeUsernameArgs{ID: userID, Username: blinkfile.Username(username)})
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Username changed to %q", username), nil
+	default:
+		return "", fmt.Errorf("unknown action %q", action)
+	}
 }
 
 func userToView(u blinkfile.User) UserView {

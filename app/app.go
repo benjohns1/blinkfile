@@ -45,6 +45,7 @@ type (
 
 	UserRepo interface {
 		Create(context.Context, blinkfile.User) error
+		Update(context.Context, blinkfile.User) error
 		Get(context.Context, blinkfile.UserID) (blinkfile.User, bool, error)
 		ListAll(context.Context) ([]blinkfile.User, error)
 		Delete(context.Context, blinkfile.UserID) error
@@ -52,6 +53,7 @@ type (
 
 	CredentialRepo interface {
 		Set(context.Context, Credentials) error
+		UpdateUsername(context.Context, blinkfile.UserID, blinkfile.Username, blinkfile.Username) error
 		GetByUsername(context.Context, blinkfile.Username) (Credentials, error)
 		Remove(context.Context, blinkfile.UserID) error
 	}

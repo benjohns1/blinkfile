@@ -72,7 +72,7 @@ func (r *CredentialRepo) buildIndices(ctx context.Context, dir string) error {
 			r.Errorf(ctx, "Loading credential data %q: %v", path, err)
 			return nil
 		}
-		r.addToIndices(cred)
+		r.setIndices(cred)
 		return nil
 	})
 }
@@ -85,7 +85,7 @@ func loadCredentials(path string) (cred credentialData, err error) {
 	return cred, Unmarshal(data, &cred)
 }
 
-func (r *CredentialRepo) addToIndices(cred credentialData) {
+func (r *CredentialRepo) setIndices(cred credentialData) {
 	r.usernameIndex[cred.Username] = cred
 }
 
@@ -97,20 +97,60 @@ func (r *CredentialRepo) Set(_ context.Context, cred app.Credentials) error {
 		return fmt.Errorf("username cannot be empty")
 	}
 	cd := credentialData(cred)
-	data, err := Marshal(cred)
+	data, err := Marshal(cd)
 	if err != nil {
 		return fmt.Errorf("marshaling credential data: %w", err)
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if found, exists := r.usernameIndex[cd.Username]; exists && found.UserID != cd.UserID {
-		return fmt.Errorf(`%w: %q`, app.ErrDuplicateUsername, cd.Username)
+		return fmt.Errorf("%w: %q", app.ErrDuplicateUsername, cd.Username)
 	}
 	err = WriteFile(r.filename(cd.Username), data, 0644)
 	if err != nil {
 		return fmt.Errorf("writing credential data: %w", err)
 	}
-	r.addToIndices(cd)
+	r.setIndices(cd)
+	return nil
+}
+
+func (r *CredentialRepo) UpdateUsername(ctx context.Context, userID blinkfile.UserID, previousUsername, newUsername blinkfile.Username) error {
+	if userID == "" {
+		return fmt.Errorf("user ID cannot be empty")
+	}
+	if previousUsername == "" {
+		return fmt.Errorf("previous username cannot be empty")
+	}
+	if newUsername == "" {
+		return fmt.Errorf("new username cannot be empty")
+	}
+	if previousUsername == newUsername {
+		return fmt.Errorf("previous and new usernames cannot be the same")
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	cd, previousExists := r.usernameIndex[previousUsername]
+	if !previousExists {
+		return app.ErrCredentialNotFound
+	}
+	if found, newExists := r.usernameIndex[newUsername]; newExists && found.UserID != cd.UserID {
+		return fmt.Errorf("%w: %q", app.ErrDuplicateUsername, cd.Username)
+	}
+
+	cd.Username = newUsername
+	data, err := Marshal(cd)
+	if err != nil {
+		return fmt.Errorf("marshaling credential data: %w", err)
+	}
+
+	err = WriteFile(r.filename(cd.Username), data, 0644)
+	if err != nil {
+		return fmt.Errorf("writing credential data: %w", err)
+	}
+	r.setIndices(cd)
+	if rmErr := r.removeUsername(ctx, previousUsername); rmErr != nil {
+		return fmt.Errorf("removing previous username: %w", rmErr)
+	}
 	return nil
 }
 
@@ -131,28 +171,31 @@ func (r *CredentialRepo) filename(userID blinkfile.Username) string {
 	return fmt.Sprintf("%s/%s.json", r.dir, userID)
 }
 
-func (r *CredentialRepo) Remove(_ context.Context, userID blinkfile.UserID) error {
+func (r *CredentialRepo) Remove(ctx context.Context, userID blinkfile.UserID) error {
 	if userID == "" {
 		return fmt.Errorf("user ID cannot be empty")
 	}
-	var usernames []blinkfile.Username
-	var filenames []string
-	for _, username := range r.getUsernames(userID) {
-		usernames = append(usernames, username)
-		filenames = append(filenames, r.filename(username))
-	}
+	usernames := r.getUsernames(userID)
 	if len(usernames) == 0 {
 		return app.ErrCredentialNotFound
 	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for i, filename := range filenames {
-		if err := RemoveFile(filename); err != nil {
+	for _, username := range usernames {
+		if err := r.removeUsername(ctx, username); err != nil {
 			return err
 		}
-		r.removeFromIndices(usernames[i])
 	}
+	return nil
+}
+
+func (r *CredentialRepo) removeUsername(_ context.Context, username blinkfile.Username) error {
+	filename := r.filename(username)
+	if err := RemoveFile(filename); err != nil {
+		return err
+	}
+	r.removeFromIndices(username)
 	return nil
 }
 

@@ -30,7 +30,8 @@ type (
 	userData struct {
 		ID blinkfile.UserID
 		blinkfile.Username
-		Created time.Time
+		Created    time.Time
+		LastEdited time.Time
 	}
 )
 
@@ -76,7 +77,7 @@ func (r *UserRepo) buildIndices(ctx context.Context, dir string) error {
 			r.Errorf(ctx, "Loading user data %q: %v", path, err)
 			return nil
 		}
-		r.addToIndices(user)
+		r.setIndices(user)
 		return nil
 	})
 }
@@ -89,23 +90,17 @@ func loadUser(path string) (user userData, err error) {
 	return user, Unmarshal(data, &user)
 }
 
-func (r *UserRepo) addToIndices(user userData) {
+func (r *UserRepo) setIndices(user userData) {
 	r.idIndex[user.ID] = user
 	r.usernameIndex[user.Username] = user
 }
 
 func (r *UserRepo) Create(_ context.Context, user blinkfile.User) error {
-	if user.ID == "" {
-		return fmt.Errorf("user ID cannot be empty")
-	}
-	if user.Username == "" {
-		return fmt.Errorf("username cannot be empty")
-	}
-	u := userData(user)
-	data, err := Marshal(u)
+	u, data, err := r.parseUserData(user)
 	if err != nil {
-		return fmt.Errorf("marshaling user data: %w", err)
+		return err
 	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, exists := r.idIndex[u.ID]; exists {
@@ -114,11 +109,56 @@ func (r *UserRepo) Create(_ context.Context, user blinkfile.User) error {
 	if _, exists := r.usernameIndex[u.Username]; exists {
 		return fmt.Errorf(`%w: %q`, app.ErrDuplicateUsername, u.Username)
 	}
-	err = WriteFile(r.filename(u.ID), data, 0644)
+
+	err = r.writeUserData(u, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepo) parseUserData(user blinkfile.User) (userData, []byte, error) {
+	if user.ID == "" {
+		return userData{}, nil, fmt.Errorf("user ID cannot be empty")
+	}
+	if user.Username == "" {
+		return userData{}, nil, fmt.Errorf("username cannot be empty")
+	}
+	u := userData(user)
+	data, err := Marshal(u)
+	if err != nil {
+		return userData{}, nil, fmt.Errorf("marshaling user data: %w", err)
+	}
+	return u, data, nil
+}
+
+func (r *UserRepo) Update(_ context.Context, user blinkfile.User) error {
+	u, data, err := r.parseUserData(user)
+	if err != nil {
+		return err
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	prevUser, idExists := r.idIndex[u.ID]
+	if !idExists {
+		return fmt.Errorf("%w: for user ID %q", app.ErrUserNotFound, u.ID)
+	}
+	delete(r.usernameIndex, prevUser.Username)
+
+	err = r.writeUserData(u, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepo) writeUserData(u userData, data []byte) error {
+	err := WriteFile(r.filename(u.ID), data, 0644)
 	if err != nil {
 		return fmt.Errorf("writing user data: %w", err)
 	}
-	r.addToIndices(u)
+	r.setIndices(u)
 	return nil
 }
 

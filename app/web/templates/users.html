@@ -24,7 +24,7 @@
         <tbody>
         {{range $user := .content.Users}}
         <tr id="user_{{$user.ID}}">
-            <td data-test="username">{{$user.Username}}</td>
+            <td data-test="username"><a href="/users/{{$user.ID}}/edit" data-test="user_edit_link">{{$user.Username}}</a></td>
             <td><label for="select-{{$user.ID}}" hidden>Select</label><input id="select-{{$user.ID}}" name="select-{{$user.ID}}" type="checkbox" data-test="delete_select_{{$user.Username}}"></td>
         </tr>
         {{end}}

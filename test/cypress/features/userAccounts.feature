@@ -48,13 +48,18 @@ Scenario: Only the admin can manage users
   And I should not see the users link
   And I should not be able to access the user list page
 
-@pending
-Scenario: Admin can update users' usernames and passwords
-  Given I have created a new user "testuser1" with the password "old_pass12345678"
+Scenario: Admin can change a user's username
+  Given I have created a new user "testuser1" with the password "password12345678"
   When I edit user "testuser1"
   And I update their username "testuser2"
+  Then I should see a username changed success message
+
+@pending
+Scenario: Admin can change a user's password
+  Given I have created a new user "testuser1" with the password "old_password12345678"
+  When I edit user "testuser1"
   And I update password to "new_pass12345678"
-  Then I should see a user updated success message
+  Then I should see a password changed success message
 
 @pending
 Scenario: User can log in with newly updated credentials

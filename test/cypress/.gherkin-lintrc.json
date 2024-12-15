@@ -1,6 +1,6 @@
 {
   "file-name": ["on", {"style": "camelCase"}],
-  "max-scenarios-per-file": ["on", {"maxScenarios": 8, "countOutlineExamples": false}],
+  "max-scenarios-per-file": ["on", {"maxScenarios": 10, "countOutlineExamples": false}],
   "no-dupe-scenario-names": ["on", "in-feature"],
   "no-unnamed-features": "on",
   "indentation" : [

@@ -50,7 +50,9 @@ type (
 		DeleteFiles(context.Context, blinkfile.UserID, []blinkfile.FileID) error
 		SubscribeToFileChanges(blinkfile.UserID) (<-chan app.FileEvent, func())
 		CreateUser(context.Context, app.CreateUserArgs) error
+		ChangeUsername(context.Context, app.ChangeUsernameArgs) error
 		ListUsers(context.Context) ([]blinkfile.User, error)
+		GetUserByID(context.Context, blinkfile.UserID) (blinkfile.User, error)
 		DeleteUsers(context.Context, []blinkfile.UserID) error
 
 		app.Log
@@ -213,6 +215,8 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 				userMgmt.Use(w.f(requirePermission("user_management")))
 				userMgmt.Get("/", w.f(showUsers))
 				userMgmt.Post("/", w.f(createUser))
+				userMgmt.Get("/{user_id:string}/edit", w.f(showEditUser))
+				userMgmt.Post("/{user_id:string}/edit", w.f(editUser))
 				userMgmt.Post("/delete", w.f(deleteUsers))
 			}
 		}

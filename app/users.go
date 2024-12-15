@@ -13,12 +13,23 @@ type (
 		Username blinkfile.Username
 		Password string
 	}
+
+	ChangeUsernameArgs struct {
+		ID       blinkfile.UserID
+		Username blinkfile.Username
+	}
+
+	ChangePasswordArgs struct {
+		ID       blinkfile.UserID
+		Password string
+	}
 )
 
 var (
 	ErrDuplicateUsername  = fmt.Errorf("username already exists")
 	ErrUsernameTaken      = fmt.Errorf("username already taken")
 	ErrCredentialNotFound = fmt.Errorf("credential not found")
+	ErrUserNotFound       = fmt.Errorf("user not found")
 )
 
 func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
@@ -37,6 +48,9 @@ func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
 	if err != nil {
 		if errors.Is(err, blinkfile.ErrEmptyUsername) {
 			return ErrUser("Error creating user", "Username cannot be empty.", err)
+		}
+		if errors.Is(err, blinkfile.ErrUsernameTooShort) {
+			return ErrUser("Error creating user", fmt.Sprintf("Username must be at least %d characters.", blinkfile.MinUsernameLength), err)
 		}
 		return Err(ErrInternal, err)
 	}
@@ -58,6 +72,48 @@ func (a *App) CreateUser(ctx context.Context, args CreateUserArgs) error {
 	return nil
 }
 
+func (a *App) ChangeUsername(ctx context.Context, args ChangeUsernameArgs) error {
+	_, found, err := a.getAdminCredentials(args.Username)
+	if err != nil {
+		return Err(ErrInternal, err)
+	}
+	if found {
+		return ErrUser("Error changing username", fmt.Sprintf("Username %q is reserved and cannot be used.", args.Username), fmt.Errorf("attempted to rename a user to the same username as the system admin %q", args.Username))
+	}
+	user, found, err := a.cfg.UserRepo.Get(ctx, args.ID)
+	if err != nil {
+		return Err(ErrRepo, err)
+	}
+	if !found {
+		return Err(ErrRepo, fmt.Errorf("user %s not found", args.ID))
+	}
+	updatedUser, err := user.ChangeUsername(args.Username, a.cfg.Now)
+	if err != nil {
+		if errors.Is(err, blinkfile.ErrEmptyUsername) {
+			return ErrUser("Error changing username", "Username cannot be empty.", err)
+		}
+		if errors.Is(err, blinkfile.ErrUsernameTooShort) {
+			return ErrUser("Error changing username", fmt.Sprintf("Username must be at least %d characters.", blinkfile.MinUsernameLength), err)
+		}
+		if errors.Is(err, blinkfile.ErrSameUsername) {
+			return ErrUser("Error changing username", "Previous and new usernames cannot be the same.", err)
+		}
+		return Err(ErrInternal, err)
+	}
+	if err = a.cfg.UserRepo.Update(ctx, updatedUser); err != nil {
+		return Err(ErrRepo, err)
+	}
+	err = a.updateCredentialUsername(ctx, user.ID, user.Username, updatedUser.Username)
+	if err != nil {
+		if revertErr := a.cfg.UserRepo.Update(ctx, user); revertErr != nil {
+			a.Errorf(ctx, "reverting user after failure to update username credential: %v", revertErr)
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (a *App) registerCredentials(ctx context.Context, userID blinkfile.UserID, username blinkfile.Username, password string) error {
 	cred, err := newPasswordCredentials(userID, username, password, a.cfg.PasswordHasher.Hash)
 	if err != nil {
@@ -70,12 +126,31 @@ func (a *App) registerCredentials(ctx context.Context, userID blinkfile.UserID, 
 	return nil
 }
 
+func (a *App) updateCredentialUsername(ctx context.Context, userID blinkfile.UserID, previousUsername, newUsername blinkfile.Username) error {
+	err := a.cfg.CredentialRepo.UpdateUsername(ctx, userID, previousUsername, newUsername)
+	if err != nil {
+		return Err(ErrRepo, err)
+	}
+	return nil
+}
+
 func (a *App) ListUsers(ctx context.Context) ([]blinkfile.User, error) {
 	users, err := a.cfg.UserRepo.ListAll(ctx)
 	if err != nil {
 		return nil, Err(ErrRepo, err)
 	}
 	return users, nil
+}
+
+func (a *App) GetUserByID(ctx context.Context, userID blinkfile.UserID) (blinkfile.User, error) {
+	user, found, err := a.cfg.UserRepo.Get(ctx, userID)
+	if err != nil {
+		return blinkfile.User{}, Err(ErrRepo, err)
+	}
+	if !found {
+		return blinkfile.User{}, ErrUser("Error retrieving user", fmt.Sprintf("No user found with ID: %s", userID), nil)
+	}
+	return user, nil
 }
 
 func (a *App) DeleteUsers(ctx context.Context, userIDs []blinkfile.UserID) error {
