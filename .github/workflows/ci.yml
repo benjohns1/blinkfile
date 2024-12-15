@@ -126,6 +126,7 @@ jobs:
           name: acceptance-test-source
           path: test/
           if-no-files-found: error
+          include-hidden-files: true
   acceptance-test:
     runs-on: ubuntu-22.04
     needs: [build,acceptance-test-source]
