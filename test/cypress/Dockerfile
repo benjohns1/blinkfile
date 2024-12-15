@@ -1,4 +1,4 @@
-FROM cypress/base:20.11.0
+FROM cypress/base:22.12.0
 WORKDIR /cypress
 COPY package.json package-lock.json ./
 RUN npm ci
