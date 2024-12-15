@@ -80,8 +80,6 @@ type (
 	}
 )
 
-var FeatureFlagIsOn = func(context.Context, string) bool { return false }
-
 type DefaultClock struct{}
 
 func (c *DefaultClock) Now() time.Time {

@@ -21,6 +21,10 @@ import (
 
 var build string
 
+var releasedFeatures = []app.FeatureFlag{
+	app.FeatureUserAccounts,
+}
+
 func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
@@ -68,15 +72,19 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 
+	var releasedFeatureNames []string
+	for _, flag := range releasedFeatures {
+		releasedFeatureNames = append(releasedFeatureNames, string(flag))
+	}
 	ff, err := featureflag.New(
 		featureflag.WithFeaturesFromEnvironment("FEATURE_FLAG_"),
-		featureflag.WithReleasedFeatures("UserAccounts"),
+		featureflag.WithReleasedFeatures(releasedFeatureNames...),
 	)
 	if err != nil {
 		return err
 	}
-	app.FeatureFlagIsOn = func(ctx context.Context, feature string) bool {
-		v, ffErr := ff.IsOn(ctx, feature)
+	app.FeatureFlagIsOn = func(ctx context.Context, feature app.FeatureFlag) bool {
+		v, ffErr := ff.IsOn(ctx, string(feature))
 		if ffErr != nil {
 			l.Errorf(ctx, "checking feature flag %q: %v", feature, ffErr)
 		}

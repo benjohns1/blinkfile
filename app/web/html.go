@@ -210,7 +210,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		authenticated.Post("/files/delete", w.f(deleteFiles))
 		authenticated.Any("/files/notifications", w.f(fileNotifications))
 
-		if app.FeatureFlagIsOn(ctx, "UserAccounts") {
+		if app.FeatureFlagIsOn(ctx, app.FeatureUserAccounts) {
 			userMgmt := authenticated.Party("/users")
 			{
 				userMgmt.Use(w.f(requirePermission("user_management")))
