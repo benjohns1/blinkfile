@@ -76,6 +76,11 @@ This requires the app to be running locally on port 8020 with ENABLE_TEST_AUTOMA
 Gherkin-style features are defined in `test/cypress/features`. Any scenarios tagged with `@pending` or `@implementing`
 will _not_ be run in the CI pipeline. Scenarios tagged with `@implementing` will show up in the test runner locally.
 
+To run only the tests tagged with `@implementing` so you don't need to run the entire spec's test suite while iterating:
+```
+npm run cypress:open:implementing
+```
+
 Cypress implementation steps are defined in `test/cypress/steps`. See
 [badeball's cypress-cucumber-preprocessor docs](https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/readme.md)
 for more details.

@@ -120,7 +120,7 @@ When("I edit user {string}", (user: string) => {
     cy.get(`[data-test=user_edit_link]:contains(${user})`).click();
 });
 
-When("I update their username {string}", (user: string) => {
+When("I update their username to {string}", (user: string) => {
     cy.get("[data-test=username]").clear().type(user);
     cy.get("[data-test=change_username]").click();
     state.user = user;
@@ -129,4 +129,14 @@ When("I update their username {string}", (user: string) => {
 Then("I should see a username changed success message", () => {
     cy.get("[data-test=username]").should("have.value", state.user)
     getMessage().should("contain", `Username changed to "${state.user}"`);
+});
+
+When("I update their password to {string}", (user: string) => {
+    cy.get("[data-test=password]").clear().type(user);
+    cy.get("[data-test=change_password]").click();
+    state.user = user;
+});
+
+Then("I should see a password changed success message", () => {
+    getMessage().should("contain", `Password changed for "${state.user}"`);
 });
