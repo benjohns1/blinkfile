@@ -81,6 +81,13 @@ func doEditUser(ctx iris.Context, a App, userID blinkfile.UserID) (string, error
 			return "", err
 		}
 		return fmt.Sprintf("Username changed to %q", username), nil
+	case "change_password":
+		password := ctx.FormValue("password")
+		username, err := a.ChangePassword(ctx, app.ChangePasswordArgs{ID: userID, Password: password})
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Password changed for %q", username), nil
 	default:
 		return "", fmt.Errorf("unknown action %q", action)
 	}

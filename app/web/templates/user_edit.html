@@ -6,7 +6,7 @@
         <label for="username" hidden>Username</label>
         <input id="username" type="text" name="username" placeholder="Username" data-test="username" required value="{{.content.User.Username}}"/>
     </div>
-    <input id="submit_change_username" type="submit" value="Update Username" data-test="change_username"/>
+    <input id="submit_change_username" type="submit" value="Change Username" data-test="change_username"/>
 </form>
 <form action="/users/{{.content.User.ID}}/edit" method="post" enctype="multipart/form-data" data-test="change_password_form">
     <input id="change_password_user_id" type="hidden" name="user_id" value="{{.content.User.ID}}"/>
@@ -15,6 +15,6 @@
         <label for="password" hidden>New Password</label>
         <input id="password" type="password" name="password" placeholder="New Password" data-test="password" required/>
     </div>
-    <input id="submit_change_password" type="submit" value="Update Password" data-test="change_password"/>
+    <input id="submit_change_password" type="submit" value="Change Password" data-test="change_password"/>
 </form>
 {{ render "partials/message.html" .content.MessageView }}

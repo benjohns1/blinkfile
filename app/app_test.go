@@ -195,6 +195,7 @@ func (ur *StubUserRepo) Delete(ctx context.Context, userID blinkfile.UserID) err
 type StubCredentialRepo struct {
 	SetFunc            func(context.Context, app.Credentials) error
 	UpdateUsernameFunc func(context.Context, blinkfile.UserID, blinkfile.Username, blinkfile.Username) error
+	UpdatePasswordFunc func(context.Context, app.Credentials) error
 	GetByUsernameFunc  func(context.Context, blinkfile.Username) (app.Credentials, error)
 	RemoveFunc         func(context.Context, blinkfile.UserID) error
 }
@@ -202,6 +203,12 @@ type StubCredentialRepo struct {
 func (cr *StubCredentialRepo) Set(ctx context.Context, cred app.Credentials) error {
 	if cr.SetFunc != nil {
 		return cr.SetFunc(ctx, cred)
+	}
+	return nil
+}
+func (cr *StubCredentialRepo) UpdatePassword(ctx context.Context, cred app.Credentials) error {
+	if cr.UpdatePasswordFunc != nil {
+		return cr.UpdatePasswordFunc(ctx, cred)
 	}
 	return nil
 }

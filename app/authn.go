@@ -15,9 +15,9 @@ type Credentials struct {
 	PasswordHash string
 }
 
-const passwordMinLength = 16
+const PasswordMinLength = 16
 
-var ErrPasswordTooShort = fmt.Errorf("password must be at least %d characters long", passwordMinLength)
+var ErrPasswordTooShort = fmt.Errorf("password must be at least %d characters long", PasswordMinLength)
 
 func newPasswordCredentials(userID blinkfile.UserID, user blinkfile.Username, pass string, hash func([]byte) string) (Credentials, error) {
 	if userID == "" {
@@ -26,7 +26,7 @@ func newPasswordCredentials(userID blinkfile.UserID, user blinkfile.Username, pa
 	if user == "" {
 		return Credentials{}, fmt.Errorf("username cannot be empty")
 	}
-	if len(pass) < passwordMinLength {
+	if len(pass) < PasswordMinLength {
 		return Credentials{}, ErrPasswordTooShort
 	}
 	encodedHash := hash([]byte(pass))

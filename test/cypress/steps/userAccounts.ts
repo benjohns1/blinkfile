@@ -42,6 +42,15 @@ Given("I have created a new user {string} with the password {string}", (user: st
     createUser(user, pass);
 });
 
+Given("I have updated the user {string} to have username {string} and password {string}", (initialUsername: string, user: string, pass: string) => {
+    cy.visit("/users");
+    cy.get(`[data-test=user_edit_link]:contains(${initialUsername})`).click();
+    cy.get("[data-test=username]").clear().type(user);
+    cy.get("[data-test=change_username]").click();
+    cy.get("[data-test=password]").clear().type(pass);
+    cy.get("[data-test=change_password]").click();
+});
+
 const createUser = (user: string, pass: string) => {
     if (user !== "") {
         getUsername().type(user);
@@ -131,12 +140,13 @@ Then("I should see a username changed success message", () => {
     getMessage().should("contain", `Username changed to "${state.user}"`);
 });
 
-When("I update their password to {string}", (user: string) => {
-    cy.get("[data-test=password]").clear().type(user);
+When("I update their password to {string}", (pass: string) => {
+    cy.get("[data-test=password]").clear().type(pass);
     cy.get("[data-test=change_password]").click();
-    state.user = user;
 });
 
 Then("I should see a password changed success message", () => {
-    getMessage().should("contain", `Password changed for "${state.user}"`);
+    cy.get("[data-test=username]").then((userInput) => {
+        getMessage().should("contain", `Password changed for "${userInput.val()}"`);
+    })
 });

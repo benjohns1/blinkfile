@@ -90,28 +90,57 @@ func (r *CredentialRepo) setIndices(cred credentialData) {
 }
 
 func (r *CredentialRepo) Set(_ context.Context, cred app.Credentials) error {
-	if cred.UserID == "" {
-		return fmt.Errorf("user ID cannot be empty")
-	}
-	if cred.Username == "" {
-		return fmt.Errorf("username cannot be empty")
-	}
-	cd := credentialData(cred)
-	data, err := Marshal(cd)
+	cd, data, err := r.parseCredentials(cred)
 	if err != nil {
-		return fmt.Errorf("marshaling credential data: %w", err)
+		return err
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if found, exists := r.usernameIndex[cd.Username]; exists && found.UserID != cd.UserID {
 		return fmt.Errorf("%w: %q", app.ErrDuplicateUsername, cd.Username)
 	}
-	err = WriteFile(r.filename(cd.Username), data, 0644)
+	return r.writeCredentials(cd, data)
+}
+
+func (r *CredentialRepo) UpdatePassword(_ context.Context, cred app.Credentials) error {
+	cd, data, err := r.parseCredentials(cred)
+	if err != nil {
+		return err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	found, exists := r.usernameIndex[cd.Username]
+	if !exists {
+		return fmt.Errorf("%w: %q", app.ErrCredentialNotFound, cd.Username)
+	}
+	if found.UserID != cd.UserID {
+		return fmt.Errorf("user IDs don't match for username: %w: %q", app.ErrCredentialNotFound, cd.Username)
+	}
+	return r.writeCredentials(cd, data)
+}
+
+func (r *CredentialRepo) writeCredentials(cd credentialData, data []byte) error {
+	err := WriteFile(r.filename(cd.Username), data, 0644)
 	if err != nil {
 		return fmt.Errorf("writing credential data: %w", err)
 	}
 	r.setIndices(cd)
 	return nil
+}
+
+func (r *CredentialRepo) parseCredentials(cred app.Credentials) (credentialData, []byte, error) {
+	if cred.UserID == "" {
+		return credentialData{}, nil, fmt.Errorf("user ID cannot be empty")
+	}
+	if cred.Username == "" {
+		return credentialData{}, nil, fmt.Errorf("username cannot be empty")
+	}
+	cd := credentialData(cred)
+	data, err := Marshal(cd)
+	if err != nil {
+		return credentialData{}, nil, fmt.Errorf("marshaling credential data: %w", err)
+	}
+	return cd, data, nil
 }
 
 func (r *CredentialRepo) UpdateUsername(ctx context.Context, userID blinkfile.UserID, previousUsername, newUsername blinkfile.Username) error {
@@ -143,13 +172,15 @@ func (r *CredentialRepo) UpdateUsername(ctx context.Context, userID blinkfile.Us
 		return fmt.Errorf("marshaling credential data: %w", err)
 	}
 
-	err = WriteFile(r.filename(cd.Username), data, 0644)
+	err = r.writeCredentials(cd, data)
 	if err != nil {
-		return fmt.Errorf("writing credential data: %w", err)
+		return err
 	}
-	r.setIndices(cd)
-	if rmErr := r.removeUsername(ctx, previousUsername); rmErr != nil {
-		return fmt.Errorf("removing previous username: %w", rmErr)
+	if rmPrevErr := r.removeUsername(ctx, previousUsername); rmPrevErr != nil {
+		if rmNewErr := r.removeUsername(ctx, newUsername); rmNewErr != nil {
+			return fmt.Errorf("removing new username after failing to remove previous username: %w", rmPrevErr)
+		}
+		return fmt.Errorf("removing previous username: %w", rmPrevErr)
 	}
 	return nil
 }

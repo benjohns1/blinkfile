@@ -338,6 +338,168 @@ func TestUserRepo_Create(t *testing.T) {
 	}
 }
 
+func TestUserRepo_Update(t *testing.T) {
+	type args struct {
+		user blinkfile.User
+	}
+	tests := []struct {
+		name    string
+		r       func(*testing.T, string) *repo.UserRepo
+		patch   func(*testing.T) func()
+		args    args
+		wantErr error
+		wantAll []blinkfile.User
+	}{
+		{
+			name: "should fail if the user ID is empty",
+			args: args{
+				user: blinkfile.User{
+					ID: "",
+				},
+			},
+			wantErr: fmt.Errorf("user ID cannot be empty"),
+		},
+		{
+			name: "should fail if the username is empty",
+			args: args{
+				user: blinkfile.User{
+					ID:       "u1",
+					Username: "",
+				},
+			},
+			wantErr: fmt.Errorf("username cannot be empty"),
+		},
+		{
+			name: "should fail if marshaling the user data fails",
+			args: args{
+				user: blinkfile.User{
+					ID:       "u1",
+					Username: "u1",
+				},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.Marshal
+				repo.Marshal = func(any) ([]byte, error) {
+					return nil, fmt.Errorf("marshal err")
+				}
+				return func() { repo.Marshal = prev }
+			},
+			wantErr: fmt.Errorf("marshaling user data: %w", fmt.Errorf("marshal err")),
+		},
+		{
+			name: "should fail if a user ID doesn't exist",
+			args: args{
+				user: blinkfile.User{
+					ID:       "u1",
+					Username: "username2",
+				},
+			},
+			wantErr: fmt.Errorf(`%w: for user ID "u1"`, app.ErrUserNotFound),
+		},
+		{
+			name: "should fail if writing the user fails",
+			r: func(t *testing.T, dir string) *repo.UserRepo {
+				cfg := repo.UserRepoConfig{Dir: dir}
+				r, err := repo.NewUserRepo(context.Background(), cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				fatalOnErr(t, r.Create(context.Background(), blinkfile.User{
+					ID:       "u1",
+					Username: "username1",
+				}))
+				return r
+			},
+			args: args{
+				user: blinkfile.User{
+					ID:       "u1",
+					Username: "username2",
+				},
+			},
+			patch: func(t *testing.T) func() {
+				prev := repo.WriteFile
+				callCount := 0
+				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {
+					callCount++
+					if callCount == 1 {
+						return prev(name, data, perm)
+					}
+					return fmt.Errorf("file write err")
+				}
+				return func() { repo.WriteFile = prev }
+			},
+			wantErr: fmt.Errorf("writing user data: %w", fmt.Errorf("file write err")),
+		},
+		{
+			name: "should update a user",
+			r: func(t *testing.T, dir string) *repo.UserRepo {
+				cfg := repo.UserRepoConfig{Dir: dir}
+				r, err := repo.NewUserRepo(context.Background(), cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				fatalOnErr(t, r.Create(context.Background(), blinkfile.User{
+					ID:         "u1",
+					Username:   "username1",
+					Created:    time.Unix(1, 1),
+					LastEdited: time.Unix(1, 1),
+				}))
+				return r
+			},
+			args: args{
+				user: blinkfile.User{
+					ID:         "u1",
+					Username:   "username2",
+					Created:    time.Unix(1, 1),
+					LastEdited: time.Unix(2, 2),
+				},
+			},
+			wantAll: []blinkfile.User{{
+				ID:         "u1",
+				Username:   "username2",
+				Created:    time.Unix(1, 1),
+				LastEdited: time.Unix(2, 2),
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			dir := newUserDir(t, "create_test")
+			cleanDir(t, dir)
+			defer func() {
+				if !t.Failed() {
+					cleanDir(t, dir)
+				}
+			}()
+			if tt.patch != nil {
+				defer tt.patch(t)()
+			}
+			var r *repo.UserRepo
+			if tt.r == nil {
+				r = newTestUserRepo(t, dir)
+			} else {
+				r = tt.r(t, dir)
+			}
+			err := r.Update(ctx, tt.args.user)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantAll == nil {
+				return
+			}
+			got, err := r.ListAll(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, tt.wantAll) {
+				t.Errorf("Update() resulted in all users:\n\t%+v\nwantAll:\n\t%+v", got, tt.wantAll)
+			}
+		})
+	}
+}
+
 func newTestUserRepo(t *testing.T, dir string) *repo.UserRepo {
 	r, err := repo.NewUserRepo(context.Background(), repo.UserRepoConfig{Dir: dir, Log: &spyLog{}})
 	if err != nil {

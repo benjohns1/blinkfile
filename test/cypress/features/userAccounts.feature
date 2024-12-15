@@ -54,14 +54,12 @@ Scenario: Admin can change a user's username
   And I update their username to "testuser2"
   Then I should see a username changed success message
 
-@implementing
 Scenario: Admin can change a user's password
   Given I have created a new user "testuser1" with the password "old_password12345678"
   When I edit user "testuser1"
   And I update their password to "new_pass12345678"
   Then I should see a password changed success message
 
-@pending
 Scenario: User can log in with newly updated credentials
   Given I have created a new user "testuser1" with the password "old_pass12345678"
   And I have updated the user "testuser1" to have username "testuser2" and password "new_pass12345678"

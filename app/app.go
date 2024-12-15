@@ -53,6 +53,7 @@ type (
 
 	CredentialRepo interface {
 		Set(context.Context, Credentials) error
+		UpdatePassword(context.Context, Credentials) error
 		UpdateUsername(context.Context, blinkfile.UserID, blinkfile.Username, blinkfile.Username) error
 		GetByUsername(context.Context, blinkfile.Username) (Credentials, error)
 		Remove(context.Context, blinkfile.UserID) error

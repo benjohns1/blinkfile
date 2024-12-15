@@ -144,12 +144,12 @@ func (r *UserRepo) Update(_ context.Context, user blinkfile.User) error {
 	if !idExists {
 		return fmt.Errorf("%w: for user ID %q", app.ErrUserNotFound, u.ID)
 	}
-	delete(r.usernameIndex, prevUser.Username)
 
 	err = r.writeUserData(u, data)
 	if err != nil {
 		return err
 	}
+	delete(r.usernameIndex, prevUser.Username)
 	return nil
 }
 

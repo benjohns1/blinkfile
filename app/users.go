@@ -103,7 +103,7 @@ func (a *App) ChangeUsername(ctx context.Context, args ChangeUsernameArgs) error
 	if err = a.cfg.UserRepo.Update(ctx, updatedUser); err != nil {
 		return Err(ErrRepo, err)
 	}
-	err = a.updateCredentialUsername(ctx, user.ID, user.Username, updatedUser.Username)
+	err = a.cfg.CredentialRepo.UpdateUsername(ctx, user.ID, user.Username, updatedUser.Username)
 	if err != nil {
 		if revertErr := a.cfg.UserRepo.Update(ctx, user); revertErr != nil {
 			a.Errorf(ctx, "reverting user after failure to update username credential: %v", revertErr)
@@ -112,6 +112,27 @@ func (a *App) ChangeUsername(ctx context.Context, args ChangeUsernameArgs) error
 	}
 
 	return nil
+}
+
+func (a *App) ChangePassword(ctx context.Context, args ChangePasswordArgs) (blinkfile.Username, error) {
+	user, found, err := a.cfg.UserRepo.Get(ctx, args.ID)
+	if err != nil {
+		return "", Err(ErrRepo, err)
+	}
+	if !found {
+		return "", Err(ErrRepo, fmt.Errorf("user %s not found", args.ID))
+	}
+	err = a.updateCredentials(ctx, args.ID, user.Username, args.Password)
+	if err != nil {
+		return "", err
+	}
+	count, err := a.cfg.SessionRepo.DeleteAllUserSessions(ctx, args.ID)
+	if err != nil {
+		a.Errorf(ctx, "error deleting user sessions after changing password: %s", err)
+	} else {
+		a.Printf(ctx, "deleted %d sessions for user ID %s", count, args.ID)
+	}
+	return user.Username, nil
 }
 
 func (a *App) registerCredentials(ctx context.Context, userID blinkfile.UserID, username blinkfile.Username, password string) error {
@@ -126,8 +147,12 @@ func (a *App) registerCredentials(ctx context.Context, userID blinkfile.UserID, 
 	return nil
 }
 
-func (a *App) updateCredentialUsername(ctx context.Context, userID blinkfile.UserID, previousUsername, newUsername blinkfile.Username) error {
-	err := a.cfg.CredentialRepo.UpdateUsername(ctx, userID, previousUsername, newUsername)
+func (a *App) updateCredentials(ctx context.Context, userID blinkfile.UserID, username blinkfile.Username, password string) error {
+	cred, err := newPasswordCredentials(userID, username, password, a.cfg.PasswordHasher.Hash)
+	if err != nil {
+		return ErrUser("Error creating user credentials", fmt.Sprintf("Credential error: %s", err), err)
+	}
+	err = a.cfg.CredentialRepo.UpdatePassword(ctx, cred)
 	if err != nil {
 		return Err(ErrRepo, err)
 	}
@@ -162,9 +187,7 @@ func (a *App) DeleteUsers(ctx context.Context, userIDs []blinkfile.UserID) error
 		a.Printf(ctx, "deleted %d sessions for user ID %s", count, userID)
 		files, err := a.cfg.FileRepo.ListByUser(ctx, userID)
 		if err != nil {
-			if err != nil {
-				return Err(ErrRepo, err)
-			}
+			return Err(ErrRepo, err)
 		}
 		filesToDelete := make([]blinkfile.FileID, 0, len(files))
 		for _, file := range files {

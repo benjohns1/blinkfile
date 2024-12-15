@@ -51,6 +51,7 @@ type (
 		SubscribeToFileChanges(blinkfile.UserID) (<-chan app.FileEvent, func())
 		CreateUser(context.Context, app.CreateUserArgs) error
 		ChangeUsername(context.Context, app.ChangeUsernameArgs) error
+		ChangePassword(context.Context, app.ChangePasswordArgs) (blinkfile.Username, error)
 		ListUsers(context.Context) ([]blinkfile.User, error)
 		GetUserByID(context.Context, blinkfile.UserID) (blinkfile.User, error)
 		DeleteUsers(context.Context, []blinkfile.UserID) error
