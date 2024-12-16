@@ -58,7 +58,7 @@ func loginRequired(ctx iris.Context, a App) error {
 }
 
 func requirePermission(permission string) func(iris.Context, App) error {
-	return func(ctx iris.Context, a App) error {
+	return func(ctx iris.Context, _ App) error {
 		sess, err := getSession(ctx)
 		if err != nil {
 			return err

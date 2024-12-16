@@ -89,15 +89,33 @@ func decodeHash(encodedHash string) (salt, hash []byte, params Argon2id, err err
 	if err != nil {
 		return nil, nil, params, err
 	}
-	params.SaltLength = uint32(len(salt))
+	params.SaltLength, err = intToUint32(len(salt))
+	if err != nil {
+		return nil, nil, params, err
+	}
 
 	hash, err = base64.RawStdEncoding.Strict().DecodeString(hashPart)
 	if err != nil {
 		return nil, nil, params, err
 	}
-	params.KeyLength = uint32(len(hash))
+	params.KeyLength, err = intToUint32(len(hash))
+	if err != nil {
+		return nil, nil, params, err
+	}
 
 	return salt, hash, params, nil
+}
+
+const maxUint32 = int(^uint32(0))
+
+func intToUint32(i int) (uint32, error) {
+	if i < 0 {
+		return 0, fmt.Errorf("conversion error: %d is less than min uint32 0", i)
+	}
+	if i > maxUint32 {
+		return 0, fmt.Errorf("conversion error: %d is larger than max uint32 %d", i, maxUint32)
+	}
+	return uint32(i), nil
 }
 
 func bytesAreEqual(a, b []byte) bool {

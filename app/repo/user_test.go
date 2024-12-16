@@ -56,7 +56,7 @@ func TestNewUserRepo(t *testing.T) {
 					return repo.UserRepoConfig{Dir: dir}
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.MkdirAll
 				repo.MkdirAll = func(string, os.FileMode) error {
 					return fmt.Errorf("mkdir err")
@@ -106,9 +106,9 @@ func TestNewUserRepo(t *testing.T) {
 					return cfg
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.ReadFile
-				repo.ReadFile = func(name string) ([]byte, error) {
+				repo.ReadFile = func(_ string) ([]byte, error) {
 					return nil, fmt.Errorf("file read err")
 				}
 				return func() { repo.ReadFile = prev }
@@ -214,7 +214,7 @@ func TestUserRepo_Create(t *testing.T) {
 					Username: "u1",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Marshal
 				repo.Marshal = func(any) ([]byte, error) {
 					return nil, fmt.Errorf("marshal err")
@@ -275,9 +275,9 @@ func TestUserRepo_Create(t *testing.T) {
 					Username: "u1",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.WriteFile
-				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {
+				repo.WriteFile = func(_ string, _ []byte, _ os.FileMode) error {
 					return fmt.Errorf("file write err")
 				}
 				return func() { repo.WriteFile = prev }
@@ -377,7 +377,7 @@ func TestUserRepo_Update(t *testing.T) {
 					Username: "u1",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Marshal
 				repo.Marshal = func(any) ([]byte, error) {
 					return nil, fmt.Errorf("marshal err")
@@ -416,7 +416,7 @@ func TestUserRepo_Update(t *testing.T) {
 					Username: "username2",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.WriteFile
 				callCount := 0
 				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {
@@ -624,9 +624,9 @@ func TestUserRepo_Delete(t *testing.T) {
 		},
 		{
 			name: "should fail if user to delete doesn't exist",
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.RemoveAll
-				repo.RemoveFile = func(path string) error {
+				repo.RemoveFile = func(_ string) error {
 					return fmt.Errorf("remove err")
 				}
 				return func() { repo.RemoveFile = prev }

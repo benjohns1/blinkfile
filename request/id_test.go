@@ -18,7 +18,7 @@ func TestNewID(t *testing.T) {
 	}{
 		{
 			name: "should panic if generating a random byte slice fails",
-			randRead: func(b []byte) (n int, err error) {
+			randRead: func(_ []byte) (n int, err error) {
 				return 0, fmt.Errorf("rand read err")
 			},
 			wantPanic: fmt.Errorf("rand read err"),

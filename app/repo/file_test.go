@@ -55,7 +55,7 @@ func TestNewFileRepo(t *testing.T) {
 			args: args{
 				cfg: repo.FileRepoConfig{Dir: newFileDir(t, "new1")},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.MkdirAll
 				repo.MkdirAll = func(string, os.FileMode) error {
 					return fmt.Errorf("mkdir err")
@@ -113,9 +113,9 @@ func TestNewFileRepo(t *testing.T) {
 					return cfg
 				}(),
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.ReadFile
-				repo.ReadFile = func(name string) ([]byte, error) {
+				repo.ReadFile = func(_ string) ([]byte, error) {
 					return nil, fmt.Errorf("file read err")
 				}
 				return func() { repo.ReadFile = prev }
@@ -236,7 +236,7 @@ func TestFileRepo_Save(t *testing.T) {
 					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.MkdirAll
 				repo.MkdirAll = func(path string, perm os.FileMode) error {
 					if path == filepath.Clean("_test/repo_file/mkdirfail1/file1") {
@@ -261,7 +261,7 @@ func TestFileRepo_Save(t *testing.T) {
 					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Marshal
 				repo.Marshal = func(any) ([]byte, error) {
 					return nil, fmt.Errorf("marshal err")
@@ -283,9 +283,9 @@ func TestFileRepo_Save(t *testing.T) {
 					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.WriteFile
-				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {
+				repo.WriteFile = func(_ string, _ []byte, _ os.FileMode) error {
 					return fmt.Errorf("file write err")
 				}
 				return func() { repo.WriteFile = prev }
@@ -306,7 +306,7 @@ func TestFileRepo_Save(t *testing.T) {
 					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.CreateFile
 				repo.CreateFile = func(string) (*os.File, error) {
 					return nil, fmt.Errorf("create err")
@@ -329,7 +329,7 @@ func TestFileRepo_Save(t *testing.T) {
 					Data: io.NopCloser(strings.NewReader("file-data")),
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Copy
 				repo.Copy = func(io.Writer, io.Reader) (int64, error) {
 					return 0, fmt.Errorf("copy err")
@@ -417,7 +417,7 @@ func TestFileRepo_PutHeader(t *testing.T) {
 			args: args{
 				h: blinkfile.FileHeader{ID: "file1"},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Marshal
 				repo.Marshal = func(any) ([]byte, error) {
 					return nil, fmt.Errorf("marshal err")
@@ -585,10 +585,10 @@ func TestFileRepo_DeleteExpiredBefore(t *testing.T) {
 		},
 		{
 			name: "should fail if deleting an expired file fails, but still return the number of deleted files up to that point",
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.RemoveAll
 				var count int
-				repo.RemoveAll = func(path string) error {
+				repo.RemoveAll = func(_ string) error {
 					if count == 0 {
 						count++
 						return nil
@@ -876,10 +876,10 @@ func TestFileRepo_Delete(t *testing.T) {
 		},
 		{
 			name: "should partially fail if deletion fails part way through",
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.RemoveAll
 				var count int
-				repo.RemoveAll = func(path string) error {
+				repo.RemoveAll = func(_ string) error {
 					if count == 0 {
 						count++
 						return nil

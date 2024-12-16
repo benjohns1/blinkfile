@@ -300,7 +300,7 @@ func TestSessionRepo_Delete(t *testing.T) {
 		{
 			name: "should fail if removing the file fails",
 			cfg:  repo.SessionConfig{Dir: newSessionDir(t)},
-			removeFile: func(name string) error {
+			removeFile: func(_ string) error {
 				return fmt.Errorf("err remove")
 			},
 			args: args{
@@ -395,7 +395,7 @@ func TestSessionRepo_DeleteAllUserSessions(t *testing.T) {
 			arrange: func(t *testing.T, r *repo.SessionRepo) {
 				fatalOnErr(t, r.Save(ctx, app.Session{UserID: "u1", Token: "token1"}))
 			},
-			removeFile: func(name string) error {
+			removeFile: func(_ string) error {
 				return fmt.Errorf("err remove")
 			},
 			args: args{

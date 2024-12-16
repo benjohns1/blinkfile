@@ -57,7 +57,7 @@ func TestNewCredentialRepo(t *testing.T) {
 					return repo.CredentialRepoConfig{Dir: dir}
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.MkdirAll
 				repo.MkdirAll = func(string, os.FileMode) error {
 					return fmt.Errorf("mkdir err")
@@ -109,9 +109,9 @@ func TestNewCredentialRepo(t *testing.T) {
 					return cfg
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.ReadFile
-				repo.ReadFile = func(name string) ([]byte, error) {
+				repo.ReadFile = func(_ string) ([]byte, error) {
 					return nil, fmt.Errorf("file read err")
 				}
 				return func() { repo.ReadFile = prev }
@@ -217,7 +217,7 @@ func TestCredentialRepo_Set(t *testing.T) {
 					Username: "u1",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Marshal
 				repo.Marshal = func(any) ([]byte, error) {
 					return nil, fmt.Errorf("marshal err")
@@ -316,9 +316,9 @@ func TestCredentialRepo_Set(t *testing.T) {
 					Username: "u1",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.WriteFile
-				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {
+				repo.WriteFile = func(_ string, _ []byte, _ os.FileMode) error {
 					return fmt.Errorf("file write err")
 				}
 				return func() { repo.WriteFile = prev }
@@ -508,7 +508,7 @@ func TestCredentialRepo_UpdateUsername(t *testing.T) {
 				previousUsername: "username1",
 				newUsername:      "username2",
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Marshal
 				callCount := 0
 				repo.Marshal = func(v any) ([]byte, error) {
@@ -542,7 +542,7 @@ func TestCredentialRepo_UpdateUsername(t *testing.T) {
 				previousUsername: "username1",
 				newUsername:      "username2",
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.WriteFile
 				callCount := 0
 				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {
@@ -576,7 +576,7 @@ func TestCredentialRepo_UpdateUsername(t *testing.T) {
 				previousUsername: "username1",
 				newUsername:      "username2",
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.RemoveFile
 				callCount := 0
 				repo.RemoveFile = func(name string) error {
@@ -610,9 +610,9 @@ func TestCredentialRepo_UpdateUsername(t *testing.T) {
 				previousUsername: "username1",
 				newUsername:      "username2",
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.RemoveFile
-				repo.RemoveFile = func(name string) error {
+				repo.RemoveFile = func(_ string) error {
 					return fmt.Errorf("remove file err")
 				}
 				return func() { repo.RemoveFile = prev }
@@ -752,7 +752,7 @@ func TestCredentialRepo_UpdatePassword(t *testing.T) {
 					Username: "u1",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.Marshal
 				repo.Marshal = func(any) ([]byte, error) {
 					return nil, fmt.Errorf("marshal err")
@@ -842,7 +842,7 @@ func TestCredentialRepo_UpdatePassword(t *testing.T) {
 					Username: "username1",
 				},
 			},
-			patch: func(t *testing.T) func() {
+			patch: func(_ *testing.T) func() {
 				prev := repo.WriteFile
 				callCount := 0
 				repo.WriteFile = func(name string, data []byte, perm os.FileMode) error {

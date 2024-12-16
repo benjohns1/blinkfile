@@ -29,7 +29,7 @@ func parseIrisErr(ctx iris.Context) *app.Error {
 	}
 	irisErr := ctx.GetErr()
 	if irisErr == nil {
-		irisErr = fmt.Errorf(text)
+		irisErr = errors.New(text)
 	}
 	var errType app.ErrorType
 	var detail string

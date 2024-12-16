@@ -178,7 +178,7 @@ func New(ctx context.Context, cfg Config) (html *HTML, err error) {
 		AllowReclaim: true,
 		Cookie:       "session",
 		Expires:      cfg.BrowserSessionExpiration,
-		SessionIDGenerator: func(ctx iris.Context) string {
+		SessionIDGenerator: func(_ iris.Context) string {
 			return randomBase64String(sessionIDLength)
 		},
 	})
