@@ -12,7 +12,7 @@ services:
     volumes:
       - blinkfile-data:/data
   blinkfile-dev:
-    image: cosmtrek/air
+    image: cosmtrek/air:v1.61.1
     working_dir: /app
     volumes:
       - ../:/app

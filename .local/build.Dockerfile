@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS source
+FROM golang:1.23.4-alpine AS source
 RUN apk add --update npm rsync git
 ARG GOCACHE=/cache/go-build
 ENV GOCACHE=${GOCACHE}
