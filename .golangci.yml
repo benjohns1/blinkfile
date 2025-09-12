@@ -1,15 +1,45 @@
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable: # https://golangci-lint.run/usage/linters
     - errcheck
-    - goimports
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - revive
     - staticcheck
     - unused
-linter-settings:
-  revive:
-    enable-all-rules: true
+  settings:
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: package-comments
+          disabled: true
+        - name: exported
+          arguments:
+            - "disable-checks-on-constants"
+            - "disable-checks-on-functions"
+            - "disable-checks-on-methods"
+            - "disable-checks-on-types"
+            - "disable-checks-on-variables"
+        - name: cognitive-complexity
+          arguments: [20]
+        - name: unnecessary-format
+          disabled: true
+        - name: line-length-limit
+          arguments: [200]
+        - name: use-errors-new
+          disabled: true
+        - name: add-constant
+          disabled: true
+        - name: function-length
+          arguments: [150, 0]
+    staticcheck:
+      checks:
+        - all
+        - -QF1008
+        - -ST1000
+formatters:
+  enable:
+    - gofmt
+    - goimports

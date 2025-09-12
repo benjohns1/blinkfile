@@ -31,7 +31,7 @@
     "hugo:serve": "npm run hugo -- server -p=8021 --bind=0.0.0.0 -D --poll 700ms",
     "commitlint": "commitlint",
     "commit": "commit",
-    "golangci-lint": "docker run --rm -v blinkfile-src:/app -v blinkfile-cache:/root/.cache -w /app golangci/golangci-lint:v1.62.2 golangci-lint",
+    "golangci-lint": "docker run --rm -v blinkfile-src:/app -v blinkfile-cache:/root/.cache -w /app golangci/golangci-lint:v2.3.1 golangci-lint",
     "go:test": "docker build --tag blinkfile-unit-test -f .local/unit-test.Dockerfile . && docker run --rm -v blinkfile-src:/src -v blinkfile-cache:/cache blinkfile-unit-test",
     "go:test:cover": "docker compose -f .local/docker-compose.yml run --rm blinkfile-unit-test",
     "acceptance-test:build": "docker build --tag blinkfile-acceptance-test-runner test/cypress",
