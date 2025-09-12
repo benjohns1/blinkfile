@@ -1,11 +1,10 @@
 {
   "devDependencies": {
-    "@commitlint/cli": "^19.6.1",
-    "@commitlint/config-conventional": "^19.6.0",
-    "@commitlint/prompt-cli": "^19.6.1",
-    "commit-and-tag-version": "^12.5.0",
-    "concurrently": "^9.1.0",
-    "cross-env": "^7.0.3"
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/prompt-cli": "^19.8.1",
+    "commit-and-tag-version": "^12.6.0",
+    "concurrently": "^9.2.1"
   },
   "engines": {
     "npm": "^10.9.0",
