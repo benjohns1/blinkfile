@@ -1,4 +1,4 @@
-FROM hugomods/hugo:0.122.0
+FROM hugomods/hugo:0.150.0
 COPY go.mod go.sum hugo.yaml /src/
 RUN cd /src && hugo mod get
 RUN rm -r /src

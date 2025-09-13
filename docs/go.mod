@@ -1,5 +1,5 @@
 module github.com/benjohns1/blinkfile/docs
 
-go 1.21
+go 1.24.0
 
-require github.com/McShelby/hugo-theme-relearn v0.0.0-20240127110639-eaabbfd6ef20 // indirect
+require github.com/McShelby/hugo-theme-relearn v0.0.0-20250911210418-e812df032eea // indirect

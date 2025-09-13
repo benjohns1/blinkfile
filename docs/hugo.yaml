@@ -5,7 +5,7 @@ description: Documentation for Blinkfile, a simple solution to send files quickl
 images:
   - /images/logo.png
 outputs:
-  home: ["HTML", "RSS", "SEARCH"]
+  home: ["html", "rss"]
 module:
   imports:
     - path: github.com/McShelby/hugo-theme-relearn
