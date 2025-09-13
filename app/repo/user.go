@@ -96,7 +96,7 @@ func (r *UserRepo) setIndices(user userData) {
 }
 
 func (r *UserRepo) Create(_ context.Context, user blinkfile.User) error {
-	u, data, err := r.parseUserData(user)
+	u, data, err := parseUserData(user)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (r *UserRepo) Create(_ context.Context, user blinkfile.User) error {
 	return nil
 }
 
-func (r *UserRepo) parseUserData(user blinkfile.User) (userData, []byte, error) {
+func parseUserData(user blinkfile.User) (userData, []byte, error) {
 	if user.ID == "" {
 		return userData{}, nil, fmt.Errorf("user ID cannot be empty")
 	}
@@ -133,7 +133,7 @@ func (r *UserRepo) parseUserData(user blinkfile.User) (userData, []byte, error) 
 }
 
 func (r *UserRepo) Update(_ context.Context, user blinkfile.User) error {
-	u, data, err := r.parseUserData(user)
+	u, data, err := parseUserData(user)
 	if err != nil {
 		return err
 	}

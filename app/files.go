@@ -22,7 +22,7 @@ func (a *App) ListFiles(ctx context.Context, owner blinkfile.UserID) ([]blinkfil
 		return nil, Err(ErrRepo, fmt.Errorf("retrieving file list: %w", err))
 	}
 	files = a.filterExpired(files)
-	files = a.filterDownloaded(files)
+	files = filterDownloaded(files)
 	sortFilesByCreatedTimeDesc(files)
 	return files, nil
 }
@@ -38,7 +38,7 @@ func (a *App) filterExpired(files []blinkfile.FileHeader) []blinkfile.FileHeader
 	return out
 }
 
-func (a *App) filterDownloaded(files []blinkfile.FileHeader) []blinkfile.FileHeader {
+func filterDownloaded(files []blinkfile.FileHeader) []blinkfile.FileHeader {
 	out := make([]blinkfile.FileHeader, 0, len(files))
 	for _, file := range files {
 		if file.DownloadLimit > 0 && file.Downloads >= file.DownloadLimit {
@@ -191,7 +191,7 @@ var (
 	subMutex      sync.Mutex
 )
 
-func (a *App) SubscribeToFileChanges(userID blinkfile.UserID) (<-chan FileEvent, func()) {
+func (_ *App) SubscribeToFileChanges(userID blinkfile.UserID) (<-chan FileEvent, func()) {
 	subMutex.Lock()
 	defer subMutex.Unlock()
 	if _, ok := subscriptions[userID]; !ok {

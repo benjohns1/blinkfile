@@ -33,12 +33,12 @@ var (
 	ErrIncompatibleVersion = fmt.Errorf("incompatible version of argon2")
 )
 
-func (h *Argon2id) Match(encodedHash string, data []byte) (matched bool, err error) {
+func (_ *Argon2id) Match(encodedHash string, data []byte) (matched bool, err error) {
 	salt, hash, params, err := decodeHash(encodedHash)
 	if err != nil {
 		return false, err
 	}
-	checkHash := params.hash(salt, data)
+	checkHash := params.generateHash(salt, data)
 	if !bytesAreEqual(hash, checkHash) {
 		return false, nil
 	}
@@ -53,7 +53,7 @@ func (h *Argon2id) Hash(data []byte) (encodedHash string) {
 	if err != nil {
 		panic(err)
 	}
-	hash := h.hash(salt, data)
+	hash := h.generateHash(salt, data)
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
@@ -62,7 +62,7 @@ func (h *Argon2id) Hash(data []byte) (encodedHash string) {
 	return encoded
 }
 
-func (h *Argon2id) hash(salt, pass []byte) []byte {
+func (h *Argon2id) generateHash(salt, pass []byte) []byte {
 	return argon2.IDKey(pass, salt, h.Time, h.Memory, h.Parallelism, h.KeyLength)
 }
 

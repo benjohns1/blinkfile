@@ -74,7 +74,7 @@ func (sr *SpySessionRepo) Get(ctx context.Context, token app.Token) (app.Session
 	sr.GetCalls = append(sr.GetCalls, token)
 	return sr.repo.Get(ctx, token)
 }
-func (sr *SpySessionRepo) DeleteAllUserSessions(context.Context, blinkfile.UserID) (int, error) {
+func (_ *SpySessionRepo) DeleteAllUserSessions(context.Context, blinkfile.UserID) (int, error) {
 	return 0, nil
 }
 
@@ -102,7 +102,7 @@ func (sr *StubSessionRepo) Delete(ctx context.Context, t app.Token) error {
 	}
 	return nil
 }
-func (sr *StubSessionRepo) DeleteAllUserSessions(context.Context, blinkfile.UserID) (int, error) {
+func (_ *StubSessionRepo) DeleteAllUserSessions(context.Context, blinkfile.UserID) (int, error) {
 	return 0, nil
 }
 

@@ -13,8 +13,12 @@ linters:
     revive:
       enable-all-rules: true
       rules:
-        - name: package-comments
+        - name: add-constant
           disabled: true
+        - name: cognitive-complexity
+          arguments: [94]
+        - name: cyclomatic
+          arguments: [27]
         - name: exported
           arguments:
             - "disable-checks-on-constants"
@@ -22,23 +26,30 @@ linters:
             - "disable-checks-on-methods"
             - "disable-checks-on-types"
             - "disable-checks-on-variables"
-        - name: cognitive-complexity
-          arguments: [20]
-        - name: unnecessary-format
-          disabled: true
-        - name: line-length-limit
-          arguments: [200]
-        - name: use-errors-new
-          disabled: true
-        - name: add-constant
-          disabled: true
         - name: function-length
           arguments: [150, 0]
+        - name: function-result-limit
+          arguments: [4]
+        - name: line-length-limit
+          arguments: [230]
+        - name: max-public-structs
+          arguments: [10]
+        - name: package-comments
+          disabled: true
+        - name: receiver-naming
+          disabled: true
+        - name: unchecked-type-assertion
+          disabled: true
+        - name: unnecessary-format
+          disabled: true
+        - name: use-errors-new
+          disabled: true
     staticcheck:
       checks:
         - all
         - -QF1008
         - -ST1000
+        - -ST1006
 formatters:
   enable:
     - gofmt

@@ -150,7 +150,7 @@ func (r *SessionRepo) DeleteAllUserSessions(ctx context.Context, userID blinkfil
 	defer r.mu.Unlock()
 	var count int
 	for _, token := range r.userIDIndex[userID] {
-		err := r.delete(ctx, token)
+		err := r.deleteSession(ctx, token)
 		if err != nil {
 			return count, err
 		}
@@ -165,10 +165,10 @@ func (r *SessionRepo) Delete(ctx context.Context, token app.Token) error {
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.delete(ctx, token)
+	return r.deleteSession(ctx, token)
 }
 
-func (r *SessionRepo) delete(ctx context.Context, token app.Token) error {
+func (r *SessionRepo) deleteSession(ctx context.Context, token app.Token) error {
 	err := RemoveFile(r.filename(token))
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {

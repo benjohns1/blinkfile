@@ -90,7 +90,7 @@ func (r *CredentialRepo) setIndices(cred credentialData) {
 }
 
 func (r *CredentialRepo) Set(_ context.Context, cred app.Credentials) error {
-	cd, data, err := r.parseCredentials(cred)
+	cd, data, err := parseCredentials(cred)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (r *CredentialRepo) Set(_ context.Context, cred app.Credentials) error {
 }
 
 func (r *CredentialRepo) UpdatePassword(_ context.Context, cred app.Credentials) error {
-	cd, data, err := r.parseCredentials(cred)
+	cd, data, err := parseCredentials(cred)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (r *CredentialRepo) writeCredentials(cd credentialData, data []byte) error 
 	return nil
 }
 
-func (r *CredentialRepo) parseCredentials(cred app.Credentials) (credentialData, []byte, error) {
+func parseCredentials(cred app.Credentials) (credentialData, []byte, error) {
 	if cred.UserID == "" {
 		return credentialData{}, nil, fmt.Errorf("user ID cannot be empty")
 	}

@@ -138,7 +138,7 @@ func (r *FileRepo) Save(ctx context.Context, file blinkfile.File) error {
 		return fmt.Errorf("making directory %q: %w", dir, err)
 	}
 
-	err = r.writeHeaderFile(ctx, headerFilename, header)
+	err = writeHeaderFile(ctx, headerFilename, header)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (r *FileRepo) Save(ctx context.Context, file blinkfile.File) error {
 	return nil
 }
 
-func (r *FileRepo) writeHeaderFile(_ context.Context, headerFilename string, header fileHeader) error {
+func writeHeaderFile(_ context.Context, headerFilename string, header fileHeader) error {
 	data, err := Marshal(header)
 	if err != nil {
 		return fmt.Errorf("marshaling file header: %w", err)
@@ -186,7 +186,7 @@ func (r *FileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileHeader
 	_, _, headerFilename := r.filenames(header.ID)
 	header.Location = previous.Location
 
-	err := r.writeHeaderFile(ctx, headerFilename, header)
+	err := writeHeaderFile(ctx, headerFilename, header)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (r *FileRepo) PutHeader(ctx context.Context, putHeader blinkfile.FileHeader
 	return nil
 }
 
-func (r *FileRepo) delete(_ context.Context, filter func(fileHeader) bool) (int, error) {
+func (r *FileRepo) filteredDelete(_ context.Context, filter func(fileHeader) bool) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	var deleteList []blinkfile.FileHeader
@@ -217,7 +217,7 @@ func (r *FileRepo) delete(_ context.Context, filter func(fileHeader) bool) (int,
 }
 
 func (r *FileRepo) DeleteExpiredBefore(ctx context.Context, t time.Time) (int, error) {
-	return r.delete(ctx, func(header fileHeader) bool {
+	return r.filteredDelete(ctx, func(header fileHeader) bool {
 		if !header.Expires.IsZero() && !header.Expires.After(t) {
 			return true
 		}
