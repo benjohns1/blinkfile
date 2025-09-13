@@ -10,12 +10,12 @@
     "test:open:implementing": "cypress open --env tags=\"@implementing\""
   },
   "devDependencies": {
-    "@badeball/cypress-cucumber-preprocessor": "^21.0.3",
-    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.4",
-    "cypress": "^13.16.1",
-    "dayjs": "^1.11.13",
+    "@badeball/cypress-cucumber-preprocessor": "^23.1.0",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.5",
+    "cypress": "^15.2.0",
+    "dayjs": "^1.11.18",
     "gherkin-lint": "^4.2.4",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.2"
   },
   "cypress-cucumber-preprocessor": {
     "stepDefinitions": [
